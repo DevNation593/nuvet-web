@@ -5,30 +5,30 @@ import Image from "next/image";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { 
-  PawPrint, Stethoscope, Scissors, Syringe, Heart, 
+  PawPrint, CalendarCheck, ClipboardList, CreditCard, BarChart3, Heart,
   Star, Clock, Shield, Users, ArrowRight, Menu,
-  Facebook, Instagram, Twitter, Phone, Mail, MapPin
+  Facebook, Instagram, Twitter, Phone, Mail
 } from "lucide-react";
 
 const services = [
-  { icon: Stethoscope, title: "Consultas Médicas", description: "Diagnóstico y tratamiento profesional para tu mascota." },
-  { icon: Syringe, title: "Vacunación", description: "Programa completo de vacunas para prevenir enfermedades." },
-  { icon: Scissors, title: "Estética y Peluquería", description: "Baño, corte y cuidado del pelaje de tu mascota." },
-  { icon: Heart, title: "Cirugías", description: "Procedimientos quirúrgicos con la mejor tecnología." },
+  { icon: CalendarCheck, title: "Agenda inteligente", description: "Turnos organizados y recordatorios automaticos para reducir ausencias." },
+  { icon: ClipboardList, title: "Historial clínico", description: "Todo el seguimiento médico de cada paciente en un solo lugar." },
+  { icon: CreditCard, title: "Cobros y facturación", description: "Caja diaria, comprobantes y control de pagos claros." },
+  { icon: BarChart3, title: "Reportes de gestión", description: "Indicadores clave para tomar decisiones con datos reales." },
 ];
 
 const testimonials = [
-  { name: "María García", pet: "Dueña de Max", rating: 5, comment: "Excelente atención, siempre muy profesionales y cariñosos con mi perrito." },
-  { name: "Carlos López", pet: "Dueño de Luna", rating: 5, comment: "El mejor servicio de peluquería canina. Mi Luna queda hermosa siempre." },
-  { name: "Ana Martínez", pet: "Dueña de Michi", rating: 5, comment: "Adopté a mi gato aquí y siempre me han dado el mejor seguimiento." },
+  { name: "Maria Garcia", role: "Directora - Clinica NovaVet", rating: 5, comment: "Con NuVet ordenamos agenda y cobros en una semana. El equipo ahora trabaja con claridad." },
+  { name: "Carlos Lopez", role: "Admin - VetCare Quito", rating: 5, comment: "Los recordatorios y el historial clinico nos ayudaron a reducir ausencias y errores." },
+  { name: "Ana Martinez", role: "Coordinadora - VetPlus", rating: 5, comment: "Los reportes nos dan visibilidad diaria. Tomamos mejores decisiones con datos reales." },
 ];
 
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-white">
       {/* HEADER / NAVBAR INTEGRADO */}
-      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-emerald-50">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-emerald-200">
+        <div className="container mx-auto px-4 h-14 flex items-center justify-between relative">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center transition-transform group-hover:scale-105">
               <PawPrint className="w-5 h-5 text-white" />
@@ -36,21 +36,16 @@ export default function LandingPage() {
             <span className="font-bold text-xl text-emerald-950 tracking-tight">NuVet</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
             <Link href="#inicio" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Inicio</Link>
-            <Link href="#servicios" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Servicios</Link>
-      
-            <Link href="#adopcion" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Adopción</Link>
-            <Link href="#tienda" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Tienda</Link>
-            <Link href="#contacto" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Contacto</Link>
-            <div className="h-5 w-[1px] bg-emerald-100" />
-            <Link href="/auth/login" className="text-sm text-emerald-900 font-bold hover:text-emerald-600 transition-colors">
-              Iniciar Sesión
-            </Link>
-            <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 px-5 text-sm">
-              <Link href="/auth/register">Registrarse</Link>
-            </Button>
+            <Link href="/pages/services" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Servicios</Link>
+            <Link href="/pages/nosotros" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Nosotros</Link>
+            <Link href="/pages/contacto" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Contacto</Link>
           </div>
+
+          <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 px-5 text-sm hidden md:inline-flex">
+            <Link href="/auth/login">Iniciar Sesion</Link>
+          </Button>
 
           <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9">
             <Menu className="w-5 h-5" />
@@ -59,10 +54,10 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-30 lg:pb-32 overflow-hidden">
+      <section className="relative pt-32 pb-20 lg:pt-60 lg:pb-32 overflow-hidden">
         <div className="absolute inset-0">
           <Image 
-            src="/assets/hero-vet.jpg" 
+            src="/assets/hero-vet.webp" 
             alt="Clínica veterinaria" 
             fill 
             className="object-cover"
@@ -75,25 +70,24 @@ export default function LandingPage() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full mb-6">
               <PawPrint className="h-4 w-4" />
-              <span className="text-sm font-bold">Clínica Veterinaria de Confianza</span>
+              <span className="text-sm font-bold">Tecnología para veterinarias</span>
             </div>
             <h1 className="text-5xl md:text-6xl font-extrabold mb-6 text-emerald-950 leading-tight">
-              Cuidamos de quienes más te quieren con <br />
-              <span className="text-emerald-600 italic font-serif">amor y profesionalismo</span>
+              Ordena tu clínica con <br />
+              <span className="text-emerald-600 italic font-serif">procesos y datos claros</span>
             </h1>
             <p className="text-lg text-emerald-800/70 mb-8 max-w-xl font-medium">
-              Ofrecemos servicios veterinarios completos, desde consultas médicas hasta estética canina. 
-              También puedes adoptar una mascota o comprar productos para su cuidado.
+              Agenda, historiales, cobros y reportes en una sola plataforma. Tu equipo trabaja más rápido y tus clientes reciben mejor atención.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button size="lg" asChild className="bg-emerald-600 hover:bg-emerald-700 gap-2 h-14 px-8 text-lg rounded-xl shadow-x1 shadow-emerald-200">
-                <Link href="/auth/register">
-                  Empezar Ahora
+                <Link href="/pages/contacto">
+                  Solicitar demo
                   <ArrowRight className="h-5 w-5" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="h-14 px-8 text-lg rounded-xl border-emerald-200 hover:bg-emerald-50">
-                <Link href="/servicios">Nuestros Servicios</Link>
+                <Link href="/pages/services">Ver servicios</Link>
               </Button>
             </div>
           </div>
@@ -104,9 +98,9 @@ export default function LandingPage() {
       <section id="servicios" className="py-24 bg-emerald-50/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-emerald-950 mb-4">Servicios Integrales</h2>
+            <h2 className="text-4xl font-bold text-emerald-950 mb-4">Servicios tecnológicos clave</h2>
             <p className="text-emerald-800/60 max-w-2xl mx-auto font-medium">
-              Todo lo que necesitas para que tu compañero peludo esté sano y feliz.
+              Herramientas digitales para ordenar la operación, mejorar la atención y ganar tiempo.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -128,22 +122,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Sección de Beneficios y Estética */}
+      {/* Seccion de Beneficios y Plataforma */}
       <section className="py-24 bg-white">
         <div className="container mx-auto px-4 space-y-32">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="lg:w-1/2 space-y-8">
               <div>
-                <h2 className="text-4xl font-bold text-emerald-950 mb-4">¿Por qué elegirnos?</h2>
+                <h2 className="text-4xl font-bold text-emerald-950 mb-4">¿Por que elegirnos?</h2>
                 <p className="text-emerald-800/60 font-medium max-w-lg">
-                  En Nuvet nos dedicamos al cuidado integral de tus mascotas. Con años de experiencia y un equipo comprometido, garantizando la mejor atención para tu compañero peludo.
+                  NuVet simplifica la gestión diaria con procesos claros y soporte cercano para cada equipo.
                 </p>
               </div>
               <div className="space-y-6">
                 {[
-                  { icon: Clock, title: "Atención 24/7", desc: "Emergencias disponibles las 24 horas del día" },
-                  { icon: Shield, title: "Profesionales Certificados", desc: "Equipo veterinario con años de experiencia" },
-                  { icon: Users, title: "+1000 Familias", desc: "Confían en nosotros para el cuidado de sus mascotas" },
+                  { icon: Clock, title: "Implementacion rapida", desc: "Arranca en dias con migracion guiada y acompanamiento" },
+                  { icon: Shield, title: "Datos protegidos", desc: "Seguridad y respaldos continuos para tu informacion" },
+                  { icon: Users, title: "Equipo alineado", desc: "Cada area trabaja con la misma informacion en tiempo real" },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
@@ -160,7 +154,7 @@ export default function LandingPage() {
             <div className="lg:w-1/2 relative">
               <div className="absolute -inset-4 border-2 border-emerald-300 rounded-[4rem] rounded-tr-none translate-x-6 translate-y-6" />
               <div className="relative h-[400px] w-full rounded-[3rem] rounded-tr-none overflow-hidden border-1 border-white shadow-2xl">
-                <Image src="/assets/pets-together.jpg" alt="Cuidado de mascotas" fill className="object-cover" />
+                <Image src="/assets/vet2.webp" alt="Equipo NuVet" fill className="object-cover" />
               </div>
             </div>
           </div>
@@ -168,49 +162,49 @@ export default function LandingPage() {
           <div className="flex flex-col lg:flex-row-reverse items-center gap-16">
             <div className="lg:w-1/2 space-y-8">
               <div>
-                <h2 className="text-4xl font-bold text-emerald-950 mb-4">Servicio Premium de Estética</h2>
+                <h2 className="text-4xl font-bold text-emerald-950 mb-4">Todo tu flujo en un solo lugar</h2>
                 <p className="text-emerald-800/60 font-medium max-w-lg">
-                  Nuestro spa canino cuenta con profesionales certificados y productos de la más alta calidad. Tu mascota merece verse y sentirse increíble.
+                  Centraliza agenda, pacientes, cobros y reportes para que tu equipo se enfoque en la atención.
                 </p>
               </div>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {["Baño con productos hipoalergénicos", "Corte personalizado", "Limpieza de oídos y uñas", "Tratamientos especiales"].map((check, i) => (
+                {["Agenda por profesionales", "Historial clinico centralizado", "Cobros y facturacion", "Reportes en tiempo real"].map((check, i) => (
                   <li key={i} className="flex items-center gap-3 text-emerald-900 font-medium">
                     <div className="bg-emerald-100 rounded-full p-1"><PawPrint className="w-3 h-3 text-emerald-600" /></div>
                     {check}
                   </li>
                 ))}
               </ul>
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-12">
-                Agendar cita de estética
+              <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-8 h-12">
+                <Link href="/pages/contacto">Solicitar demo</Link>
               </Button>
             </div>
             <div className="lg:w-1/2 relative">
-              <div className="absolute -inset-4 border-2 border-emerald-200 rounded-[4rem] rounded-bl-none -translate-x-4 translate-y-4" />
-              <div className="relative h-[400px] w-full rounded-[4rem] rounded-bl-none overflow-hidden border-4 border-white shadow-2xl">
-                <Image src="/assets/grooming.jpg" alt="Peluquería canina" fill className="object-cover" />
+              <div className="absolute -inset-4 border-2 border-emerald-300 rounded-[4rem] rounded-bl-none -translate-x-6 -translate-y-6" />
+              <div className="relative h-[400px] w-full rounded-[3rem] rounded-bl-none overflow-hidden border-1 border-white shadow-2xl">
+                <Image src="/assets/gato3.webp" alt="Gestion veterinaria" fill className="object-cover" />
               </div>
             </div>
           </div>
         </div>
       </section>
       
-      {/* CTA Sección Adopción */}
+      {/* CTA Seccion Demo */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="bg-emerald-900 rounded-[3rem] p-8 md:p-16 overflow-hidden relative">
             <div className="relative z-10 max-w-xl">
               <Heart className="h-12 w-12 text-emerald-400 mb-6" />
-              <h2 className="text-4xl font-bold text-white mb-6">¿Buscas un nuevo integrante para la familia?</h2>
+              <h2 className="text-4xl font-bold text-white mb-6">Listo para ordenar tu operacion?</h2>
               <p className="text-emerald-100/80 text-lg mb-8">
-                Tenemos muchos amigos esperando un hogar lleno de amor. Conoce a nuestras mascotas en adopción.
+                Agenda una demo y mira como NuVet unifica agenda, pacientes, cobros y reportes en un solo flujo.
               </p>
               <Button size="lg" variant="secondary" className="bg-white text-emerald-900 hover:bg-emerald-50 h-12 px-8 font-bold rounded-xl" asChild>
-                <Link href="/adopcion">Ver Mascotas</Link>
+                <Link href="/pages/contacto">Solicitar demo</Link>
               </Button>
             </div>
             <div className="absolute right-0 bottom-0 hidden lg:block w-1/2 h-full">
-               <Image src="/assets/pets-together.jpg" alt="Mascotas" fill className="object-cover opacity-50" />
+               <Image src="/assets/gato2.webp" alt="Equipo NuVet" fill className="object-cover opacity-50" />
             </div>
           </div>
         </div>
@@ -219,20 +213,20 @@ export default function LandingPage() {
       {/* Testimonios */}
       <section id="testimonios" className="py-24">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-emerald-950 mb-16">Lo que dicen las familias NuVet</h2>
+          <h2 className="text-3xl font-bold text-center text-emerald-950 mb-16">Lo que dicen las clinicas que usan NuVet</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((t, i) => (
-              <Card key={i} className="bg-white border border-emerald-200 rounded-2xl p-2 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-300">
+              <Card key={i} className="bg-white border border-emerald-200 rounded-2xl p-2 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-300 transform hover:scale-[1.10]">
                 <CardContent className="p-6">
                   <div className="flex gap-1 mb-4">
                     {[...Array(t.rating)].map((_, i) => <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)}
                   </div>
-                  <p className="text-emerald-900 font-medium italic mb-6 leading-relaxed">"{t.comment}"</p>
+                  <p className="text-emerald-900 font-medium italic mb-6 leading-relaxed">&ldquo;{t.comment}&rdquo;</p>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">{t.name[0]}</div>
                     <div>
                       <p className="font-bold text-emerald-950 text-sm">{t.name}</p>
-                      <p className="text-emerald-600 text-xs font-semibold">{t.pet}</p>
+                      <p className="text-emerald-600 text-xs font-semibold">{t.role}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -243,9 +237,9 @@ export default function LandingPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-[#1a4731] text-white/90 py-12">
+      <footer className="bg-[#1a4731] text-white/90 py-8">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div className="space-y-6">
               <Link href="/" className="flex items-center gap-2">
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
@@ -254,7 +248,7 @@ export default function LandingPage() {
                 <span className="font-bold text-2xl text-white tracking-tight">NuVet</span>
               </Link>
               <p className="text-sm text-emerald-100/70 leading-relaxed">
-                Tu clínica veterinaria de confianza. Cuidamos a tus mascotas con amor y profesionalismo.
+                Plataforma digital para gestionar tu veterinaria: agenda, historiales, cobros y reportes en un solo lugar.
               </p>
               <div className="flex gap-4">
                 <Link href="#" className="hover:text-emerald-400 transition-colors"><Facebook className="w-5 h-5" /></Link>
@@ -264,35 +258,36 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-6">Enlaces Rápidos</h4>
-              <ul className="space-y-4 text-sm text-emerald-100/70">
-                <li><Link href="#servicios" className="hover:text-emerald-400 transition-colors">Servicios</Link></li>
-                <li><Link href="/adopcion" className="hover:text-emerald-400 transition-colors">Adopción</Link></li>
-                <li><Link href="/tienda" className="hover:text-emerald-400 transition-colors">Tienda</Link></li>
-                <li><Link href="/contacto" className="hover:text-emerald-400 transition-colors">Contacto</Link></li>
+              <h4 className="font-bold text-white mb-4">Enlaces Rápidos</h4>
+              <ul className="space-y-3 text-sm text-emerald-100/70">
+                <li><Link href="/" className="hover:text-emerald-400 transition-colors">Inicio</Link></li>
+                <li><Link href="/pages/services" className="hover:text-emerald-400 transition-colors">Servicios</Link></li>
+                <li><Link href="/pages/nosotros" className="hover:text-emerald-400 transition-colors">Nosotros</Link></li>
+                <li><Link href="/pages/contacto" className="hover:text-emerald-400 transition-colors">Contacto</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-6">Servicios</h4>
-              <ul className="space-y-4 text-sm text-emerald-100/70">
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Consultas Médicas</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Vacunación</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cirugías</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Estética y Peluquería</Link></li>
+              <h4 className="font-bold text-white mb-4">Servicios</h4>
+              <ul className="space-y-3 text-sm text-emerald-100/70">
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Agenda inteligente</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clinico digital</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automaticos</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturacion</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestion</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Inventario conectado</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-6">Contacto</h4>
-              <ul className="space-y-4 text-sm text-emerald-100/70">
+              <h4 className="font-bold text-white mb-4">Contacto</h4>
+              <ul className="space-y-3 text-sm text-emerald-100/70">
                 <li className="flex items-center gap-3"><Phone className="w-4 h-4 text-emerald-400" /> +593 9999999999</li>
                 <li className="flex items-center gap-3"><Mail className="w-4 h-4 text-emerald-400" /> contacto@nuvet.com</li>
-                <li className="flex items-start gap-3"><MapPin className="w-4 h-4 text-emerald-400 mt-1 flex-shrink-0" /> Av. Occidental, Quito, Ecuador</li>
               </ul>
             </div>
           </div>
-          <div className="pt-8 border-t border-emerald-800/50 text-center">
+          <div className="pt-6 border-t border-emerald-800/50 text-center">
             <p className="text-xs text-emerald-100/40">© 2026 Nuvet. Todos los derechos reservados.</p>
           </div>
         </div>
