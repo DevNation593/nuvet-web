@@ -33,7 +33,7 @@ export function proxy(request: NextRequest) {
         if (auth) {
             return NextResponse.redirect(new URL('/clinic', request.url));
         }
-        return NextResponse.redirect(new URL('/auth/login', request.url));
+        return NextResponse.next();
     }
 
     return NextResponse.next();
