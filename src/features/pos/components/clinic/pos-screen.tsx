@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -14,6 +15,7 @@ import {
 } from '@/shared/components/ui/dialog';
 import {
     type PaymentMethod,
+    type PosTicketStatus,
     type PosCartItem,
     type PosTransaction,
     useCreatePosTransaction,
@@ -23,6 +25,8 @@ import {
 } from '@/features/pos/hooks/use-pos';
 import { useValidatePromotionCode } from '@/features/promotions/hooks/use-promotions';
 import { useProducts, type Product } from '@/features/store/hooks/use-store';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { resolveUserPermissions } from '@/shared/lib/permissions';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -49,6 +53,14 @@ const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
     CARD: 'Tarjeta',
     TRANSFER: 'Transferencia',
     OTHER: 'Otro',
+};
+
+const POS_STATUS_LABELS: Record<PosTicketStatus, string> = {
+    OPEN: 'Abierto',
+    COMPLETED: 'Completado',
+    CANCELLED: 'Cancelado',
+    PARTIAL_REFUND: 'Reembolso parcial',
+    REFUNDED: 'Reembolsado',
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -331,6 +343,8 @@ function PosRegister() {
                                                 <button
                                                     type="button"
                                                     className="rounded p-0.5 hover:bg-muted"
+                                                    aria-label="Disminuir cantidad"
+                                                    title="Disminuir cantidad"
                                                     onClick={() => updateQty(item.productId, -1, stock)}
                                                 >
                                                     <Minus className="h-3.5 w-3.5" />
@@ -339,6 +353,8 @@ function PosRegister() {
                                                 <button
                                                     type="button"
                                                     className="rounded p-0.5 hover:bg-muted"
+                                                    aria-label="Aumentar cantidad"
+                                                    title="Aumentar cantidad"
                                                     onClick={() => updateQty(item.productId, 1, stock)}
                                                 >
                                                     <Plus className="h-3.5 w-3.5" />
@@ -350,6 +366,8 @@ function PosRegister() {
                                             <button
                                                 type="button"
                                                 className="rounded p-0.5 hover:bg-muted text-destructive"
+                                                aria-label="Eliminar producto"
+                                                title="Eliminar producto"
                                                 onClick={() => removeFromCart(item.productId)}
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
@@ -385,7 +403,15 @@ function PosRegister() {
                                         ? `${appliedPromo.value}% de descuento`
                                         : `$${appliedPromo.value} de descuento`}
                                 </span>
-                                <button type="button" onClick={() => { setAppliedPromo(null); setPromoCode(''); }}>
+                                <button
+                                    type="button"
+                                    aria-label="Quitar promoción"
+                                    title="Quitar promoción"
+                                    onClick={() => {
+                                        setAppliedPromo(null);
+                                        setPromoCode('');
+                                    }}
+                                >
                                     <X className="h-3.5 w-3.5" />
                                 </button>
                             </div>
@@ -532,12 +558,18 @@ function PaymentModal({
 // ─── Transaction History ──────────────────────────────────────────────────────
 
 function TransactionHistory() {
+    const router = useRouter();
     const [voidTarget, setVoidTarget] = useState<PosTransaction | null>(null);
     const [voidReason, setVoidReason] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(null);
 
     const transactionsQ = usePosTransactions({ limit: 50 });
     const voidTransaction = useVoidPosTransaction(selectedId);
+
+    const currentUser = useAuthStore((state) => state.user);
+    const userPermissions = resolveUserPermissions(currentUser);
+    const canCreateBilling = userPermissions.includes('billing:create' as never);
+    const canReadBilling = userPermissions.includes('billing:read' as never);
 
     const transactions = transactionsQ.data?.data ?? [];
 
@@ -551,6 +583,23 @@ function TransactionHistory() {
         } catch {
             toast.error('No se pudo anular la venta');
         }
+    }
+
+    function buildBillingUrl(tx: PosTransaction, mode: 'issue' | 'status') {
+        const externalId = tx.providerInvoiceId || tx.invoice?.providerInvoiceId;
+        const query = new URLSearchParams({
+            from: 'pos',
+            ticketId: tx.id,
+        });
+
+        if (externalId) {
+            query.set('providerInvoiceId', externalId);
+        }
+        if (mode === 'status') {
+            query.set('focus', 'status');
+        }
+
+        return `/clinic/billing?${query.toString()}`;
     }
 
     return (
@@ -575,6 +624,7 @@ function TransactionHistory() {
                                         <th className="px-4 py-3 text-left font-medium">Descuento</th>
                                         <th className="px-4 py-3 text-left font-medium">Total</th>
                                         <th className="px-4 py-3 text-left font-medium">Método</th>
+                                        <th className="px-4 py-3 text-left font-medium">Estado</th>
                                         <th className="px-4 py-3 text-left font-medium">Acciones</th>
                                     </tr>
                                 </thead>
@@ -595,17 +645,42 @@ function TransactionHistory() {
                                                     {PAYMENT_METHOD_LABELS[tx.paymentMethod] ?? tx.paymentMethod}
                                                 </Badge>
                                             </td>
+                                            <td className="px-4 py-3 text-xs text-muted-foreground">
+                                                {tx.status ? POS_STATUS_LABELS[tx.status] : '—'}
+                                            </td>
                                             <td className="px-4 py-3">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => {
-                                                        setSelectedId(tx.id);
-                                                        setVoidTarget(tx);
-                                                    }}
-                                                >
-                                                    Anular
-                                                </Button>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => {
+                                                            setSelectedId(tx.id);
+                                                            setVoidTarget(tx);
+                                                        }}
+                                                    >
+                                                        Anular
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        disabled={!canCreateBilling}
+                                                        onClick={() => {
+                                                            router.push(buildBillingUrl(tx, 'issue'));
+                                                        }}
+                                                    >
+                                                        Facturar
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        disabled={!canReadBilling}
+                                                        onClick={() => {
+                                                            router.push(buildBillingUrl(tx, 'status'));
+                                                        }}
+                                                    >
+                                                        Estado
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

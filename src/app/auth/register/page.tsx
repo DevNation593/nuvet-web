@@ -12,6 +12,9 @@ import { toast } from "sonner";
 
 // Función temporal para evitar errores
 async function signUp(email: string, password: string, name: string) {
+  void email;
+  void password;
+  void name;
   return { error: null };
 }
 
@@ -42,7 +45,7 @@ export default function Register() {
         toast.success("¡Cuenta creada exitosamente!");
         router.push("/mi-cuenta");
       }
-    } catch (err) {
+    } catch {
       toast.error("Ocurrió un error inesperado.");
     } finally {
       setIsLoading(false);
