@@ -3,7 +3,6 @@ import type {
     ApiEnvelope,
     CreateOrderRequest,
     CreateProductRequest,
-    OrderStatus,
     StockAdjustmentRequest,
     UpdateOrderStatusRequest,
     UpdateProductRequest,

@@ -4,6 +4,12 @@ import { fetchPosTransactions, fetchPosDailySummary, createPosTransaction, voidP
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'OTHER';
+export type PosTicketStatus =
+    | 'OPEN'
+    | 'COMPLETED'
+    | 'CANCELLED'
+    | 'PARTIAL_REFUND'
+    | 'REFUNDED';
 
 export interface PosCartItem {
     productId: string;
@@ -25,6 +31,7 @@ export interface PosTransactionItem {
 
 export interface PosTransaction {
     id: string;
+    status?: PosTicketStatus;
     items: PosTransactionItem[];
     subtotal: number;
     discountTotal: number;
@@ -37,6 +44,16 @@ export interface PosTransaction {
     change?: number;
     notes?: string;
     clientId?: string;
+    client?: {
+        firstName?: string;
+        lastName?: string;
+        identification?: string;
+        email?: string;
+    };
+    providerInvoiceId?: string;
+    invoice?: {
+        providerInvoiceId?: string;
+    };
     createdAt: string;
     receiptNumber: string;
 }

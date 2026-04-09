@@ -1,7 +1,6 @@
 import api from '@/shared/lib/api-client';
 import type {
     ApiEnvelope,
-    ApiVaccinationStatus,
     CreateVaccinationRequest,
     UpdateVaccinationRequest,
 } from '@nuvet/types';

@@ -59,7 +59,7 @@ const ChartContainer = React.forwardRef<
 ChartContainer.displayName = "Chart";
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
-  const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
+  const colorConfig = Object.entries(config).filter(([, itemConfig]) => itemConfig.theme || itemConfig.color);
 
   if (!colorConfig.length) {
     return null;
@@ -164,6 +164,7 @@ const ChartTooltipContent = React.forwardRef<
             const key = `${nameKey || item.name || item.dataKey || "value"}`;
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
             const indicatorColor = color || item.payload.fill || item.color;
+            const safeIndicatorColor = indicatorColor || "currentColor";
 
             return (
               <div
@@ -181,20 +182,38 @@ const ChartTooltipContent = React.forwardRef<
                       <itemConfig.icon />
                     ) : (
                       !hideIndicator && (
-                        <div
-                          className={cn("shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]", {
+                        <svg
+                          className={cn("shrink-0", {
                             "h-2.5 w-2.5": indicator === "dot",
-                            "w-1": indicator === "line",
-                            "w-0 border-[1.5px] border-dashed bg-transparent": indicator === "dashed",
-                            "my-0.5": nestLabel && indicator === "dashed",
+                            "h-2.5 w-1": indicator === "line",
+                            "my-0.5 h-2.5 w-2.5": nestLabel && indicator === "dashed",
+                            "h-2.5 w-2.5": !nestLabel && indicator === "dashed",
                           })}
-                          style={
-                            {
-                              "--color-bg": indicatorColor,
-                              "--color-border": indicatorColor,
-                            } as React.CSSProperties
-                          }
-                        />
+                          viewBox="0 0 10 10"
+                          aria-hidden="true"
+                        >
+                          {indicator === "dashed" ? (
+                            <line
+                              x1="1"
+                              y1="5"
+                              x2="9"
+                              y2="5"
+                              stroke={safeIndicatorColor}
+                              strokeWidth="1.5"
+                              strokeDasharray="2 1"
+                            />
+                          ) : (
+                            <rect
+                              x="1"
+                              y="1"
+                              width="8"
+                              height="8"
+                              rx="2"
+                              fill={safeIndicatorColor}
+                              stroke={safeIndicatorColor}
+                            />
+                          )}
+                        </svg>
                       )
                     )}
                     <div
@@ -258,12 +277,9 @@ const ChartLegendContent = React.forwardRef<
             {itemConfig?.icon && !hideIcon ? (
               <itemConfig.icon />
             ) : (
-              <div
-                className="h-2 w-2 shrink-0 rounded-[2px]"
-                style={{
-                  backgroundColor: item.color,
-                }}
-              />
+              <svg className="h-2 w-2 shrink-0" viewBox="0 0 8 8" aria-hidden="true">
+                <rect x="0" y="0" width="8" height="8" rx="2" fill={item.color || "currentColor"} />
+              </svg>
             )}
             {itemConfig?.label}
           </div>

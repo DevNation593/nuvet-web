@@ -36,6 +36,16 @@ export default function LoginPage() {
 }
 
 function LoginPageContent() {
+    const resolveAuthErrorMessage = (error: unknown): string => {
+      if (typeof error !== 'object' || error === null) return 'Credenciales inválidas';
+
+      const maybeResponse = (error as {
+        response?: { data?: { error?: { message?: string } } };
+      }).response;
+
+      return maybeResponse?.data?.error?.message ?? 'Credenciales inválidas';
+    };
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const setAuth = useAuthStore((state) => state.setAuth);
@@ -70,8 +80,8 @@ function LoginPageContent() {
       
       const from = searchParams.get('from') || (user.role === 'CLIENT' ? '/client' : '/clinic');
       router.push(from);
-    } catch (err: any) {
-      const message = err.response?.data?.error?.message || 'Credenciales inválidas';
+    } catch (err: unknown) {
+      const message = resolveAuthErrorMessage(err);
       toast.error(message);
     } finally {
       setIsLoading(false);

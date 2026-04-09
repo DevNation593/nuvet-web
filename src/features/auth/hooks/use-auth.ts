@@ -1,6 +1,5 @@
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
-import { toast } from 'sonner';
 import { useAuthStore } from '../store/auth.store';
 import { login as loginService, logout as logoutService } from '../services/auth-service';
 import type { LoginRequest } from '@nuvet/types';

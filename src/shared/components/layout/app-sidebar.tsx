@@ -19,6 +19,7 @@ import {
     Store,
     History,
     ShoppingBag,
+    FileText,
 } from 'lucide-react';
 import { PermissionModule } from '@nuvet/types';
 import { useAuthStore } from '@/features/auth/store/auth.store';
@@ -35,6 +36,7 @@ const staffNav: { href: string; label: string; icon: React.ElementType; module?:
     { href: '/clinic/surgeries',    label: 'Cirugias',            icon: Heart,         module: PermissionModule.SURGERIES },
     { href: '/clinic/store',        label: 'Tienda / Inventario', icon: ShoppingCart,  module: PermissionModule.STORE },
     { href: '/clinic/pos',          label: 'Punto de Venta',      icon: Store,         module: PermissionModule.POS },
+    { href: '/clinic/billing',      label: 'Facturacion',         icon: FileText,      module: PermissionModule.BILLING },
     { href: '/clinic/promotions',   label: 'Promociones',         icon: Percent,       module: PermissionModule.PROMOTIONS },
     { href: '/clinic/adoptions',    label: 'Adopciones',          icon: HeartHandshake, module: PermissionModule.ADOPTIONS },
     { href: '/clinic/settings',     label: 'Ajustes',             icon: Settings,      module: PermissionModule.TENANT_SETTINGS },
