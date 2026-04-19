@@ -3,7 +3,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store';
 import { env } from './env-validation';
 
 function resolveApiBaseUrl(raw?: string) {
-    const fallback = 'http://localhost:3000/api/v1';
+    const fallback = 'https://dev.nuvet.tech/api/v1';
     const value = raw?.trim();
 
     if (!value) return fallback;
