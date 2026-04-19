@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
     CreateUserRequest,
@@ -23,12 +24,16 @@ export function useUsers(params: UsersParams = {}) {
     });
 }
 
-/** Staff (VET, RECEPTIONIST, GROOMER) for assignment in appointments. */
+const STAFF_ROLES = new Set([
+    'CLINIC_ADMIN', 'VET', 'RECEPTIONIST', 'GROOMER', 'INVENTORY', 'ADOPTION_MANAGER',
+]);
+
 export function useStaffUsers() {
     const { data, ...rest } = useUsers({ limit: 100 });
-    const staff = data?.data?.filter(
-        (u) => ['CLINIC_ADMIN', 'VET', 'RECEPTIONIST', 'GROOMER', 'INVENTORY', 'ADOPTION_MANAGER'].includes(u.role)
-    ) ?? [];
+    const staff = useMemo(
+        () => data?.data?.filter((u) => STAFF_ROLES.has(u.role)) ?? [],
+        [data?.data],
+    );
     return { data: { data: staff, meta: data?.meta }, ...rest };
 }
 

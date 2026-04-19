@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
@@ -15,15 +15,19 @@ import {
 } from '@/shared/components/ui/dialog';
 import {
     type PaymentMethod,
+    type PosRegisterClosureReport,
     type PosTicketStatus,
     type PosCartItem,
     type PosTransaction,
+    type CreatePosTransactionInput,
     useCreatePosTransaction,
+    usePosDiscounts,
     usePosDailySummary,
+    usePosRegisters,
+    useRegisterClosureReport,
     usePosTransactions,
     useVoidPosTransaction,
 } from '@/features/pos/hooks/use-pos';
-import { useValidatePromotionCode } from '@/features/promotions/hooks/use-promotions';
 import { useProducts, type Product } from '@/features/store/hooks/use-store';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { resolveUserPermissions } from '@/shared/lib/permissions';
@@ -34,9 +38,11 @@ import {
     BadgeDollarSign,
     BarChart3,
     CreditCard,
+    Download,
     Loader2,
     Minus,
     Plus,
+    Printer,
     ReceiptText,
     Search,
     ShoppingCart,
@@ -45,6 +51,14 @@ import {
     X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+    fetchExternalInvoiceDocumentUrl,
+    fetchExternalInvoiceStatus,
+    fetchTicketInvoiceStatus,
+} from '@/features/billing/services/billing-service';
+import { isInvoicePendingStatus } from '@/features/billing/lib/invoice-status';
+import { fetchRegisterClosureReport } from '@/features/pos/services/pos-service';
+import { useBranchesStore } from '@/features/branches/store/branches.store';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -143,12 +157,13 @@ function DailySummaryBar() {
 function PosRegister() {
     const [search, setSearch] = useState('');
     const [cart, setCart] = useState<PosCartItem[]>([]);
-    const [promoCode, setPromoCode] = useState('');
+    const [selectedPromotionId, setSelectedPromotionId] = useState('');
     const [appliedPromo, setAppliedPromo] = useState<{ id?: string; code: string; type: string; value: number } | null>(null);
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
-    const productsQ = useProducts({ limit: 200 });
-    const validateCode = useValidatePromotionCode();
+    const activeBranchId = useBranchesStore((s) => s.activeBranchId);
+    const productsQ = useProducts({ limit: 100 });
+    const discountsQ = usePosDiscounts();
     const createTransaction = useCreatePosTransaction();
 
     const products = useMemo(
@@ -174,7 +189,7 @@ function PosRegister() {
     const promoDiscount = useMemo(() => {
         if (!appliedPromo) return 0;
         if (appliedPromo.type === 'PERCENTAGE') return (subtotal * appliedPromo.value) / 100;
-        if (appliedPromo.type === 'FIXED_AMOUNT') return Math.min(appliedPromo.value, subtotal);
+        if (appliedPromo.type === 'FIXED_AMOUNT' || appliedPromo.type === 'FIXED') return Math.min(appliedPromo.value, subtotal);
         return 0;
     }, [appliedPromo, subtotal]);
 
@@ -230,34 +245,60 @@ function PosRegister() {
     function clearCart() {
         setCart([]);
         setAppliedPromo(null);
-        setPromoCode('');
+        setSelectedPromotionId('');
     }
 
     // ─── Promotion ───────────────────────────────────────────────────────────
 
-    async function applyPromoCode() {
-        if (!promoCode.trim()) return;
-        try {
-            const promo = await validateCode.mutateAsync(promoCode.trim().toUpperCase());
-            setAppliedPromo({ id: promo.id, code: promo.code ?? promoCode, type: promo.type, value: promo.value });
-            toast.success(`Código "${promo.code}" aplicado`);
-        } catch {
-            toast.error('Código inválido o expirado');
+    function applyPromoCode() {
+        if (!selectedPromotionId) return;
+        const selectedDiscount = (discountsQ.data ?? []).find((discount) => discount.id === selectedPromotionId);
+        if (!selectedDiscount) {
+            toast.error('Descuento no disponible');
+            return;
         }
+
+        setAppliedPromo({
+            id: selectedDiscount.id,
+            code: selectedDiscount.name,
+            type: selectedDiscount.type,
+            value: Number(selectedDiscount.value ?? 0),
+        });
+        toast.success(`Descuento "${selectedDiscount.name}" aplicado`);
     }
 
     // ─── Checkout ────────────────────────────────────────────────────────────
 
-    async function processPayment(paymentMethod: PaymentMethod, cashReceived?: number, notes?: string) {
+    async function processPayment(
+        paymentMethod: PaymentMethod,
+        cashReceived?: number,
+        notes?: string,
+        invoice?: CreatePosTransactionInput['invoice'],
+    ) {
         try {
             const result = await createTransaction.mutateAsync({
                 items: cart.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice })),
                 paymentMethod,
-                promotionCode: appliedPromo?.code,
+                promotionCode: appliedPromo?.id,
                 cashReceived,
                 notes,
+                branchId: activeBranchId ?? undefined,
+                invoice,
             });
-            toast.success(`Venta procesada — Recibo: ${result.receiptNumber}`);
+
+            if (result.invoiceIssueError) {
+                toast.warning(
+                    `Venta procesada (Recibo: ${result.receiptNumber}), pero la factura no se pudo emitir: ${result.invoiceIssueError}`,
+                    { duration: 8000 },
+                );
+            } else if (result.invoice?.providerInvoiceId) {
+                toast.success(
+                    `Venta procesada — Recibo: ${result.receiptNumber} — Factura: ${result.invoice.documentNumber ?? result.invoice.providerInvoiceId}`,
+                );
+            } else {
+                toast.success(`Venta procesada — Recibo: ${result.receiptNumber}`);
+            }
+
             clearCart();
             setPaymentModalOpen(false);
         } catch (error: unknown) {
@@ -378,20 +419,32 @@ function PosRegister() {
                             </div>
                         )}
 
-                        {/* Promo code */}
+                        {/* Promotion selector */}
                         <div className="flex gap-1.5">
                             <div className="relative flex-1">
                                 <Tag className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                                <input
-                                    className="h-9 w-full rounded-md border border-input pl-7 pr-3 text-xs uppercase"
-                                    placeholder="Código promocional"
-                                    value={promoCode}
-                                    onChange={(e) => setPromoCode(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && applyPromoCode()}
-                                />
+                                <select
+                                    className="h-9 w-full rounded-md border border-input pl-7 pr-3 text-xs"
+                                    aria-label="Seleccionar descuento"
+                                    title="Seleccionar descuento"
+                                    value={selectedPromotionId}
+                                    onChange={(e) => setSelectedPromotionId(e.target.value)}
+                                >
+                                    <option value="">Seleccionar descuento activo</option>
+                                    {(discountsQ.data ?? []).map((discount) => (
+                                        <option key={discount.id} value={discount.id}>
+                                            {discount.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-                            <Button size="sm" variant="outline" onClick={applyPromoCode} disabled={validateCode.isPending}>
-                                {validateCode.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Aplicar'}
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={applyPromoCode}
+                                disabled={!selectedPromotionId}
+                            >
+                                Aplicar
                             </Button>
                         </div>
 
@@ -409,7 +462,7 @@ function PosRegister() {
                                     title="Quitar promoción"
                                     onClick={() => {
                                         setAppliedPromo(null);
-                                        setPromoCode('');
+                                        setSelectedPromotionId('');
                                     }}
                                 >
                                     <X className="h-3.5 w-3.5" />
@@ -461,6 +514,16 @@ function PosRegister() {
 
 // ─── Payment Modal ────────────────────────────────────────────────────────────
 
+type BuyerIdType = '04' | '05' | '06' | '07' | '08';
+
+const ID_TYPE_OPTIONS: { value: BuyerIdType; label: string }[] = [
+    { value: '05', label: 'Cédula' },
+    { value: '04', label: 'RUC' },
+    { value: '06', label: 'Pasaporte' },
+    { value: '07', label: 'Consumidor final' },
+    { value: '08', label: 'Identificación del exterior' },
+];
+
 function PaymentModal({
     open,
     onOpenChange,
@@ -472,22 +535,78 @@ function PaymentModal({
     onOpenChange: (open: boolean) => void;
     total: number;
     loading: boolean;
-    onConfirm: (method: PaymentMethod, cashReceived?: number, notes?: string) => Promise<void>;
+    onConfirm: (
+        method: PaymentMethod,
+        cashReceived?: number,
+        notes?: string,
+        invoice?: CreatePosTransactionInput['invoice'],
+    ) => Promise<void>;
 }) {
     const [method, setMethod] = useState<PaymentMethod>('CASH');
     const [cashReceived, setCashReceived] = useState<string>('');
     const [notes, setNotes] = useState('');
 
+    const [issueInvoice, setIssueInvoice] = useState(true);
+    const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10));
+    const [buyerIdType, setBuyerIdType] = useState<BuyerIdType>('07');
+    const [buyerTaxId, setBuyerTaxId] = useState('');
+    const [buyerName, setBuyerName] = useState('');
+    const [buyerEmail, setBuyerEmail] = useState('');
+    const [buyerPhone, setBuyerPhone] = useState('');
+    const [buyerAddress, setBuyerAddress] = useState('');
+
+    const isConsumidorFinal = buyerIdType === '07';
+
     const change = method === 'CASH' && cashReceived ? parseFloat(cashReceived) - total : 0;
+
+    function buildInvoicePayload(): CreatePosTransactionInput['invoice'] | undefined {
+        if (!issueInvoice) return undefined;
+
+        const taxId = buyerTaxId.trim();
+        const name = buyerName.trim();
+        const email = buyerEmail.trim();
+        const phone = buyerPhone.trim();
+        const address = buyerAddress.trim();
+
+        const date = invoiceDate.trim() || undefined;
+
+        if (isConsumidorFinal && !taxId && !name) {
+            return { asyncEmission: false, issueDate: date };
+        }
+
+        return {
+            buyer: {
+                legalName: name || 'Consumidor Final',
+                taxId: taxId || '9999999999999',
+                idType: buyerIdType,
+                email: email || undefined,
+                phone: phone || undefined,
+                address: address || undefined,
+            },
+            asyncEmission: false,
+            issueDate: date,
+        };
+    }
+
+    const taxIdPlaceholder = buyerIdType === '04'
+        ? '0999999999001'
+        : buyerIdType === '05'
+            ? '0999999999'
+            : buyerIdType === '06'
+                ? 'Número de pasaporte'
+                : buyerIdType === '08'
+                    ? 'Identificación exterior'
+                    : '9999999999999';
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-sm">
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Procesar cobro</DialogTitle>
                     <DialogDescription>Total a cobrar: <strong>${total.toFixed(2)}</strong></DialogDescription>
                 </DialogHeader>
                 <div className="space-y-3">
+                    {/* Payment method */}
                     <div>
                         <p className="mb-2 text-sm font-medium">Método de pago</p>
                         <div className="grid grid-cols-2 gap-2">
@@ -537,14 +656,152 @@ function PaymentModal({
                             onChange={(e) => setNotes(e.target.value)}
                         />
                     </label>
+
+                    {/* Billing section */}
+                    <div className="rounded-md border border-input p-3 space-y-3">
+                        <label className="flex items-center gap-2 text-sm font-medium">
+                            <input
+                                type="checkbox"
+                                checked={issueInvoice}
+                                onChange={(e) => setIssueInvoice(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300"
+                            />
+                            Emitir factura electrónica
+                        </label>
+
+                        {issueInvoice && (
+                            <div className="space-y-2.5 pt-1">
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                                        Fecha de emisión
+                                    </label>
+                                    <input
+                                        type="date"
+                                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                        value={invoiceDate}
+                                        max={new Date().toISOString().slice(0, 10)}
+                                        onChange={(e) => setInvoiceDate(e.target.value)}
+                                        aria-label="Fecha de emisión"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                                        Tipo de identificación
+                                    </label>
+                                    <select
+                                        value={buyerIdType}
+                                        onChange={(e) => {
+                                            const val = e.target.value as BuyerIdType;
+                                            setBuyerIdType(val);
+                                            if (val === '07') {
+                                                setBuyerTaxId('');
+                                                setBuyerName('');
+                                            }
+                                        }}
+                                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                                        aria-label="Tipo de identificación"
+                                    >
+                                        {ID_TYPE_OPTIONS.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {!isConsumidorFinal && (
+                                    <>
+                                        <div>
+                                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                                                {buyerIdType === '04' ? 'RUC' : buyerIdType === '05' ? 'Cédula' : 'Identificación'} *
+                                            </label>
+                                            <input
+                                                className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                                                placeholder={taxIdPlaceholder}
+                                                value={buyerTaxId}
+                                                onChange={(e) => setBuyerTaxId(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                                                Nombre / Razón social *
+                                            </label>
+                                            <input
+                                                className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                                                placeholder="Nombre completo o razón social"
+                                                value={buyerName}
+                                                onChange={(e) => setBuyerName(e.target.value)}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                                        Correo electrónico
+                                    </label>
+                                    <input
+                                        type="email"
+                                        className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                                        placeholder="cliente@correo.com"
+                                        value={buyerEmail}
+                                        onChange={(e) => setBuyerEmail(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                                            Teléfono
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                                            placeholder="+593 999 999 999"
+                                            value={buyerPhone}
+                                            onChange={(e) => setBuyerPhone(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                                            Dirección
+                                        </label>
+                                        <input
+                                            className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                                            placeholder="Dirección del cliente"
+                                            value={buyerAddress}
+                                            onChange={(e) => setBuyerAddress(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                {isConsumidorFinal && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Se emitirá como Consumidor Final (9999999999999)
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Cancelar
                     </Button>
                     <Button
-                        onClick={() => onConfirm(method, parseFloat(cashReceived) || undefined, notes || undefined)}
-                        disabled={loading || (method === 'CASH' && !!cashReceived && parseFloat(cashReceived) < total)}
+                        onClick={() => {
+                            void onConfirm(
+                                method,
+                                parseFloat(cashReceived) || undefined,
+                                notes || undefined,
+                                buildInvoicePayload(),
+                            );
+                        }}
+                        disabled={
+                            loading ||
+                            (method === 'CASH' && !!cashReceived && parseFloat(cashReceived) < total) ||
+                            (issueInvoice && !isConsumidorFinal && (!buyerTaxId.trim() || !buyerName.trim()))
+                        }
                     >
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Confirmar venta
@@ -562,9 +819,20 @@ function TransactionHistory() {
     const [voidTarget, setVoidTarget] = useState<PosTransaction | null>(null);
     const [voidReason, setVoidReason] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [printingId, setPrintingId] = useState<string | null>(null);
+    const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
+    const [xmlLoadingId, setXmlLoadingId] = useState<string | null>(null);
+    const [closureRegisterId, setClosureRegisterId] = useState('');
+    const [showOnlyClosedWithDiscrepancy, setShowOnlyClosedWithDiscrepancy] = useState(false);
+    const [discrepancyThreshold, setDiscrepancyThreshold] = useState(0);
+    const [discrepancySort, setDiscrepancySort] = useState<'none' | 'desc' | 'asc'>('none');
+    const [registerDiscrepancies, setRegisterDiscrepancies] = useState<Record<string, number | null>>({});
+    const [loadingDiscrepancies, setLoadingDiscrepancies] = useState(false);
 
     const transactionsQ = usePosTransactions({ limit: 50 });
+    const registersQ = usePosRegisters();
     const voidTransaction = useVoidPosTransaction(selectedId);
+    const closureReportQ = useRegisterClosureReport(closureRegisterId.trim() || null, { enabled: false });
 
     const currentUser = useAuthStore((state) => state.user);
     const userPermissions = resolveUserPermissions(currentUser);
@@ -572,6 +840,116 @@ function TransactionHistory() {
     const canReadBilling = userPermissions.includes('billing:read' as never);
 
     const transactions = transactionsQ.data?.data ?? [];
+    const registers = registersQ.data?.data ?? [];
+
+    const sortedRegisters = useMemo(() => {
+        return [...registers].sort((a, b) => {
+            if (a.status !== b.status) {
+                return a.status === 'CLOSED' ? -1 : 1;
+            }
+            return new Date(b.openedAt).getTime() - new Date(a.openedAt).getTime();
+        });
+    }, [registers]);
+
+    const filteredRegisters = useMemo(() => {
+        if (!showOnlyClosedWithDiscrepancy) {
+            return sortedRegisters;
+        }
+
+        return sortedRegisters.filter((register) => {
+            if (register.status !== 'CLOSED') {
+                return false;
+            }
+            const discrepancy = registerDiscrepancies[register.id];
+            return typeof discrepancy === 'number' && Math.abs(discrepancy) >= discrepancyThreshold;
+        });
+    }, [discrepancyThreshold, registerDiscrepancies, showOnlyClosedWithDiscrepancy, sortedRegisters]);
+
+    const displayedRegisters = useMemo(() => {
+        if (discrepancySort === 'none') {
+            return filteredRegisters;
+        }
+
+        return [...filteredRegisters].sort((a, b) => {
+            const aDiscrepancy = registerDiscrepancies[a.id];
+            const bDiscrepancy = registerDiscrepancies[b.id];
+            const aValue = typeof aDiscrepancy === 'number' ? Math.abs(aDiscrepancy) : -1;
+            const bValue = typeof bDiscrepancy === 'number' ? Math.abs(bDiscrepancy) : -1;
+
+            if (aValue === bValue) {
+                return 0;
+            }
+
+            if (discrepancySort === 'desc') {
+                return bValue - aValue;
+            }
+            return aValue - bValue;
+        });
+    }, [discrepancySort, filteredRegisters, registerDiscrepancies]);
+
+    useEffect(() => {
+        const closedRegisters = sortedRegisters.filter((register) => register.status === 'CLOSED');
+        const pendingRegisters = closedRegisters.filter((register) => !(register.id in registerDiscrepancies));
+
+        if (pendingRegisters.length === 0) {
+            return;
+        }
+
+        let cancelled = false;
+        setLoadingDiscrepancies(true);
+
+        void Promise.allSettled(
+            pendingRegisters.map(async (register) => {
+                const report = await fetchRegisterClosureReport(register.id);
+                return {
+                    id: register.id,
+                    discrepancy: report.discrepancy,
+                };
+            }),
+        )
+            .then((results) => {
+                if (cancelled) {
+                    return;
+                }
+
+                setRegisterDiscrepancies((prev) => {
+                    const next = { ...prev };
+                    for (const [index, result] of results.entries()) {
+                        if (result.status === 'fulfilled') {
+                            next[result.value.id] = result.value.discrepancy;
+                        }
+                        if (result.status === 'rejected') {
+                            // Null means data unavailable to avoid retry loops.
+                            next[pendingRegisters[index].id] = null;
+                        }
+                    }
+                    return next;
+                });
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setLoadingDiscrepancies(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [registerDiscrepancies, sortedRegisters]);
+
+    useEffect(() => {
+        const hasPendingInvoice = transactions.some((tx) =>
+            isInvoicePendingStatus(tx.invoice?.status),
+        );
+
+        if (!hasPendingInvoice) return;
+
+        const intervalId = window.setInterval(() => {
+            void transactionsQ.refetch();
+        }, 15000);
+
+        return () => window.clearInterval(intervalId);
+    }, [transactions, transactionsQ]);
 
     async function confirmVoid() {
         if (!voidTarget) return;
@@ -584,6 +962,70 @@ function TransactionHistory() {
             toast.error('No se pudo anular la venta');
         }
     }
+
+        async function handleFetchClosureReport(registerId?: string) {
+            const targetId = (registerId ?? closureRegisterId).trim();
+            if (!targetId) {
+                        toast.warning('Ingresa un registerId para consultar el cierre');
+                        return;
+                }
+
+            setClosureRegisterId(targetId);
+                await closureReportQ.refetch();
+        }
+
+        function printClosureReport(report: PosRegisterClosureReport) {
+                const popup = window.open('', '_blank', 'noopener,noreferrer,width=760,height=920');
+                if (!popup) {
+                        toast.error('No se pudo abrir la vista de impresión. Verifica bloqueador de popups.');
+                        return;
+                }
+
+                const printableDate = new Date().toLocaleString('es-EC');
+                const methods = Object.entries(report.summary.byPaymentMethod)
+                        .map(([method, stats]) => `<li>${method}: ${stats.count} pagos / $${stats.total.toFixed(2)}</li>`)
+                        .join('');
+
+                popup.document.write(`<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Cierre de caja ${report.registerId}</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #0f172a; margin: 24px; }
+        h1 { margin: 0 0 8px; font-size: 22px; }
+        p { margin: 4px 0; }
+        .meta { margin-bottom: 18px; color: #334155; }
+        .line { border-top: 1px solid #e2e8f0; margin: 16px 0; }
+        .row { margin: 10px 0; }
+        .label { font-weight: 700; }
+        ul { margin: 8px 0 0 20px; }
+    </style>
+</head>
+<body>
+    <h1>Reporte de cierre de caja</h1>
+    <p class="meta">Generado el ${printableDate}</p>
+    <div class="line"></div>
+    <div class="row"><span class="label">Caja:</span> ${report.registerId}</div>
+    <div class="row"><span class="label">Abierta:</span> ${new Date(report.openedAt).toLocaleString('es-EC')}</div>
+    <div class="row"><span class="label">Cerrada:</span> ${new Date(report.closedAt).toLocaleString('es-EC')}</div>
+    <div class="row"><span class="label">Saldo inicial:</span> $${report.openingBalance.toFixed(2)}</div>
+    <div class="row"><span class="label">Saldo esperado:</span> $${report.expectedClosingBalance.toFixed(2)}</div>
+    <div class="row"><span class="label">Saldo declarado:</span> $${report.closingBalance.toFixed(2)}</div>
+    <div class="row"><span class="label">Diferencia:</span> $${report.discrepancy.toFixed(2)}</div>
+    <div class="line"></div>
+    <div class="row"><span class="label">Ventas:</span> $${report.summary.salesTotal.toFixed(2)}</div>
+    <div class="row"><span class="label">Reembolsos:</span> $${report.summary.refundsTotal.toFixed(2)}</div>
+    <div class="row"><span class="label">Tickets:</span> ${report.summary.ticketsCount}</div>
+    <div class="row"><span class="label">Pagos por método:</span>
+        <ul>${methods}</ul>
+    </div>
+</body>
+</html>`);
+                popup.document.close();
+                popup.focus();
+                popup.print();
+        }
 
     function buildBillingUrl(tx: PosTransaction, mode: 'issue' | 'status') {
         const externalId = tx.providerInvoiceId || tx.invoice?.providerInvoiceId;
@@ -602,8 +1044,344 @@ function TransactionHistory() {
         return `/clinic/billing?${query.toString()}`;
     }
 
+    function printFallback(tx: PosTransaction, invoiceData?: {
+        providerInvoiceId?: string;
+        providerStatus?: string;
+        documentNumber?: string;
+        accessKey?: string;
+        authorizedAt?: string;
+        rejectedReason?: string;
+    }) {
+        const popup = window.open('', '_blank', 'noopener,noreferrer,width=760,height=920');
+        if (!popup) {
+            toast.error('No se pudo abrir la vista de impresión. Verifica bloqueador de popups.');
+            return;
+        }
+
+        const printableDate = new Date().toLocaleString('es-EC');
+        const providerInvoiceId = invoiceData?.providerInvoiceId ?? tx.providerInvoiceId ?? tx.invoice?.providerInvoiceId ?? 'N/D';
+        const status = invoiceData?.providerStatus ?? tx.status ?? 'N/D';
+        const documentNumber = invoiceData?.documentNumber ?? tx.receiptNumber ?? 'N/D';
+        const accessKey = invoiceData?.accessKey ?? 'N/D';
+        const authorizedAt = invoiceData?.authorizedAt ?? 'N/D';
+        const observation = invoiceData?.rejectedReason ?? 'Sin observaciones';
+
+        popup.document.write(`<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Factura ${documentNumber}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #0f172a; margin: 24px; }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p { margin: 4px 0; }
+    .meta { margin-bottom: 18px; color: #334155; }
+    .line { border-top: 1px solid #e2e8f0; margin: 16px 0; }
+    .row { margin: 10px 0; }
+    .label { font-weight: 700; }
+    .value { word-break: break-word; }
+  </style>
+</head>
+<body>
+  <h1>Factura electrónica</h1>
+  <p class="meta">Documento generado para impresión el ${printableDate}</p>
+  <div class="line"></div>
+  <div class="row"><span class="label">Provider Invoice ID:</span> <span class="value">${providerInvoiceId}</span></div>
+  <div class="row"><span class="label">Estado:</span> <span class="value">${status}</span></div>
+  <div class="row"><span class="label">Comprobante:</span> <span class="value">${documentNumber}</span></div>
+  <div class="row"><span class="label">Clave de acceso:</span> <span class="value">${accessKey}</span></div>
+  <div class="row"><span class="label">Autorizado en:</span> <span class="value">${authorizedAt}</span></div>
+  <div class="row"><span class="label">Observación:</span> <span class="value">${observation}</span></div>
+  <div class="line"></div>
+  <div class="row"><span class="label">Recibo POS:</span> <span class="value">${tx.receiptNumber}</span></div>
+  <div class="row"><span class="label">Total:</span> <span class="value">$${tx.total.toFixed(2)}</span></div>
+</body>
+</html>`);
+        popup.document.close();
+        popup.focus();
+        popup.print();
+    }
+
+    async function handlePrintInvoice(tx: PosTransaction) {
+        setPrintingId(tx.id);
+
+        try {
+            let providerInvoiceId = tx.providerInvoiceId || tx.invoice?.providerInvoiceId;
+            if (!providerInvoiceId) {
+                const ticketStatus = await fetchTicketInvoiceStatus(tx.id);
+                providerInvoiceId = ticketStatus.providerInvoiceId;
+            }
+
+            if (!providerInvoiceId) {
+                toast.warning('Este ticket aún no tiene factura electrónica asociada.');
+                return;
+            }
+
+            const status = await fetchExternalInvoiceStatus(providerInvoiceId);
+            try {
+                const doc = await fetchExternalInvoiceDocumentUrl(providerInvoiceId, 'pdf');
+                const tab = window.open(doc.url, '_blank', 'noopener,noreferrer');
+                if (!tab) {
+                    toast.error('El navegador bloqueó la apertura del PDF. Habilita popups para imprimir.');
+                    return;
+                }
+                return;
+            } catch {
+                // Continue with fallback print view when PDF URL is unavailable.
+            }
+
+            printFallback(tx, status);
+        } catch {
+            // If external status fails, still allow local printable output.
+            printFallback(tx);
+        } finally {
+            setPrintingId(null);
+        }
+    }
+
+    async function handleDownloadXml(tx: PosTransaction) {
+        setXmlLoadingId(tx.id);
+
+        try {
+            let providerInvoiceId = tx.providerInvoiceId || tx.invoice?.providerInvoiceId;
+            if (!providerInvoiceId) {
+                const ticketStatus = await fetchTicketInvoiceStatus(tx.id);
+                providerInvoiceId = ticketStatus.providerInvoiceId;
+            }
+
+            if (!providerInvoiceId) {
+                toast.warning('Este ticket aún no tiene factura electrónica asociada.');
+                return;
+            }
+
+            const doc = await fetchExternalInvoiceDocumentUrl(providerInvoiceId, 'xml');
+            const tab = window.open(doc.url, '_blank', 'noopener,noreferrer');
+            if (!tab) {
+                toast.error('El navegador bloqueó la apertura del XML. Habilita popups para continuar.');
+            }
+        } catch {
+            toast.warning('Esta factura no tiene XML disponible o no se pudo obtener su URL.');
+        } finally {
+            setXmlLoadingId(null);
+        }
+    }
+
+    async function handleOpenPdf(tx: PosTransaction) {
+        setPdfLoadingId(tx.id);
+
+        try {
+            let providerInvoiceId = tx.providerInvoiceId || tx.invoice?.providerInvoiceId;
+            if (!providerInvoiceId) {
+                const ticketStatus = await fetchTicketInvoiceStatus(tx.id);
+                providerInvoiceId = ticketStatus.providerInvoiceId;
+            }
+
+            if (!providerInvoiceId) {
+                toast.warning('Este ticket aún no tiene factura electrónica asociada.');
+                return;
+            }
+
+            const doc = await fetchExternalInvoiceDocumentUrl(providerInvoiceId, 'pdf');
+            const tab = window.open(doc.url, '_blank', 'noopener,noreferrer');
+            if (!tab) {
+                toast.error('El navegador bloqueó la apertura del PDF. Habilita popups para continuar.');
+            }
+        } catch {
+            toast.warning('Esta factura no tiene PDF disponible o no se pudo obtener su URL.');
+        } finally {
+            setPdfLoadingId(null);
+        }
+    }
+
     return (
         <>
+            <Card>
+                <CardHeader>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <CardTitle className="text-base">Cajas recientes</CardTitle>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                Umbral:
+                                <input
+                                    type="number"
+                                    min={0}
+                                    step="0.5"
+                                    className="h-8 w-24 rounded-md border border-input px-2 text-xs"
+                                    value={discrepancyThreshold}
+                                    onChange={(event) => {
+                                        const nextValue = Number(event.target.value);
+                                        setDiscrepancyThreshold(Number.isFinite(nextValue) && nextValue >= 0 ? nextValue : 0);
+                                    }}
+                                />
+                            </label>
+                            <select
+                                aria-label="Ordenar por diferencia"
+                                className="h-8 rounded-md border border-input px-2 text-xs"
+                                value={discrepancySort}
+                                onChange={(event) => {
+                                    const value = event.target.value as 'none' | 'desc' | 'asc';
+                                    setDiscrepancySort(value);
+                                }}
+                            >
+                                <option value="none">Sin orden por diferencia</option>
+                                <option value="desc">Mayor diferencia</option>
+                                <option value="asc">Menor diferencia</option>
+                            </select>
+                            <Button
+                                size="sm"
+                                variant={showOnlyClosedWithDiscrepancy ? 'default' : 'outline'}
+                                onClick={() => setShowOnlyClosedWithDiscrepancy((prev) => !prev)}
+                            >
+                                {showOnlyClosedWithDiscrepancy ? 'Mostrando con discrepancia' : 'Solo cerradas con discrepancia'}
+                            </Button>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                    {registersQ.isLoading ? (
+                        <ClinicRowsSkeleton rows={4} />
+                    ) : displayedRegisters.length === 0 ? (
+                        <ClinicStateCard
+                            message={
+                                showOnlyClosedWithDiscrepancy
+                                    ? 'No hay cajas cerradas con discrepancia para ese umbral.'
+                                    : 'No hay cajas registradas.'
+                            }
+                        />
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[780px] text-sm">
+                                <thead className="border-y bg-muted/30 text-muted-foreground">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left font-medium">Caja</th>
+                                        <th className="px-4 py-3 text-left font-medium">Sucursal</th>
+                                        <th className="px-4 py-3 text-left font-medium">Estado</th>
+                                        <th className="px-4 py-3 text-left font-medium">Diferencia</th>
+                                        <th className="px-4 py-3 text-left font-medium">Apertura</th>
+                                        <th className="px-4 py-3 text-left font-medium">Cierre</th>
+                                        <th className="px-4 py-3 text-left font-medium">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {displayedRegisters.map((register) => (
+                                        <tr key={register.id} className="border-b hover:bg-muted/20">
+                                            <td className="px-4 py-3 font-mono text-xs">{register.id}</td>
+                                            <td className="px-4 py-3 text-xs">{register.branch?.name ?? 'Principal'}</td>
+                                            <td className="px-4 py-3 text-xs">
+                                                <Badge variant={register.status === 'CLOSED' ? 'scheduled' : 'outline'}>
+                                                    {register.status}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-4 py-3 text-xs">
+                                                {register.status !== 'CLOSED' ? (
+                                                    '—'
+                                                ) : typeof registerDiscrepancies[register.id] === 'number' ? (
+                                                    <span
+                                                        className={
+                                                            Math.abs(registerDiscrepancies[register.id] ?? 0) >= 5
+                                                                ? 'font-semibold text-red-600'
+                                                                : 'text-muted-foreground'
+                                                        }
+                                                    >
+                                                        ${(registerDiscrepancies[register.id] ?? 0).toFixed(2)}
+                                                    </span>
+                                                ) : loadingDiscrepancies ? (
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                ) : (
+                                                    'N/D'
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-xs">
+                                                {format(new Date(register.openedAt), 'dd MMM yyyy HH:mm', { locale: es })}
+                                            </td>
+                                            <td className="px-4 py-3 text-xs">
+                                                {register.closedAt
+                                                    ? format(new Date(register.closedAt), 'dd MMM yyyy HH:mm', { locale: es })
+                                                    : '—'}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={register.status !== 'CLOSED' || closureReportQ.isFetching}
+                                                    onClick={() => {
+                                                        void handleFetchClosureReport(register.id);
+                                                    }}
+                                                >
+                                                    Ver cierre
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base">Reporte de cierre de caja</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                            className="h-10 flex-1 rounded-md border border-input px-3 text-sm"
+                            placeholder="registerId de la caja cerrada"
+                            value={closureRegisterId}
+                            onChange={(event) => setClosureRegisterId(event.target.value)}
+                        />
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                void handleFetchClosureReport();
+                            }}
+                            disabled={closureReportQ.isFetching || !closureRegisterId.trim()}
+                        >
+                            {closureReportQ.isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Consultar cierre
+                        </Button>
+                    </div>
+
+                    {closureReportQ.isSuccess && closureReportQ.data ? (
+                        <div className="space-y-3 rounded-md border bg-muted/30 p-3 text-sm">
+                            <div className="grid gap-2 sm:grid-cols-2">
+                                <p><strong>Register:</strong> {closureReportQ.data.registerId}</p>
+                                <p><strong>Tickets:</strong> {closureReportQ.data.summary.ticketsCount}</p>
+                                <p><strong>Saldo inicial:</strong> ${closureReportQ.data.openingBalance.toFixed(2)}</p>
+                                <p><strong>Saldo esperado:</strong> ${closureReportQ.data.expectedClosingBalance.toFixed(2)}</p>
+                                <p><strong>Saldo declarado:</strong> ${closureReportQ.data.closingBalance.toFixed(2)}</p>
+                                <p
+                                    className={
+                                        Math.abs(closureReportQ.data.discrepancy) >= 5
+                                            ? 'font-semibold text-red-600'
+                                            : ''
+                                    }
+                                >
+                                    <strong>Diferencia:</strong> ${closureReportQ.data.discrepancy.toFixed(2)}
+                                </p>
+                            </div>
+
+                            <div className="rounded-md border bg-background p-3">
+                                <p><strong>Ventas:</strong> ${closureReportQ.data.summary.salesTotal.toFixed(2)}</p>
+                                <p><strong>Reembolsos:</strong> ${closureReportQ.data.summary.refundsTotal.toFixed(2)}</p>
+                                <p><strong>Saldo efectivo esperado:</strong> ${closureReportQ.data.summary.expectedCashBalance.toFixed(2)}</p>
+                            </div>
+
+                            <Button
+                                variant="secondary"
+                                className="w-full"
+                                onClick={() => printClosureReport(closureReportQ.data!)}
+                            >
+                                <Printer className="mr-2 h-4 w-4" />
+                                Imprimir reporte de cierre
+                            </Button>
+                        </div>
+                    ) : null}
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <CardTitle className="text-base">Transacciones recientes</CardTitle>
@@ -669,6 +1447,51 @@ function TransactionHistory() {
                                                         }}
                                                     >
                                                         Facturar
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        disabled={!canReadBilling || printingId === tx.id}
+                                                        onClick={() => {
+                                                            void handlePrintInvoice(tx);
+                                                        }}
+                                                    >
+                                                        {printingId === tx.id ? (
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Printer className="mr-2 h-4 w-4" />
+                                                        )}
+                                                        Imprimir
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        disabled={!canReadBilling || pdfLoadingId === tx.id}
+                                                        onClick={() => {
+                                                            void handleOpenPdf(tx);
+                                                        }}
+                                                    >
+                                                        {pdfLoadingId === tx.id ? (
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Download className="mr-2 h-4 w-4" />
+                                                        )}
+                                                        Ver PDF
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        disabled={!canReadBilling || xmlLoadingId === tx.id}
+                                                        onClick={() => {
+                                                            void handleDownloadXml(tx);
+                                                        }}
+                                                    >
+                                                        {xmlLoadingId === tx.id ? (
+                                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Download className="mr-2 h-4 w-4" />
+                                                        )}
+                                                        Descargar XML
                                                     </Button>
                                                     <Button
                                                         size="sm"

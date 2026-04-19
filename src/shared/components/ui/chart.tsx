@@ -184,10 +184,9 @@ const ChartTooltipContent = React.forwardRef<
                       !hideIndicator && (
                         <svg
                           className={cn("shrink-0", {
-                            "h-2.5 w-2.5": indicator === "dot",
+                            "h-2.5 w-2.5": indicator === "dot" || (indicator === "dashed" && !nestLabel),
                             "h-2.5 w-1": indicator === "line",
-                            "my-0.5 h-2.5 w-2.5": nestLabel && indicator === "dashed",
-                            "h-2.5 w-2.5": !nestLabel && indicator === "dashed",
+                            "my-0.5 h-2.5 w-2.5": indicator === "dashed" && nestLabel,
                           })}
                           viewBox="0 0 10 10"
                           aria-hidden="true"

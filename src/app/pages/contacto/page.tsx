@@ -30,8 +30,8 @@ import {
 const subjects = [
   { value: 'demo', label: 'Solicitar demo' },
   { value: 'pricing', label: 'Precios y planes' },
-  { value: 'onboarding', label: 'Implementacion y onboarding' },
-  { value: 'support', label: 'Soporte tecnico' },
+  { value: 'onboarding', label: 'Implementación y onboarding' },
+  { value: 'support', label: 'Soporte técnico' },
   { value: 'partnerships', label: 'Alianzas' },
   { value: 'other', label: 'Otro' },
 ];
@@ -41,7 +41,7 @@ const teamSizes = [
   { value: '4-10', label: '4 a 10 personas' },
   { value: '11-25', label: '11 a 25 personas' },
   { value: '26-50', label: '26 a 50 personas' },
-  { value: '50+', label: 'Mas de 50' },
+  { value: '50+', label: 'Más de 50' },
 ];
 
 const countryCodes = [
@@ -97,7 +97,7 @@ export default function ContactoPage() {
 
   const handleScheduleCall = () => {
     if (!callPhone.trim()) {
-      toast.error('Ingresa un numero para coordinar la llamada.');
+      toast.error('Ingresa un número para coordinar la llamada.');
       return;
     }
     toast.success('Llamada agendada. Te contactaremos pronto.');
@@ -123,7 +123,7 @@ export default function ContactoPage() {
           </div>
 
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 px-5 text-sm hidden md:inline-flex">
-            <Link href="/auth/login">Iniciar Sesion</Link>
+            <Link href="/auth/login">Iniciar sesión</Link>
           </Button>
 
           <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9">
@@ -146,7 +146,7 @@ export default function ContactoPage() {
         <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="text-3xl md:text-4xl font-bold text-emerald-950 mb-3">Contáctanos</h1>
           <p className="text-base md:text-lg text-emerald-900/70 max-w-2xl mx-auto">
-            Hablemos de como NuVet impulsa tu veterinaria.
+            Hablemos de cómo NuVet impulsa tu veterinaria.
           </p>
         </div>
       </section>
@@ -255,7 +255,7 @@ export default function ContactoPage() {
                       id="contactMessage"
                       value={formData.message}
                       onChange={(event) => setFormData({ ...formData, message: event.target.value })}
-                      placeholder="Escribe tu mensaje aqui..."
+                      placeholder="Escribe tu mensaje aquí..."
                       className="bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl outline-none"
                       rows={5}
                       required
@@ -274,15 +274,15 @@ export default function ContactoPage() {
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-emerald-950">¿Prefieres una llamada rápida?</h3>
                   <p className="text-sm text-emerald-900/60 mb-4">
-                    Coordinamos una demo de 20 minutos para mostrarte como NuVet se adapta a tu flujo.
+                    Coordinamos una demo de 20 minutos para mostrarte cómo NuVet se adapta a tu flujo.
                   </p>
                   <div className="space-y-3">
                     <div className="space-y-2">
-                      <Label htmlFor="callPhone">Numero de contacto</Label>
+                      <Label htmlFor="callPhone">Número de contacto</Label>
                       <div className="flex flex-col gap-3 sm:flex-row">
                         <Select value={callCountry} onValueChange={setCallCountry}>
                           <SelectTrigger className="h-12 w-full sm:w-36 bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl">
-                            <SelectValue placeholder="Codigo" />
+                            <SelectValue placeholder="Código" />
                           </SelectTrigger>
                           <SelectContent>
                             {countryCodes.map((country) => (
@@ -363,10 +363,10 @@ export default function ContactoPage() {
               <h4 className="font-bold text-white mb-4">Servicios</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
                 <li><Link href="#" className="hover:text-emerald-400 transition-colors">Agenda inteligente</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clinico digital</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automaticos</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturacion</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestion</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clínico digital</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automáticos</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturación</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestión</Link></li>
                 <li><Link href="#" className="hover:text-emerald-400 transition-colors">Inventario conectado</Link></li>
               </ul>
             </div>

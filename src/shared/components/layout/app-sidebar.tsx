@@ -7,9 +7,8 @@ import {
     LayoutDashboard,
     Calendar,
     UserCircle2,
-    Users,
+    PawPrint,
     Stethoscope,
-    Syringe,
     Scissors,
     Heart,
     ShoppingCart,
@@ -20,31 +19,37 @@ import {
     History,
     ShoppingBag,
     FileText,
+    LineChart,
+    Building2,
 } from 'lucide-react';
-import { PermissionModule } from '@nuvet/types';
+import { PermissionModule, UserRole } from '@nuvet/types';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { resolveActiveModules } from '@/shared/lib/permissions';
 
-const staffNav: { href: string; label: string; icon: React.ElementType; module?: PermissionModule }[] = [
+const BILLING_MODULE = PermissionModule.POS;
+const DISCOUNTS_MODULE = 'discounts' as PermissionModule;
+
+const staffNav: { href: string; label: string; icon: React.ElementType; module?: PermissionModule; adminOnly?: boolean }[] = [
     { href: '/clinic', label: 'Inicio', icon: LayoutDashboard },
     { href: '/clinic/appointments', label: 'Agenda',              icon: Calendar,      module: PermissionModule.APPOINTMENTS },
-    { href: '/clinic/pets',         label: 'Pacientes',           icon: Users,         module: PermissionModule.PETS },
+    { href: '/clinic/pets',         label: 'Mascotas',            icon: PawPrint,      module: PermissionModule.PETS },
     { href: '/clinic/clients',      label: 'Clientes',            icon: UserCircle2,   module: PermissionModule.CLIENTS },
     { href: '/clinic/medical-records', label: 'Consulta',         icon: Stethoscope,   module: PermissionModule.MEDICAL_RECORDS },
-    { href: '/clinic/vaccinations', label: 'Vacunas',             icon: Syringe,       module: PermissionModule.VACCINATIONS },
     { href: '/clinic/aesthetics',   label: 'Estetica',            icon: Scissors,      module: PermissionModule.AESTHETICS },
     { href: '/clinic/surgeries',    label: 'Cirugias',            icon: Heart,         module: PermissionModule.SURGERIES },
     { href: '/clinic/store',        label: 'Tienda / Inventario', icon: ShoppingCart,  module: PermissionModule.STORE },
     { href: '/clinic/pos',          label: 'Punto de Venta',      icon: Store,         module: PermissionModule.POS },
-    { href: '/clinic/billing',      label: 'Facturacion',         icon: FileText,      module: PermissionModule.BILLING },
-    { href: '/clinic/promotions',   label: 'Promociones',         icon: Percent,       module: PermissionModule.PROMOTIONS },
+    { href: '/clinic/billing',      label: 'Facturacion',         icon: FileText,      module: BILLING_MODULE },
+    { href: '/clinic/insights',     label: 'Insights',            icon: LineChart,     module: PermissionModule.REPORTS },
+    { href: '/clinic/promotions',   label: 'Promociones',         icon: Percent,       module: DISCOUNTS_MODULE },
     { href: '/clinic/adoptions',    label: 'Adopciones',          icon: HeartHandshake, module: PermissionModule.ADOPTIONS },
+    { href: '/clinic/branches',     label: 'Sucursales',           icon: Building2,     module: PermissionModule.BRANCHES, adminOnly: true },
     { href: '/clinic/settings',     label: 'Ajustes',             icon: Settings,      module: PermissionModule.TENANT_SETTINGS },
 ];
 
 const clientNav: { href: string; label: string; icon: React.ElementType }[] = [
     { href: '/clinic',              label: 'Inicio',        icon: LayoutDashboard },
-    { href: '/clinic/pets',         label: 'Mis Mascotas',  icon: Heart },
+    { href: '/clinic/pets',         label: 'Mis Mascotas',  icon: PawPrint },
     { href: '/clinic/appointments', label: 'Mis Citas',     icon: Calendar },
     { href: '/clinic/medical-records', label: 'Historial',  icon: History },
     { href: '/clinic/store',        label: 'Tienda',        icon: ShoppingBag },
@@ -57,9 +62,13 @@ export function AppSidebar() {
     const isClient = user?.role === 'CLIENT';
     const activeModules = resolveActiveModules(user);
 
+    const isAdmin = user?.role === UserRole.CLINIC_ADMIN;
     const navItems = isClient
         ? clientNav
-        : staffNav.filter((item) => !item.module || activeModules.includes(item.module));
+        : staffNav.filter((item) => {
+              if (item.adminOnly && !isAdmin) return false;
+              return !item.module || activeModules.includes(item.module);
+          });
 
     return (
         <aside className="hidden w-64 flex-shrink-0 border-r bg-card md:block">

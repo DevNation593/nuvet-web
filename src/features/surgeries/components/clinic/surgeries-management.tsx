@@ -24,6 +24,7 @@ import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/
 import { getStatusLabel } from '@/shared/lib/status-labels';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { localDateTimeToUTC } from '@/shared/lib/timezone';
 
 const surgerySchema = z.object({
     petId: z.string().min(1),
@@ -155,7 +156,7 @@ export function SurgeriesManagement() {
                             petId: values.petId,
                             vetId: values.vetId,
                             type: values.type,
-                            scheduledAt: `${values.scheduledDate}T09:00:00.000Z`,
+                            scheduledAt: localDateTimeToUTC(values.scheduledDate, '09:00'),
                             durationMinutes: values.durationMinutes,
                             anesthesiaType: values.anesthesiaType,
                             notes: values.notes,

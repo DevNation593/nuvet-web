@@ -14,11 +14,11 @@ const values = [
   },
   {
     title: 'Operación segura',
-    description: 'Tus datos y los historiales clinicos se resguardan con estándares modernos.',
+    description: 'Tus datos y los historiales clínicos se resguardan con estándares modernos.',
     icon: ShieldCheck,
   },
   {
-    title: 'Innovación util',
+    title: 'Innovación útil',
     description: 'Creamos automatizaciones simples para que tu equipo gane tiempo cada día.',
     icon: Sparkles,
   },
@@ -35,7 +35,7 @@ const teamHighlights = [
   },
   {
     title: 'Éxito del cliente',
-    description: 'Onboarding guiado y acompanamiento constante para cada cuenta.',
+    description: 'Onboarding guiado y acompañamiento constante para cada cuenta.',
   },
 ];
 
@@ -59,7 +59,7 @@ export default function NosotrosPage() {
           </div>
 
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 px-5 text-sm hidden md:inline-flex">
-            <Link href="/auth/login">Iniciar Sesion</Link>
+            <Link href="/auth/login">Iniciar sesión</Link>
           </Button>
 
           <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9">
@@ -87,7 +87,7 @@ export default function NosotrosPage() {
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-emerald-950 mb-4">Nuestra historia en NuVet</h1>
             <p className="text-lg text-emerald-900/70 max-w-2xl">
-              Construimos una plataforma que conecta agenda, historiales clínicos y ventas para que las veterinarias se enfoquen en lo mas importante.
+              Construimos una plataforma que conecta agenda, historiales clínicos y ventas para que las veterinarias se enfoquen en lo más importante.
             </p>
             <div className="mt-6 flex flex-col sm:flex-row gap-4">
               <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white h-11 px-6">
@@ -109,7 +109,7 @@ export default function NosotrosPage() {
           <Card className="border-emerald-200 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-300">
             <CardContent className="p-6">
               <Target className="h-6 w-6 text-emerald-600 mb-3" />
-              <h3 className="text-lg font-semibold text-emerald-950">Mision</h3>
+              <h3 className="text-lg font-semibold text-emerald-950">Misión</h3>
               <p className="text-sm text-emerald-900/70">
                 Ayudar a las veterinarias a crecer con herramientas digitales simples, seguras y accionables.
               </p>
@@ -118,9 +118,9 @@ export default function NosotrosPage() {
           <Card className="border-emerald-200 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-300">
             <CardContent className="p-6">
               <PawPrint className="h-6 w-6 text-emerald-600 mb-3" />
-              <h3 className="text-lg font-semibold text-emerald-950">Vision</h3>
+              <h3 className="text-lg font-semibold text-emerald-950">Visión</h3>
               <p className="text-sm text-emerald-900/70">
-                Ser el sistema de confianza que conecta cada proceso clinico en Latinoamerica.
+                Ser el sistema de confianza que conecta cada proceso clínico en Latinoamérica.
               </p>
             </CardContent>
           </Card>
@@ -129,7 +129,7 @@ export default function NosotrosPage() {
               <Users className="h-6 w-6 text-emerald-600 mb-3" />
               <h3 className="text-lg font-semibold text-emerald-950">Comunidad</h3>
               <p className="text-sm text-emerald-900/70">
-                Crecemos junto a veterinarias, equipos y familias que cuidan con empatia.
+                Crecemos junto a veterinarias, equipos y familias que cuidan con empatía.
               </p>
             </CardContent>
           </Card>
@@ -140,7 +140,7 @@ export default function NosotrosPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-emerald-950">Nuestros valores</h2>
-            <p className="text-emerald-900/60 mt-2">Lo que guia cada decision en NuVet.</p>
+            <p className="text-emerald-900/60 mt-2">Lo que guía cada decisión en NuVet.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {values.map((value) => (
@@ -161,7 +161,7 @@ export default function NosotrosPage() {
           <div className="space-y-6">
             <h2 className="text-3xl font-bold text-emerald-950">Un equipo construido para veterinarias</h2>
             <p className="text-emerald-900/70">
-              NuVet esta formado por especialistas en producto, tecnologia y operacion clinica. Cada decision prioriza la experiencia del staff y de las familias.
+              NuVet está formado por especialistas en producto, tecnología y operación clínica. Cada decisión prioriza la experiencia del staff y de las familias.
             </p>
             <div className="space-y-4">
               {teamHighlights.map((item) => (
@@ -230,10 +230,10 @@ export default function NosotrosPage() {
               <h4 className="font-bold text-white mb-4">Servicios</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
                 <li><Link href="#" className="hover:text-emerald-400 transition-colors">Agenda inteligente</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clinico digital</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automaticos</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturacion</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestion</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clínico digital</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automáticos</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturación</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestión</Link></li>
                 <li><Link href="#" className="hover:text-emerald-400 transition-colors">Inventario conectado</Link></li>
               </ul>
             </div>

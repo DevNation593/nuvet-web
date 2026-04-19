@@ -1,4 +1,5 @@
 import api from '@/shared/lib/api-client';
+import { unwrapResponse, unwrapPaginatedResponse } from '@/shared/lib/api-helpers';
 import type {
     ApiEnvelope,
     Appointment,
@@ -18,6 +19,7 @@ export interface FetchAppointmentsParams {
     dateTo?: string;
     from?: string;
     to?: string;
+    branchId?: string;
 }
 
 export async function fetchAppointments(params: FetchAppointmentsParams = {}) {
@@ -33,26 +35,23 @@ export async function fetchAppointments(params: FetchAppointmentsParams = {}) {
         vetId: resolvedVetId,
         dateFrom: resolvedDateFrom,
         dateTo: resolvedDateTo,
+        branchId: params.branchId,
     };
-    const res = await api.get<ApiEnvelope<Appointment[]>>('/appointments', { params: queryParams });
-    const raw = res.data as ApiEnvelope<Appointment[]>;
-    return {
-        data: Array.isArray(raw?.data) ? raw.data : [],
-        meta: raw?.meta ?? { page: 1, limit: 20, total: 0, totalPages: 0, hasNextPage: false, hasPrevPage: false },
-    };
+    const { data } = await api.get<ApiEnvelope<Appointment[]>>('/appointments', { params: queryParams });
+    return unwrapPaginatedResponse<Appointment>(data);
 }
 
 export async function fetchAppointment(id: string) {
     const { data } = await api.get<ApiEnvelope<Appointment>>(`/appointments/${id}`);
-    return (data?.data ?? data) as Appointment;
+    return unwrapResponse<Appointment>(data);
 }
 
-export async function fetchAvailability(date: string, staffId: string) {
-    const res = await api.get<{ data?: { slots?: { time: string; available: boolean }[] } }>(
+export async function fetchAvailability(date: string, staffId: string, branchId?: string) {
+    const { data } = await api.get<{ data?: { slots?: { time: string; available: boolean }[] } }>(
         '/appointments/availability',
-        { params: { date, vetId: staffId } },
+        { params: { date, vetId: staffId, branchId } },
     );
-    return (res.data as { data?: { slots?: { time: string; available: boolean }[] } })?.data?.slots ?? [];
+    return (data as { data?: { slots?: { time: string; available: boolean }[] } })?.data?.slots ?? [];
 }
 
 export async function fetchAppointmentStaff() {
@@ -64,15 +63,15 @@ export async function fetchAppointmentStaff() {
 
 export async function createAppointment(input: CreateAppointmentRequest) {
     const { data } = await api.post<ApiEnvelope<Appointment>>('/appointments', input);
-    return (data?.data ?? data) as Appointment;
+    return unwrapResponse<Appointment>(data);
 }
 
 export async function updateAppointmentStatus(id: string, input: UpdateAppointmentStatusRequest) {
     const { data } = await api.patch<ApiEnvelope<Appointment>>(`/appointments/${id}`, input);
-    return (data?.data ?? data) as Appointment;
+    return unwrapResponse<Appointment>(data);
 }
 
 export async function cancelAppointment(id: string, reason?: string) {
     const { data } = await api.delete<ApiEnvelope<Appointment>>(`/appointments/${id}`, { data: { reason } });
-    return (data?.data ?? data) as Appointment;
+    return unwrapResponse<Appointment>(data);
 }

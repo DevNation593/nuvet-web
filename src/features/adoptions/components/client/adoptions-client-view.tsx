@@ -21,6 +21,7 @@ import {
     DialogTitle,
 } from '@/shared/components/ui/dialog';
 import { getStatusLabel } from '@/shared/lib/status-labels';
+import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
 import { Heart } from 'lucide-react';
 
 const applySchema = z.object({
@@ -61,9 +62,9 @@ export function AdoptionsClientView() {
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
                                         <h3 className="font-semibold">{item.pet?.name ?? 'Mascota'}</h3>
-                                        <p className="text-xs text-muted-foreground">{item.pet?.species ?? 'Especie no registrada'}</p>
+                                        <p className="text-xs text-muted-foreground">{getPetSpeciesLabel(item.pet?.species)}</p>
                                     </div>
-                                    <Badge variant="scheduled">{getStatusLabel(item.status)}</Badge>
+                                    <Badge variant="secondary">{getStatusLabel(item.status)}</Badge>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-3">

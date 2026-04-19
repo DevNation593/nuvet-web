@@ -85,3 +85,66 @@
     @apply bg-background text-foreground antialiased;
   }
 }
+
+/* ── Print styles ───────────────────────────────────────────────── */
+@media print {
+  /* Hide non-essential UI elements */
+  aside,
+  nav,
+  header,
+  footer,
+  [data-no-print],
+  .no-print,
+  button:not(.print-keep) {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Cards look clean on print */
+  .rounded-lg,
+  .rounded-xl {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Tables print well */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 11px;
+  }
+
+  th,
+  td {
+    border: 1px solid #ccc !important;
+    padding: 4px 8px !important;
+  }
+
+  /* Avoid page breaks inside cards/rows */
+  tr,
+  .card,
+  [class*="CardContent"] {
+    page-break-inside: avoid;
+  }
+
+  /* Show full URLs for links */
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 10px;
+    color: #666;
+  }
+}

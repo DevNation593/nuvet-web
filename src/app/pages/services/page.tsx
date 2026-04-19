@@ -34,55 +34,55 @@ const FEATURES: FeatureItem[] = [
   {
     id: 'agenda',
     name: 'Agenda inteligente',
-    description: 'Turnos organizados, recordatorios automaticos y menos ausencias.',
+    description: 'Turnos organizados, recordatorios automáticos y menos ausencias.',
     details: ['Calendario por profesionales', 'Confirmaciones en un clic', 'Control de disponibilidad'],
     icon: CalendarCheck,
   },
   {
     id: 'records',
-    name: 'Historial clinico digital',
-    description: 'Todo el seguimiento medico de cada paciente en un solo lugar.',
-    details: ['Evoluciones y tratamientos', 'Archivos y resultados', 'Acceso rapido en consulta'],
+    name: 'Historial clínico digital',
+    description: 'Todo el seguimiento médico de cada paciente en un solo lugar.',
+    details: ['Evoluciones y tratamientos', 'Archivos y resultados', 'Acceso rápido en consulta'],
     icon: ClipboardList,
   },
   {
     id: 'reminders',
-    name: 'Recordatorios automaticos',
+    name: 'Recordatorios automáticos',
     description: 'Comunica vacunas, controles y post-operatorios sin esfuerzo.',
-    details: ['Campanas segmentadas', 'Mensajes programados', 'Historial de contactos'],
+    details: ['Campañas segmentadas', 'Mensajes programados', 'Historial de contactos'],
     icon: Bell,
   },
   {
     id: 'billing',
-    name: 'Cobros y facturacion',
+    name: 'Cobros y facturación',
     description: 'Caja diaria, comprobantes y control de pagos claros.',
-    details: ['Metodos de pago', 'Estados de cuenta', 'Reportes de ingresos'],
+    details: ['Métodos de pago', 'Estados de cuenta', 'Reportes de ingresos'],
     icon: CreditCard,
   },
   {
     id: 'analytics',
-    name: 'Reportes de gestion',
+    name: 'Reportes de gestión',
     description: 'Indicadores clave para tomar decisiones con datos reales.',
-    details: ['Servicios mas frecuentes', 'Rendimiento del equipo', 'Tendencias mensuales'],
+    details: ['Servicios más frecuentes', 'Rendimiento del equipo', 'Tendencias mensuales'],
     icon: BarChart3,
   },
   {
     id: 'inventory',
     name: 'Inventario conectado',
     description: 'Controla stock, movimientos y ventas de productos.',
-    details: ['Alertas de minimo', 'Entradas y salidas', 'Catalogo actualizado'],
+    details: ['Alertas de mínimo', 'Entradas y salidas', 'Catálogo actualizado'],
     icon: Boxes,
   },
 ];
 
 const trustPoints = [
   {
-    title: 'Implementacion guiada',
-    description: 'Acompanamos la migracion de datos y la configuracion inicial.',
+    title: 'Implementación guiada',
+    description: 'Acompañamos la migración de datos y la configuración inicial.',
   },
   {
     title: 'Seguridad y respaldo',
-    description: 'Protegemos la informacion clinica con buenas practicas modernas.',
+    description: 'Protegemos la información clínica con buenas prácticas modernas.',
   },
   {
     title: 'Soporte cercano',
@@ -111,7 +111,7 @@ export default function ServiciosPage() {
           </div>
 
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 px-5 text-sm hidden md:inline-flex">
-            <Link href="/auth/login">Iniciar Sesion</Link>
+            <Link href="/auth/login">Iniciar sesión</Link>
           </Button>
 
           <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9">
@@ -134,7 +134,7 @@ export default function ServiciosPage() {
         <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="text-4xl md:text-4xl font-bold text-emerald-950 mb-4">Servicios tecnológicos para veterinarias</h1>
           <p className="text-lg text-emerald-900/70 max-w-2xl mx-auto">
-            Centraliza tu operacion clínica con herramientas digitales que ordenan agenda, historial, cobros y reportes.
+            Centraliza tu operación clínica con herramientas digitales que ordenan agenda, historial, cobros y reportes.
           </p>
           <div className="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white h-11 px-6">
@@ -187,7 +187,7 @@ export default function ServiciosPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-emerald-950">Un servicio confiable para tu equipo</h2>
-            <p className="text-emerald-900/60 mt-2">Acompañamos la adopcion con soporte, seguridad y crecimiento.</p>
+              <p className="text-emerald-900/60 mt-2">Acompañamos la adopción con soporte, seguridad y crecimiento.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {trustPoints.map((point) => (
@@ -236,7 +236,7 @@ export default function ServiciosPage() {
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Enlaces Rapidos</h4>
+              <h4 className="font-bold text-white mb-4">Enlaces rápidos</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
                 <li><Link href="/" className="hover:text-emerald-400 transition-colors">Inicio</Link></li>
                 <li><Link href="/pages/services" className="hover:text-emerald-400 transition-colors">Servicios</Link></li>
@@ -249,10 +249,10 @@ export default function ServiciosPage() {
               <h4 className="font-bold text-white mb-4">Servicios</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
                 <li><Link href="#" className="hover:text-emerald-400 transition-colors">Agenda inteligente</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clinico digital</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automaticos</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturacion</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestion</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clínico digital</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automáticos</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturación</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestión</Link></li>
                 <li><Link href="#" className="hover:text-emerald-400 transition-colors">Inventario conectado</Link></li>
               </ul>
             </div>

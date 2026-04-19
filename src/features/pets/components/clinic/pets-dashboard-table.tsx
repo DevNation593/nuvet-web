@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { usePets } from '@/features/pets/hooks/use-pets';
+import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
 
 type DashboardPet = {
     id: string;
@@ -65,7 +66,7 @@ export function PetsDashboardTable() {
                                     >
                                         <td className="p-4 align-middle font-medium">{pet.name}</td>
                                         <td className="p-4 align-middle">
-                                            {pet.species}{' '}
+                                            {getPetSpeciesLabel(pet.species)}{' '}
                                             <span className="text-gray-400">/ {pet.breed || 'Desconocida'}</span>
                                         </td>
                                         <td className="p-4 align-middle">

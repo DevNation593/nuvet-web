@@ -95,7 +95,7 @@ function LoginPageContent() {
       <div className="hidden lg:flex lg:w-1/2 bg-[#F1FDF9] p-12 flex-col justify-between relative border-r border-emerald-50 h-full">
         <div className="absolute inset-0 z-0">
           <Image 
-            src="/assets/gato-login.png" 
+            src="/assets/gato-login.webp" 
             alt="Fondo NuVet" 
             fill
             priority
@@ -175,7 +175,7 @@ function LoginPageContent() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-emerald-900 font-medium">Contraseña</Label>
-                  <Link href="/auth/forgot-password" size="sm" className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors">
+                  <Link href="/auth/forgot-password" className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors">
                     ¿Olvidaste tu contraseña?
                   </Link>
                 </div>
@@ -217,11 +217,8 @@ function LoginPageContent() {
           </form>
 
           <div className="text-center">
-            <p className="text-sm text-emerald-800/60 font-medium">
-              ¿Eres nuevo en NuVet?{" "}
-              <Link href="/auth/register" className="text-emerald-600 font-bold hover:underline underline-offset-4">
-                Crear tu cuenta
-              </Link>
+            <p className="text-xs text-emerald-800/40 font-medium">
+              El acceso es proporcionado por el administrador de tu clínica.
             </p>
           </div>
         </div>

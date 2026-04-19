@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import { ClinicHomeSummary } from '@/features/dashboard/components/clinic/clinic-home-summary';
 
 export default function ClinicPage() {
-    redirect('/clinic/pos');
+    return <ClinicHomeSummary />;
 }

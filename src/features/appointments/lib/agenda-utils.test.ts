@@ -5,6 +5,7 @@ import {
     getWeekDays,
     formatSlotLabel,
 } from './agenda-utils';
+import { describe, it, expect } from 'vitest';
 
 describe('agenda-utils', () => {
     const jan1 = new Date(2026, 0, 1);

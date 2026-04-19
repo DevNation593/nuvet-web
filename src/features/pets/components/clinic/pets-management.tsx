@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,10 +19,11 @@ import {
     DialogTitle,
 } from '@/shared/components/ui/dialog';
 import { useClients } from '@/features/clients/hooks/use-clients';
-import { useCreatePet, useDeactivatePet, usePet, usePets, useUpdatePet } from '@/features/pets/hooks/use-pets';
+import { useCreatePet, useDeactivatePet, usePet, usePets, useReactivatePet, useUpdatePet } from '@/features/pets/hooks/use-pets';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
-import { Loader2, PawPrint, Pencil, Search, UserPlus } from 'lucide-react';
+import { FileText, Loader2, PawPrint, Pencil, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
 
 type PetRow = {
     id: string;
@@ -53,6 +55,27 @@ const petSchema = z.object({
 
 type PetFormValues = z.infer<typeof petSchema>;
 
+type PetMedicalRecord = {
+    id: string;
+    diagnosis?: string;
+    treatment?: string;
+    notes?: string;
+    createdAt?: string;
+};
+
+type PetVaccination = {
+    id: string;
+    vaccineName?: string;
+    status?: string;
+    administeredAt?: string;
+    nextDueAt?: string;
+};
+
+type PetDetail = PetRow & {
+    medicalRecords?: PetMedicalRecord[];
+    vaccinations?: PetVaccination[];
+};
+
 function calculateAge(birthDate?: string) {
     if (!birthDate) return '—';
     const birth = new Date(birthDate);
@@ -60,23 +83,33 @@ function calculateAge(birthDate?: string) {
     return `${years} años`;
 }
 
+function formatDate(value?: string) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return format(date, 'dd/MM/yyyy');
+}
+
 export function PetsManagement() {
+    const router = useRouter();
     const [search, setSearch] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingPet, setEditingPet] = useState<PetRow | null>(null);
     const [speciesFilter, setSpeciesFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
 
-    const petsQuery = usePets({ limit: 100 });
+    const petsQuery = usePets({ limit: 100, includeInactive: statusFilter !== 'active' });
     const clientsQuery = useClients({ limit: 100 });
     const selectedPetQuery = usePet(selectedId);
     const createPet = useCreatePet();
     const updatePet = useUpdatePet(editingPet?.id ?? null);
     const deactivatePet = useDeactivatePet();
+    const reactivatePet = useReactivatePet();
 
     const pets = useMemo(() => (((petsQuery.data?.data ?? []) as unknown[]) as PetRow[]), [petsQuery.data?.data]);
     const clients = useMemo(() => clientsQuery.data?.data ?? [], [clientsQuery.data?.data]);
-    const selectedPet = (selectedPetQuery.data as unknown as PetRow | undefined) ?? undefined;
+    const selectedPet = (selectedPetQuery.data as unknown as PetDetail | undefined) ?? undefined;
 
     const filteredPets = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -87,15 +120,21 @@ export function PetsManagement() {
                     .toLowerCase()
                     .includes(term);
             const matchesSpecies = !speciesFilter || pet.species === speciesFilter;
-            return matchesSearch && matchesSpecies;
+            const isPetActive = pet.isActive ?? true;
+            const matchesStatus =
+                statusFilter === 'all' ||
+                (statusFilter === 'active' && isPetActive) ||
+                (statusFilter === 'inactive' && !isPetActive);
+
+            return matchesSearch && matchesSpecies && matchesStatus;
         });
-    }, [pets, search, speciesFilter]);
+    }, [pets, search, speciesFilter, statusFilter]);
 
     return (
         <div className="space-y-4">
             <header className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Pacientes</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">Mascotas</h2>
                     <p className="text-sm text-muted-foreground">Gestiona el registro de mascotas</p>
                 </div>
                 <Button
@@ -105,13 +144,13 @@ export function PetsManagement() {
                     }}
                 >
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Nuevo Paciente
+                    Nueva Mascota
                 </Button>
             </header>
 
             <Card>
                 <CardHeader className="pb-3">
-                    <div className="grid gap-2 sm:grid-cols-[1fr_220px]">
+                    <div className="grid gap-2 sm:grid-cols-[1fr_220px_220px]">
                         <div className="relative">
                             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <input
@@ -122,6 +161,8 @@ export function PetsManagement() {
                             />
                         </div>
                         <select
+                            aria-label="Filtrar por especie"
+                            title="Filtrar por especie"
                             className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                             value={speciesFilter}
                             onChange={(e) => setSpeciesFilter(e.target.value)}
@@ -129,9 +170,20 @@ export function PetsManagement() {
                             <option value="">Todas las especies</option>
                             {Object.values(PetSpecies).map((specie) => (
                                 <option key={specie} value={specie}>
-                                    {specie}
+                                    {getPetSpeciesLabel(specie)}
                                 </option>
                             ))}
+                        </select>
+                        <select
+                            aria-label="Filtrar por estado"
+                            title="Filtrar por estado"
+                            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                            value={statusFilter}
+                            onChange={(event) => setStatusFilter(event.target.value as 'active' | 'inactive' | 'all')}
+                        >
+                            <option value="active">Solo activas</option>
+                            <option value="inactive">Solo inactivas</option>
+                            <option value="all">Todas</option>
                         </select>
                     </div>
                 </CardHeader>
@@ -173,7 +225,7 @@ export function PetsManagement() {
                                             onClick={() => setSelectedId(pet.id)}
                                         >
                                             <td className="px-4 py-3 font-medium">{pet.name}</td>
-                                            <td className="px-4 py-3">{pet.species}</td>
+                                            <td className="px-4 py-3">{getPetSpeciesLabel(pet.species)}</td>
                                             <td className="px-4 py-3">{pet.breed ?? '—'}</td>
                                             <td className="px-4 py-3">{calculateAge(pet.birthDate)}</td>
                                             <td className="px-4 py-3">
@@ -195,8 +247,20 @@ export function PetsManagement() {
                                                             setEditingPet(pet);
                                                             setModalOpen(true);
                                                         }}
+                                                        title="Editar"
                                                     >
                                                         <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        size="icon"
+                                                        variant="ghost"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            router.push(`/clinic/pets/${pet.id}/history`);
+                                                        }}
+                                                        title="Historial clínico"
+                                                    >
+                                                        <FileText className="h-4 w-4" />
                                                     </Button>
                                                     <Button
                                                         size="icon"
@@ -204,10 +268,15 @@ export function PetsManagement() {
                                                         onClick={async (event) => {
                                                             event.stopPropagation();
                                                             try {
-                                                                await deactivatePet.mutateAsync(pet.id);
-                                                                toast.success('Paciente desactivado');
+                                                                if ((pet.isActive ?? true)) {
+                                                                    await deactivatePet.mutateAsync(pet.id);
+                                                                    toast.success('Mascota desactivada');
+                                                                } else {
+                                                                    await reactivatePet.mutateAsync(pet.id);
+                                                                    toast.success('Mascota reactivada');
+                                                                }
                                                             } catch {
-                                                                toast.error('No se pudo desactivar');
+                                                                toast.error('No se pudo actualizar el estado');
                                                             }
                                                         }}
                                                     >
@@ -226,7 +295,7 @@ export function PetsManagement() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Detalle de paciente</CardTitle>
+                    <CardTitle className="text-base">Detalle de mascota</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {selectedPetQuery.isLoading ? (
@@ -236,12 +305,12 @@ export function PetsManagement() {
                         </div>
                     ) : !selectedPet ? (
                         <p className="text-sm text-muted-foreground">
-                            Selecciona un paciente para ver su información.
+                            Selecciona una mascota para ver su información.
                         </p>
                     ) : (
                         <div className="grid gap-2 text-sm sm:grid-cols-2">
                             <DetailItem label="Nombre" value={selectedPet.name} />
-                            <DetailItem label="Especie" value={selectedPet.species} />
+                            <DetailItem label="Especie" value={getPetSpeciesLabel(selectedPet.species)} />
                             <DetailItem label="Raza" value={selectedPet.breed ?? '—'} />
                             <DetailItem label="Sexo" value={selectedPet.sex} />
                             <DetailItem label="Edad" value={calculateAge(selectedPet.birthDate)} />
@@ -249,8 +318,84 @@ export function PetsManagement() {
                                 label="Dueño"
                                 value={`${selectedPet.owner?.firstName ?? ''} ${selectedPet.owner?.lastName ?? ''}`.trim() || '—'}
                             />
+                            <DetailItem
+                                label="Historial clínico"
+                                value={
+                                    selectedPet.medicalRecords && selectedPet.medicalRecords.length > 0
+                                        ? `${selectedPet.medicalRecords.length} registros recientes`
+                                        : 'Sin registros'
+                                }
+                            />
+                            <DetailItem
+                                label="Vacunas"
+                                value={
+                                    selectedPet.vaccinations && selectedPet.vaccinations.length > 0
+                                        ? `${selectedPet.vaccinations.length} vacunas registradas`
+                                        : 'Sin vacunas registradas'
+                                }
+                            />
                         </div>
                     )}
+
+                    {selectedPet ? (
+                        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                            <div className="rounded-md border bg-muted/10 p-3">
+                                <p className="mb-2 text-sm font-semibold">Registros médicos recientes</p>
+                                {!selectedPet.medicalRecords || selectedPet.medicalRecords.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground">No hay historial clínico registrado.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {selectedPet.medicalRecords.map((record) => (
+                                            <div key={record.id} className="rounded-md border bg-background p-2 text-xs">
+                                                <p className="font-medium">{record.diagnosis || 'Sin diagnóstico'}</p>
+                                                <p className="text-muted-foreground">
+                                                    Fecha: {formatDate(record.createdAt)}
+                                                </p>
+                                                {record.treatment ? <p>Tratamiento: {record.treatment}</p> : null}
+                                                {record.notes ? <p>Notas: {record.notes}</p> : null}
+                                                <div className="mt-2">
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() =>
+                                                            router.push(
+                                                                `/clinic/medical-records?petId=${selectedPet.id}&recordId=${record.id}`,
+                                                            )
+                                                        }
+                                                    >
+                                                        Abrir historial
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="rounded-md border bg-muted/10 p-3">
+                                <p className="mb-2 text-sm font-semibold">Vacunación reciente</p>
+                                {!selectedPet.vaccinations || selectedPet.vaccinations.length === 0 ? (
+                                    <p className="text-xs text-muted-foreground">No hay vacunas registradas.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {selectedPet.vaccinations.map((vaccination) => (
+                                            <div key={vaccination.id} className="rounded-md border bg-background p-2 text-xs">
+                                                <p className="font-medium">{vaccination.vaccineName || 'Vacuna sin nombre'}</p>
+                                                <p className="text-muted-foreground">
+                                                    Aplicada: {formatDate(vaccination.administeredAt)}
+                                                </p>
+                                                {vaccination.nextDueAt ? (
+                                                    <p className="text-muted-foreground">Próxima dosis: {formatDate(vaccination.nextDueAt)}</p>
+                                                ) : null}
+                                                {vaccination.status ? <p>Estado: {vaccination.status}</p> : null}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : null}
                 </CardContent>
             </Card>
 
@@ -264,10 +409,10 @@ export function PetsManagement() {
                     try {
                         if (editingPet) {
                             await updatePet.mutateAsync(values);
-                            toast.success('Paciente actualizado');
+                            toast.success('Mascota actualizada');
                         } else {
                             await createPet.mutateAsync(values);
-                            toast.success('Paciente creado');
+                            toast.success('Mascota creada');
                         }
                         setModalOpen(false);
                     } catch (error: unknown) {
@@ -275,7 +420,7 @@ export function PetsManagement() {
                             error && typeof error === 'object' && 'response' in error
                                 ? (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
                                 : undefined;
-                        toast.error(message ?? 'No se pudo guardar el paciente');
+                        toast.error(message ?? 'No se pudo guardar la mascota');
                     }
                 }}
             />
@@ -317,7 +462,7 @@ function PetModal({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{initialData ? 'Editar paciente' : 'Nuevo paciente'}</DialogTitle>
+                    <DialogTitle>{initialData ? 'Editar mascota' : 'Nueva mascota'}</DialogTitle>
                     <DialogDescription>Completa los datos médicos básicos de la mascota.</DialogDescription>
                 </DialogHeader>
 
@@ -350,7 +495,7 @@ function PetModal({
                             <select className="h-10 w-full rounded-md border border-input px-3 text-sm" {...form.register('species')}>
                                 {Object.values(PetSpecies).map((specie) => (
                                     <option key={specie} value={specie}>
-                                        {specie}
+                                        {getPetSpeciesLabel(specie)}
                                     </option>
                                 ))}
                             </select>

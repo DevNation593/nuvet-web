@@ -20,6 +20,7 @@ import {
     DialogTitle,
 } from '@/shared/components/ui/dialog';
 import { Pencil, Plus } from 'lucide-react';
+import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
 
 const petSchema = z.object({
     name: z.string().min(2, 'Nombre requerido'),
@@ -112,7 +113,7 @@ export function PetsClientView() {
                                 </div>
                             </CardHeader>
                             <CardContent className="text-sm text-muted-foreground">
-                                <p>{pet.species} · {pet.sex}</p>
+                                <p>{getPetSpeciesLabel(pet.species)} · {pet.sex}</p>
                                 {pet.breed ? <p>{pet.breed}</p> : null}
                                 {pet.birthDate ? <p>{toDateInput(pet.birthDate)}</p> : null}
                             </CardContent>
@@ -131,7 +132,7 @@ export function PetsClientView() {
                         className="space-y-3"
                         onSubmit={form.handleSubmit(async (values) => {
                             try {
-                                if (!user?.id) { toast.error('Sesion invalida'); return; }
+                                if (!user?.id) { toast.error('Sesión inválida'); return; }
                                 const payload = {
                                     ownerId: user.id,
                                     name: values.name,
@@ -162,7 +163,7 @@ export function PetsClientView() {
                         <div className="grid gap-3 sm:grid-cols-2">
                             <Field label="Especie" error={form.formState.errors.species?.message}>
                                 <select className="h-10 w-full rounded-md border border-input px-3 text-sm" {...form.register('species')}>
-                                    {Object.values(PetSpecies).map((s) => <option key={s} value={s}>{s}</option>)}
+                                    {Object.values(PetSpecies).map((s) => <option key={s} value={s}>{getPetSpeciesLabel(s)}</option>)}
                                 </select>
                             </Field>
                             <Field label="Sexo" error={form.formState.errors.sex?.message}>
