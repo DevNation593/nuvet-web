@@ -27,5 +27,5 @@ function validate() {
 validate();
 
 export const env = {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'https://dev.nuvet.tech',
 } as const;
