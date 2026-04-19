@@ -21,14 +21,15 @@ export enum PermissionModule {
   STORE = 'store',
   INVENTORY = 'inventory',
   ADOPTIONS = 'adoptions',
-  PROMOTIONS = 'promotions',
-  POS = 'pos',
-  BILLING = 'billing',
   USERS = 'users',
   TENANT_SETTINGS = 'tenant_settings',
   NOTIFICATIONS = 'notifications',
   REPORTS = 'reports',
   FILES = 'files',
+  DISCOUNTS = 'discounts',
+  BRANCHES = 'branches',
+  POS = 'pos',
+  BILLING = 'billing',
 }
 
 export enum PermissionAction {
@@ -61,6 +62,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     `${PermissionModule.VACCINATIONS}:${PermissionAction.CREATE}`,
     `${PermissionModule.VACCINATIONS}:${PermissionAction.UPDATE}`,
     ...permissionsForModule(PermissionModule.SURGERIES),
+    `${PermissionModule.BRANCHES}:${PermissionAction.READ}`,
     `${PermissionModule.NOTIFICATIONS}:${PermissionAction.READ}`,
     `${PermissionModule.REPORTS}:${PermissionAction.READ}`,
     `${PermissionModule.FILES}:${PermissionAction.READ}`,
@@ -80,10 +82,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     `${PermissionModule.STORE}:${PermissionAction.CREATE}`,
     `${PermissionModule.STORE}:${PermissionAction.UPDATE}`,
     `${PermissionModule.ADOPTIONS}:${PermissionAction.READ}`,
+    `${PermissionModule.BRANCHES}:${PermissionAction.READ}`,
     `${PermissionModule.NOTIFICATIONS}:${PermissionAction.READ}`,
     `${PermissionModule.NOTIFICATIONS}:${PermissionAction.UPDATE}`,
     `${PermissionModule.NOTIFICATIONS}:${PermissionAction.DELETE}`,
     `${PermissionModule.USERS}:${PermissionAction.READ}`,
+    ...permissionsForModule(PermissionModule.POS),
     `${PermissionModule.BILLING}:${PermissionAction.READ}`,
     `${PermissionModule.BILLING}:${PermissionAction.CREATE}`,
   ],
@@ -92,6 +96,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     `${PermissionModule.APPOINTMENTS}:${PermissionAction.UPDATE}`,
     ...permissionsForModule(PermissionModule.AESTHETICS),
     `${PermissionModule.PETS}:${PermissionAction.READ}`,
+    `${PermissionModule.BRANCHES}:${PermissionAction.READ}`,
     `${PermissionModule.NOTIFICATIONS}:${PermissionAction.READ}`,
   ],
   [UserRole.INVENTORY]: [
@@ -99,6 +104,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, AppPermission[]> = {
     `${PermissionModule.INVENTORY}:${PermissionAction.READ}`,
     `${PermissionModule.INVENTORY}:${PermissionAction.UPDATE}`,
     `${PermissionModule.REPORTS}:${PermissionAction.READ}`,
+    `${PermissionModule.POS}:${PermissionAction.READ}`,
     `${PermissionModule.NOTIFICATIONS}:${PermissionAction.READ}`,
   ],
   [UserRole.ADOPTION_MANAGER]: [
@@ -208,6 +214,52 @@ export enum StockMovementType {
   ADJUSTMENT = 'ADJUSTMENT',
 }
 
+export enum DiscountType {
+  PERCENTAGE = 'PERCENTAGE',
+  FIXED = 'FIXED',
+  BUY_X_GET_Y = 'BUY_X_GET_Y', // ej: 2x1, 3x2
+}
+
+export enum DiscountTargetType {
+  PRODUCT = 'PRODUCT',
+  PRODUCT_CATEGORY = 'PRODUCT_CATEGORY',
+  SERVICE = 'SERVICE',
+  ALL_PRODUCTS = 'ALL_PRODUCTS',
+  ALL_SERVICES = 'ALL_SERVICES',
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  CARD = 'CARD',
+  TRANSFER = 'TRANSFER',
+  OTHER = 'OTHER',
+}
+
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  REFUNDED = 'REFUNDED',
+}
+
+export enum CashRegisterStatus {
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+}
+
+export enum PosTicketStatus {
+  OPEN = 'OPEN',
+  COMPLETED = 'COMPLETED',
+  REFUNDED = 'REFUNDED',
+  PARTIAL_REFUND = 'PARTIAL_REFUND',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum PosItemType {
+  PRODUCT = 'PRODUCT',
+  SERVICE = 'SERVICE',
+}
+
 export enum NotificationChannel {
   EMAIL = 'EMAIL',
   PUSH = 'PUSH',
@@ -264,14 +316,15 @@ export const PLAN_MODULES: Record<TenantPlan, PermissionModule[]> = {
     PermissionModule.STORE,
     PermissionModule.INVENTORY,
     PermissionModule.ADOPTIONS,
-    PermissionModule.PROMOTIONS,
     PermissionModule.POS,
-    PermissionModule.BILLING,
+    PermissionModule.DISCOUNTS,
+    PermissionModule.BRANCHES,
     PermissionModule.USERS,
     PermissionModule.TENANT_SETTINGS,
     PermissionModule.NOTIFICATIONS,
     PermissionModule.REPORTS,
     PermissionModule.FILES,
+    PermissionModule.BILLING,
   ],
   [TenantPlan.ENTERPRISE]: Object.values(PermissionModule),
 };
@@ -298,10 +351,11 @@ export interface Tenant {
   name: string;
   slug: string;
   plan: TenantPlan;
-  activeModules?: PermissionModule[];
   logoUrl?: string;
   phone?: string;
   address?: string;
+  email?: string;
+  website?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

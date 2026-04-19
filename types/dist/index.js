@@ -15,7 +15,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PLAN_MODULES = exports.TenantPlan = exports.PetSex = exports.PetSpecies = exports.NotificationChannel = exports.StockMovementType = exports.OrderStatus = exports.AdoptionStatus = exports.AestheticStatus = exports.SurgeryStatus = exports.VaccinationStatus = exports.AppointmentStatus = exports.AppointmentType = exports.ROLE_PERMISSIONS = exports.PermissionAction = exports.PermissionModule = exports.UserRole = void 0;
+exports.PLAN_MODULES = exports.TenantPlan = exports.PetSex = exports.PetSpecies = exports.NotificationChannel = exports.PosItemType = exports.PosTicketStatus = exports.CashRegisterStatus = exports.PaymentStatus = exports.PaymentMethod = exports.DiscountTargetType = exports.DiscountType = exports.StockMovementType = exports.OrderStatus = exports.AdoptionStatus = exports.AestheticStatus = exports.SurgeryStatus = exports.VaccinationStatus = exports.AppointmentStatus = exports.AppointmentType = exports.ROLE_PERMISSIONS = exports.PermissionAction = exports.PermissionModule = exports.UserRole = void 0;
 exports.getRolePermissions = getRolePermissions;
 exports.hasPermission = hasPermission;
 exports.hasAnyPermission = hasAnyPermission;
@@ -43,13 +43,15 @@ var PermissionModule;
     PermissionModule["STORE"] = "store";
     PermissionModule["INVENTORY"] = "inventory";
     PermissionModule["ADOPTIONS"] = "adoptions";
-    PermissionModule["PROMOTIONS"] = "promotions";
-    PermissionModule["POS"] = "pos";
     PermissionModule["USERS"] = "users";
     PermissionModule["TENANT_SETTINGS"] = "tenant_settings";
     PermissionModule["NOTIFICATIONS"] = "notifications";
     PermissionModule["REPORTS"] = "reports";
     PermissionModule["FILES"] = "files";
+    PermissionModule["DISCOUNTS"] = "discounts";
+    PermissionModule["BRANCHES"] = "branches";
+    PermissionModule["POS"] = "pos";
+    PermissionModule["BILLING"] = "billing";
 })(PermissionModule || (exports.PermissionModule = PermissionModule = {}));
 var PermissionAction;
 (function (PermissionAction) {
@@ -75,6 +77,7 @@ exports.ROLE_PERMISSIONS = {
         `${PermissionModule.VACCINATIONS}:${PermissionAction.CREATE}`,
         `${PermissionModule.VACCINATIONS}:${PermissionAction.UPDATE}`,
         ...permissionsForModule(PermissionModule.SURGERIES),
+        `${PermissionModule.BRANCHES}:${PermissionAction.READ}`,
         `${PermissionModule.NOTIFICATIONS}:${PermissionAction.READ}`,
         `${PermissionModule.REPORTS}:${PermissionAction.READ}`,
         `${PermissionModule.FILES}:${PermissionAction.READ}`,
@@ -94,16 +97,21 @@ exports.ROLE_PERMISSIONS = {
         `${PermissionModule.STORE}:${PermissionAction.CREATE}`,
         `${PermissionModule.STORE}:${PermissionAction.UPDATE}`,
         `${PermissionModule.ADOPTIONS}:${PermissionAction.READ}`,
+        `${PermissionModule.BRANCHES}:${PermissionAction.READ}`,
         `${PermissionModule.NOTIFICATIONS}:${PermissionAction.READ}`,
         `${PermissionModule.NOTIFICATIONS}:${PermissionAction.UPDATE}`,
         `${PermissionModule.NOTIFICATIONS}:${PermissionAction.DELETE}`,
         `${PermissionModule.USERS}:${PermissionAction.READ}`,
+        ...permissionsForModule(PermissionModule.POS),
+        `${PermissionModule.BILLING}:${PermissionAction.READ}`,
+        `${PermissionModule.BILLING}:${PermissionAction.CREATE}`,
     ],
     [UserRole.GROOMER]: [
         `${PermissionModule.APPOINTMENTS}:${PermissionAction.READ}`,
         `${PermissionModule.APPOINTMENTS}:${PermissionAction.UPDATE}`,
         ...permissionsForModule(PermissionModule.AESTHETICS),
         `${PermissionModule.PETS}:${PermissionAction.READ}`,
+        `${PermissionModule.BRANCHES}:${PermissionAction.READ}`,
         `${PermissionModule.NOTIFICATIONS}:${PermissionAction.READ}`,
     ],
     [UserRole.INVENTORY]: [
@@ -111,6 +119,7 @@ exports.ROLE_PERMISSIONS = {
         `${PermissionModule.INVENTORY}:${PermissionAction.READ}`,
         `${PermissionModule.INVENTORY}:${PermissionAction.UPDATE}`,
         `${PermissionModule.REPORTS}:${PermissionAction.READ}`,
+        `${PermissionModule.POS}:${PermissionAction.READ}`,
         `${PermissionModule.NOTIFICATIONS}:${PermissionAction.READ}`,
     ],
     [UserRole.ADOPTION_MANAGER]: [
@@ -210,6 +219,52 @@ var StockMovementType;
     StockMovementType["OUT"] = "OUT";
     StockMovementType["ADJUSTMENT"] = "ADJUSTMENT";
 })(StockMovementType || (exports.StockMovementType = StockMovementType = {}));
+var DiscountType;
+(function (DiscountType) {
+    DiscountType["PERCENTAGE"] = "PERCENTAGE";
+    DiscountType["FIXED"] = "FIXED";
+    DiscountType["BUY_X_GET_Y"] = "BUY_X_GET_Y";
+})(DiscountType || (exports.DiscountType = DiscountType = {}));
+var DiscountTargetType;
+(function (DiscountTargetType) {
+    DiscountTargetType["PRODUCT"] = "PRODUCT";
+    DiscountTargetType["PRODUCT_CATEGORY"] = "PRODUCT_CATEGORY";
+    DiscountTargetType["SERVICE"] = "SERVICE";
+    DiscountTargetType["ALL_PRODUCTS"] = "ALL_PRODUCTS";
+    DiscountTargetType["ALL_SERVICES"] = "ALL_SERVICES";
+})(DiscountTargetType || (exports.DiscountTargetType = DiscountTargetType = {}));
+var PaymentMethod;
+(function (PaymentMethod) {
+    PaymentMethod["CASH"] = "CASH";
+    PaymentMethod["CARD"] = "CARD";
+    PaymentMethod["TRANSFER"] = "TRANSFER";
+    PaymentMethod["OTHER"] = "OTHER";
+})(PaymentMethod || (exports.PaymentMethod = PaymentMethod = {}));
+var PaymentStatus;
+(function (PaymentStatus) {
+    PaymentStatus["PENDING"] = "PENDING";
+    PaymentStatus["COMPLETED"] = "COMPLETED";
+    PaymentStatus["FAILED"] = "FAILED";
+    PaymentStatus["REFUNDED"] = "REFUNDED";
+})(PaymentStatus || (exports.PaymentStatus = PaymentStatus = {}));
+var CashRegisterStatus;
+(function (CashRegisterStatus) {
+    CashRegisterStatus["OPEN"] = "OPEN";
+    CashRegisterStatus["CLOSED"] = "CLOSED";
+})(CashRegisterStatus || (exports.CashRegisterStatus = CashRegisterStatus = {}));
+var PosTicketStatus;
+(function (PosTicketStatus) {
+    PosTicketStatus["OPEN"] = "OPEN";
+    PosTicketStatus["COMPLETED"] = "COMPLETED";
+    PosTicketStatus["REFUNDED"] = "REFUNDED";
+    PosTicketStatus["PARTIAL_REFUND"] = "PARTIAL_REFUND";
+    PosTicketStatus["CANCELLED"] = "CANCELLED";
+})(PosTicketStatus || (exports.PosTicketStatus = PosTicketStatus = {}));
+var PosItemType;
+(function (PosItemType) {
+    PosItemType["PRODUCT"] = "PRODUCT";
+    PosItemType["SERVICE"] = "SERVICE";
+})(PosItemType || (exports.PosItemType = PosItemType = {}));
 var NotificationChannel;
 (function (NotificationChannel) {
     NotificationChannel["EMAIL"] = "EMAIL";
@@ -266,13 +321,15 @@ exports.PLAN_MODULES = {
         PermissionModule.STORE,
         PermissionModule.INVENTORY,
         PermissionModule.ADOPTIONS,
-        PermissionModule.PROMOTIONS,
         PermissionModule.POS,
+        PermissionModule.DISCOUNTS,
+        PermissionModule.BRANCHES,
         PermissionModule.USERS,
         PermissionModule.TENANT_SETTINGS,
         PermissionModule.NOTIFICATIONS,
         PermissionModule.REPORTS,
         PermissionModule.FILES,
+        PermissionModule.BILLING,
     ],
     [TenantPlan.ENTERPRISE]: Object.values(PermissionModule),
 };
