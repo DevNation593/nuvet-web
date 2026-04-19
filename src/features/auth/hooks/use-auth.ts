@@ -1,6 +1,6 @@
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
-import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/auth.store';
 import { login as loginService, logout as logoutService } from '../services/auth-service';
 import type { LoginRequest } from '@nuvet/types';
@@ -30,9 +30,12 @@ export function useLogin() {
 
 export function useLogout() {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const logout = useAuthStore((state) => state.logout);
 
     const handleLogout = useCallback(async () => {
+        queryClient.cancelQueries();
+        queryClient.clear();
         try {
             await logoutService();
         } catch {
@@ -40,7 +43,7 @@ export function useLogout() {
         }
         logout();
         router.push('/auth/login');
-    }, [logout, router]);
+    }, [logout, router, queryClient]);
 
     return { logout: handleLogout };
 }

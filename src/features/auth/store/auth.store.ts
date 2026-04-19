@@ -47,8 +47,9 @@ export const useAuthStore = create<AuthState>()(
                     user,
                 });
                 if (typeof document !== 'undefined' && user?.role) {
-                    document.cookie = `nuvet-role=${user.role}; path=/; max-age=604800; SameSite=Lax`;
-                    document.cookie = `nuvet-tenant-id=${user.tenantId ?? ''}; path=/; max-age=604800; SameSite=Lax`;
+                    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+                    document.cookie = `nuvet-role=${user.role}; path=/; max-age=604800; SameSite=Lax${secure}`;
+                    document.cookie = `nuvet-tenant-id=${user.tenantId ?? ''}; path=/; max-age=604800; SameSite=Lax${secure}`;
                 }
             },
             updateUser: (userPatch) => {
@@ -72,8 +73,9 @@ export const useAuthStore = create<AuthState>()(
                     user: null,
                 });
                 if (typeof document !== 'undefined') {
-                    document.cookie = 'nuvet-role=; path=/; max-age=0';
-                    document.cookie = 'nuvet-tenant-id=; path=/; max-age=0';
+                    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+                    document.cookie = `nuvet-role=; path=/; max-age=0${secure}`;
+                    document.cookie = `nuvet-tenant-id=; path=/; max-age=0${secure}`;
                 }
             },
         }),

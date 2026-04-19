@@ -1,5 +1,6 @@
 import axios from 'axios';
 import api from '@/shared/lib/api-client';
+import { unwrapResponse, unwrapPaginatedResponse } from '@/shared/lib/api-helpers';
 import type {
     ApiEnvelope,
     CreateMedicalRecordRequest,
@@ -18,26 +19,22 @@ export interface FetchMedicalRecordsParams {
 
 export async function fetchMedicalRecords(params: FetchMedicalRecordsParams = {}) {
     const { data } = await api.get<ApiEnvelope<MedicalRecord[]>>('/medical-records', { params });
-    const payload = data?.data ?? data;
-    return {
-        data: Array.isArray(payload) ? payload : (payload as { data?: MedicalRecord[] })?.data ?? [],
-        meta: data?.meta ?? { page: 1, limit: 20, total: 0, totalPages: 0 },
-    };
+    return unwrapPaginatedResponse<MedicalRecord>(data);
 }
 
 export async function fetchMedicalRecord(id: string) {
     const { data } = await api.get<ApiEnvelope<MedicalRecord>>(`/medical-records/${id}`);
-    return (data?.data ?? data) as MedicalRecord;
+    return unwrapResponse<MedicalRecord>(data);
 }
 
 export async function createMedicalRecord(input: CreateMedicalRecordRequest) {
     const { data } = await api.post<ApiEnvelope<MedicalRecord>>('/medical-records', input);
-    return (data?.data ?? data) as MedicalRecord;
+    return unwrapResponse<MedicalRecord>(data);
 }
 
 export async function updateMedicalRecord(id: string, input: UpdateMedicalRecordRequest) {
     const { data } = await api.patch<ApiEnvelope<MedicalRecord>>(`/medical-records/${id}`, input);
-    return (data?.data ?? data) as MedicalRecord;
+    return unwrapResponse<MedicalRecord>(data);
 }
 
 export async function uploadMedicalRecordAttachment(recordId: string, file: File) {
@@ -47,7 +44,7 @@ export async function uploadMedicalRecordAttachment(recordId: string, file: File
         folder: 'medical-records',
     };
     const presignRes = await api.post<ApiEnvelope<PresignUploadResponse>>('/files/presign', presignPayload);
-    const presign = (presignRes.data?.data ?? presignRes.data) as PresignUploadResponse;
+    const presign = unwrapResponse<PresignUploadResponse>(presignRes.data);
 
     await axios.put(presign.url, file, {
         headers: { 'Content-Type': file.type || 'application/octet-stream' },
@@ -63,5 +60,5 @@ export async function uploadMedicalRecordAttachment(recordId: string, file: File
         `/medical-records/${recordId}/attachments`,
         registerPayload,
     );
-    return (registerRes.data?.data ?? registerRes.data) as MedicalRecordAttachment;
+    return unwrapResponse<MedicalRecordAttachment>(registerRes.data);
 }

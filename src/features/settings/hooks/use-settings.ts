@@ -1,17 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/features/auth/store/auth.store';
 import type {
     CreateNotificationTemplateRequest,
     NotificationChannel,
-    PermissionModule,
     TenantPlan,
     UpdateTenantRequest,
 } from '@nuvet/types';
 import {
     fetchTenantSettings,
     updateTenantSettings,
-    fetchActiveModules,
-    updateActiveModules,
+    fetchBillingConfig,
+    updateBillingConfig,
     fetchNotificationTemplates,
     createNotificationTemplate,
     updateNotificationTemplate,
@@ -26,8 +24,18 @@ export interface TenantSettings {
     address?: string;
     email?: string;
     website?: string;
-    activeModules?: PermissionModule[];
+    billingApiKey?: string;
+    billingEstablishmentCode?: string;
+    billingEmissionPointCode?: string;
+    hasBillingApiSecret?: boolean;
     _count?: { users: number; pets: number };
+}
+
+export interface BillingConfig {
+    billingApiKey?: string | null;
+    billingEstablishmentCode?: string | null;
+    billingEmissionPointCode?: string | null;
+    hasBillingApiSecret?: boolean;
 }
 
 export interface NotificationTemplate {
@@ -40,10 +48,13 @@ export interface NotificationTemplate {
     isSystem: boolean;
 }
 
+const CONFIG_STALE_TIME = 5 * 60 * 1000;
+
 export function useTenantSettings() {
     return useQuery({
         queryKey: ['tenant-settings'],
         queryFn: () => fetchTenantSettings(),
+        staleTime: CONFIG_STALE_TIME,
     });
 }
 
@@ -57,23 +68,21 @@ export function useUpdateTenantSettings() {
     });
 }
 
-export function useActiveModules() {
+export function useBillingConfig() {
     return useQuery({
-        queryKey: ['tenant-modules'],
-        queryFn: () => fetchActiveModules(),
+        queryKey: ['billing-config'],
+        queryFn: () => fetchBillingConfig(),
+        staleTime: CONFIG_STALE_TIME,
     });
 }
 
-export function useUpdateActiveModules() {
+export function useUpdateBillingConfig() {
     const queryClient = useQueryClient();
-    const updateUser = useAuthStore((state) => state.updateUser);
     return useMutation({
-        mutationFn: (activeModules: PermissionModule[]) => updateActiveModules(activeModules),
-        onSuccess: (activeModules) => {
-            queryClient.invalidateQueries({ queryKey: ['tenant-modules'] });
+        mutationFn: (input: Partial<BillingConfig & { billingApiSecret: string }>) => updateBillingConfig(input),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['billing-config'] });
             queryClient.invalidateQueries({ queryKey: ['tenant-settings'] });
-            // Propagar al store para que el sidebar se actualice de inmediato
-            updateUser({ activeModules });
         },
     });
 }
@@ -82,6 +91,7 @@ export function useNotificationTemplates() {
     return useQuery({
         queryKey: ['notification-templates'],
         queryFn: () => fetchNotificationTemplates(),
+        staleTime: CONFIG_STALE_TIME,
     });
 }
 

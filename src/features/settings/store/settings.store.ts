@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-type SettingsSection = 'general' | 'security' | 'modules' | 'users' | 'notifications';
+type SettingsSection = 'general' | 'security' | 'billing' | 'users' | 'notifications';
 
 interface SettingsState {
     activeSection: SettingsSection;

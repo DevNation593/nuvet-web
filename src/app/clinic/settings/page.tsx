@@ -3,4 +3,3 @@ import { SettingsManagement } from '@/features/settings/components/clinic/settin
 export default function ClinicSettingsPage() {
     return <SettingsManagement />;
 }
-

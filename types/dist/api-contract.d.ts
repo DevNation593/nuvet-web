@@ -25,6 +25,7 @@ export interface ApiEnvelope<T> {
 }
 export interface LoginRequest {
     email: string;
+    tenantSlug?: string;
     password: string;
 }
 export interface RefreshTokenRequest {
@@ -109,6 +110,7 @@ export interface CreateAppointmentRequest {
     vetId?: string;
     groomerId?: string;
     notes?: string;
+    branchId?: string;
 }
 export interface UpdateAppointmentStatusRequest {
     status?: ApiAppointmentStatus;
