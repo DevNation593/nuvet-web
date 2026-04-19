@@ -85,7 +85,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent side="left" className="w-72 p-0">
                 <SheetHeader className="flex h-16 items-center justify-center border-b px-4">
-                    <SheetTitle className="text-lg font-semibold text-primary">NuVet</SheetTitle>
+                    <SheetTitle className="text-lg font-semibold text-primary">NuVet Tech</SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col gap-1 p-3 overflow-y-auto max-h-[calc(100vh-4rem)]">
                     {navItems.map((item) => {

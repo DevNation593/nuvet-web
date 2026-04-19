@@ -48,7 +48,7 @@ export default function NosotrosPage() {
             <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center transition-transform group-hover:scale-105">
               <PawPrint className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl text-emerald-950 tracking-tight">NuVet</span>
+            <span className="font-bold text-xl text-emerald-950 tracking-tight">NuVet Tech</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
@@ -85,7 +85,7 @@ export default function NosotrosPage() {
               <Users className="h-4 w-4" />
               <span className="text-sm font-bold">Somos aliados de tu veterinaria</span>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-emerald-950 mb-4">Nuestra historia en NuVet</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-emerald-950 mb-4">Nuestra historia en NuVet Tech</h1>
             <p className="text-lg text-emerald-900/70 max-w-2xl">
               Construimos una plataforma que conecta agenda, historiales clínicos y ventas para que las veterinarias se enfoquen en lo más importante.
             </p>
@@ -99,7 +99,7 @@ export default function NosotrosPage() {
             </div>
           </div>
           <div className="relative h-[320px] sm:h-[380px] w-full overflow-hidden rounded-3xl ">
-            <Image src="/assets/about-us.webp" alt="Equipo NuVet" fill className="object-cover" priority />
+            <Image src="/assets/about-us.webp" alt="Equipo NuVet Tech" fill className="object-cover" priority />
           </div>
         </div>
       </section>
@@ -140,7 +140,7 @@ export default function NosotrosPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold text-emerald-950">Nuestros valores</h2>
-            <p className="text-emerald-900/60 mt-2">Lo que guía cada decisión en NuVet.</p>
+            <p className="text-emerald-900/60 mt-2">Lo que guía cada decisión en NuVet Tech.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {values.map((value) => (
@@ -161,7 +161,7 @@ export default function NosotrosPage() {
           <div className="space-y-6">
             <h2 className="text-3xl font-bold text-emerald-950">Un equipo construido para veterinarias</h2>
             <p className="text-emerald-900/70">
-              NuVet está formado por especialistas en producto, tecnología y operación clínica. Cada decisión prioriza la experiencia del staff y de las familias.
+              NuVet Tech está formado por especialistas en producto, tecnología y operación clínica. Cada decisión prioriza la experiencia del staff y de las familias.
             </p>
             <div className="space-y-4">
               {teamHighlights.map((item) => (
@@ -204,7 +204,7 @@ export default function NosotrosPage() {
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
                   <PawPrint className="w-6 h-6 text-emerald-400" />
                 </div>
-                <span className="font-bold text-2xl text-white tracking-tight">NuVet</span>
+                <span className="font-bold text-2xl text-white tracking-tight">NuVet Tech</span>
               </Link>
               <p className="text-sm text-emerald-100/70 leading-relaxed">
                 Plataforma digital para gestionar tu veterinaria: agenda, historiales, cobros y reportes en un solo lugar.

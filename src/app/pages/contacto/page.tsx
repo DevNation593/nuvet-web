@@ -112,7 +112,7 @@ export default function ContactoPage() {
             <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center transition-transform group-hover:scale-105">
               <PawPrint className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl text-emerald-950 tracking-tight">NuVet</span>
+            <span className="font-bold text-xl text-emerald-950 tracking-tight">NuVet Tech</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
@@ -146,7 +146,7 @@ export default function ContactoPage() {
         <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="text-3xl md:text-4xl font-bold text-emerald-950 mb-3">Contáctanos</h1>
           <p className="text-base md:text-lg text-emerald-900/70 max-w-2xl mx-auto">
-            Hablemos de cómo NuVet impulsa tu veterinaria.
+            Hablemos de cómo NuVet Tech impulsa tu veterinaria.
           </p>
         </div>
       </section>
@@ -274,7 +274,7 @@ export default function ContactoPage() {
                 <CardContent className="p-6">
                   <h3 className="text-lg font-semibold text-emerald-950">¿Prefieres una llamada rápida?</h3>
                   <p className="text-sm text-emerald-900/60 mb-4">
-                    Coordinamos una demo de 20 minutos para mostrarte cómo NuVet se adapta a tu flujo.
+                    Coordinamos una demo de 20 minutos para mostrarte cómo NuVet Tech se adapta a tu flujo.
                   </p>
                   <div className="space-y-3">
                     <div className="space-y-2">
@@ -337,7 +337,7 @@ export default function ContactoPage() {
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
                   <PawPrint className="w-6 h-6 text-emerald-400" />
                 </div>
-                <span className="font-bold text-2xl text-white tracking-tight">NuVet</span>
+                <span className="font-bold text-2xl text-white tracking-tight">NuVet Tech</span>
               </Link>
               <p className="text-sm text-emerald-100/70 leading-relaxed">
                 Plataforma digital para gestionar tu veterinaria: agenda, historiales, cobros y reportes en un solo lugar.
