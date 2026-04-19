@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,6 +57,19 @@ export function MedicalRecordsManagement() {
     const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const petIdFromUrl = params.get('petId') ?? '';
+        const recordIdFromUrl = params.get('recordId');
+
+        if (petIdFromUrl) {
+            setSelectedPetId(petIdFromUrl);
+        }
+        if (recordIdFromUrl) {
+            setSelectedRecordId(recordIdFromUrl);
+        }
+    }, []);
+
     const petsQuery = usePets({ limit: 100 });
     const recordsQuery = useMedicalRecords(selectedPetId || null, { limit: 50 });
     const recordQuery = useMedicalRecord(selectedRecordId);
@@ -100,6 +113,8 @@ export function MedicalRecordsManagement() {
                 <CardHeader className="pb-3">
                     <div className="grid gap-2 sm:grid-cols-[1fr_260px]">
                         <select
+                            aria-label="Seleccionar paciente"
+                            title="Seleccionar paciente"
                             className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                             value={selectedPetId}
                             onChange={(event) => {

@@ -1,4 +1,5 @@
 import api from '@/shared/lib/api-client';
+import { unwrapResponse, unwrapPaginatedResponse } from '@/shared/lib/api-helpers';
 import type {
     ApiEnvelope,
     CreateSurgeryRequest,
@@ -16,19 +17,15 @@ export interface FetchSurgeriesParams {
 
 export async function fetchSurgeries(params: FetchSurgeriesParams = {}) {
     const { data } = await api.get<ApiEnvelope<Surgery[]>>('/surgeries', { params });
-    const payload = data?.data ?? data;
-    return {
-        data: Array.isArray(payload) ? payload : (payload as { data?: Surgery[] })?.data ?? [],
-        meta: data?.meta ?? { page: 1, totalPages: 1 },
-    };
+    return unwrapPaginatedResponse<Surgery>(data);
 }
 
 export async function createSurgery(input: CreateSurgeryRequest) {
     const { data } = await api.post<ApiEnvelope<Surgery>>('/surgeries', input);
-    return (data?.data ?? data) as Surgery;
+    return unwrapResponse<Surgery>(data);
 }
 
 export async function updateSurgery(id: string, input: UpdateSurgeryRequest) {
     const { data } = await api.patch<ApiEnvelope<Surgery>>(`/surgeries/${id}`, input);
-    return (data?.data ?? data) as Surgery;
+    return unwrapResponse<Surgery>(data);
 }

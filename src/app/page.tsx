@@ -11,16 +11,16 @@ import {
 } from "lucide-react";
 
 const services = [
-  { icon: CalendarCheck, title: "Agenda inteligente", description: "Turnos organizados y recordatorios automaticos para reducir ausencias." },
+  { icon: CalendarCheck, title: "Agenda inteligente", description: "Turnos organizados y recordatorios automáticos para reducir ausencias." },
   { icon: ClipboardList, title: "Historial clínico", description: "Todo el seguimiento médico de cada paciente en un solo lugar." },
   { icon: CreditCard, title: "Cobros y facturación", description: "Caja diaria, comprobantes y control de pagos claros." },
   { icon: BarChart3, title: "Reportes de gestión", description: "Indicadores clave para tomar decisiones con datos reales." },
 ];
 
 const testimonials = [
-  { name: "Maria Garcia", role: "Directora - Clinica NovaVet", rating: 5, comment: "Con NuVet ordenamos agenda y cobros en una semana. El equipo ahora trabaja con claridad." },
-  { name: "Carlos Lopez", role: "Admin - VetCare Quito", rating: 5, comment: "Los recordatorios y el historial clinico nos ayudaron a reducir ausencias y errores." },
-  { name: "Ana Martinez", role: "Coordinadora - VetPlus", rating: 5, comment: "Los reportes nos dan visibilidad diaria. Tomamos mejores decisiones con datos reales." },
+  { name: "María García", role: "Directora - Clínica NovaVet", rating: 5, comment: "Con NuVet ordenamos agenda y cobros en una semana. El equipo ahora trabaja con claridad." },
+  { name: "Carlos López", role: "Admin - VetCare Quito", rating: 5, comment: "Los recordatorios y el historial clínico nos ayudaron a reducir ausencias y errores." },
+  { name: "Ana Martínez", role: "Coordinadora - VetPlus", rating: 5, comment: "Los reportes nos dan visibilidad diaria. Tomamos mejores decisiones con datos reales." },
 ];
 
 export default function LandingPage() {
@@ -44,7 +44,7 @@ export default function LandingPage() {
           </div>
 
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 px-5 text-sm hidden md:inline-flex">
-            <Link href="/auth/login">Iniciar Sesion</Link>
+            <Link href="/auth/login">Iniciar sesión</Link>
           </Button>
 
           <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9">
@@ -128,16 +128,16 @@ export default function LandingPage() {
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="lg:w-1/2 space-y-8">
               <div>
-                <h2 className="text-4xl font-bold text-emerald-950 mb-4">¿Por que elegirnos?</h2>
+                <h2 className="text-4xl font-bold text-emerald-950 mb-4">¿Por qué elegirnos?</h2>
                 <p className="text-emerald-800/60 font-medium max-w-lg">
                   NuVet simplifica la gestión diaria con procesos claros y soporte cercano para cada equipo.
                 </p>
               </div>
               <div className="space-y-6">
                 {[
-                  { icon: Clock, title: "Implementacion rapida", desc: "Arranca en dias con migracion guiada y acompanamiento" },
-                  { icon: Shield, title: "Datos protegidos", desc: "Seguridad y respaldos continuos para tu informacion" },
-                  { icon: Users, title: "Equipo alineado", desc: "Cada area trabaja con la misma informacion en tiempo real" },
+                  { icon: Clock, title: "Implementación rápida", desc: "Arranca en días con migración guiada y acompañamiento" },
+                  { icon: Shield, title: "Datos protegidos", desc: "Seguridad y respaldos continuos para tu información" },
+                  { icon: Users, title: "Equipo alineado", desc: "Cada área trabaja con la misma información en tiempo real" },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
@@ -168,7 +168,7 @@ export default function LandingPage() {
                 </p>
               </div>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {["Agenda por profesionales", "Historial clinico centralizado", "Cobros y facturacion", "Reportes en tiempo real"].map((check, i) => (
+                {["Agenda por profesionales", "Historial clínico centralizado", "Cobros y facturación", "Reportes en tiempo real"].map((check, i) => (
                   <li key={i} className="flex items-center gap-3 text-emerald-900 font-medium">
                     <div className="bg-emerald-100 rounded-full p-1"><PawPrint className="w-3 h-3 text-emerald-600" /></div>
                     {check}
@@ -182,7 +182,7 @@ export default function LandingPage() {
             <div className="lg:w-1/2 relative">
               <div className="absolute -inset-4 border-2 border-emerald-300 rounded-[4rem] rounded-bl-none -translate-x-6 -translate-y-6" />
               <div className="relative h-[400px] w-full rounded-[3rem] rounded-bl-none overflow-hidden border-1 border-white shadow-2xl">
-                <Image src="/assets/gato3.webp" alt="Gestion veterinaria" fill className="object-cover" />
+                <Image src="/assets/gato3.webp" alt="Gestión veterinaria" fill className="object-cover" />
               </div>
             </div>
           </div>
@@ -195,9 +195,9 @@ export default function LandingPage() {
           <div className="bg-emerald-900 rounded-[3rem] p-8 md:p-16 overflow-hidden relative">
             <div className="relative z-10 max-w-xl">
               <Heart className="h-12 w-12 text-emerald-400 mb-6" />
-              <h2 className="text-4xl font-bold text-white mb-6">Listo para ordenar tu operacion?</h2>
+              <h2 className="text-4xl font-bold text-white mb-6">¿Listo para ordenar tu operación?</h2>
               <p className="text-emerald-100/80 text-lg mb-8">
-                Agenda una demo y mira como NuVet unifica agenda, pacientes, cobros y reportes en un solo flujo.
+                Agenda una demo y mira cómo NuVet unifica agenda, pacientes, cobros y reportes en un solo flujo.
               </p>
               <Button size="lg" variant="secondary" className="bg-white text-emerald-900 hover:bg-emerald-50 h-12 px-8 font-bold rounded-xl" asChild>
                 <Link href="/pages/contacto">Solicitar demo</Link>
@@ -213,7 +213,7 @@ export default function LandingPage() {
       {/* Testimonios */}
       <section id="testimonios" className="py-24">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-emerald-950 mb-16">Lo que dicen las clinicas que usan NuVet</h2>
+          <h2 className="text-3xl font-bold text-center text-emerald-950 mb-16">Lo que dicen las clínicas que usan NuVet</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((t, i) => (
               <Card key={i} className="bg-white border border-emerald-200 rounded-2xl p-2 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-300 transform hover:scale-[1.10]">
@@ -271,10 +271,10 @@ export default function LandingPage() {
               <h4 className="font-bold text-white mb-4">Servicios</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
                 <li><Link href="#" className="hover:text-emerald-400 transition-colors">Agenda inteligente</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clinico digital</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automaticos</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturacion</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestion</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clínico digital</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automáticos</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturación</Link></li>
+                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestión</Link></li>
                 <li><Link href="#" className="hover:text-emerald-400 transition-colors">Inventario conectado</Link></li>
               </ul>
             </div>

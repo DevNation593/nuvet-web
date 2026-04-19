@@ -28,6 +28,7 @@ import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/
 import { getStatusLabel } from '@/shared/lib/status-labels';
 import { Plus, Syringe } from 'lucide-react';
 import { toast } from 'sonner';
+import { localDateTimeToUTC } from '@/shared/lib/timezone';
 import { VaccinationStatus } from '@nuvet/types';
 
 const vaccinationSchema = z.object({
@@ -220,8 +221,8 @@ export function VaccinationsManagement() {
                     try {
                         const payload: CreateVaccinationInput = {
                             ...values,
-                            administeredAt: `${values.administeredAt}T09:00:00.000Z`,
-                            nextDueAt: values.nextDueAt ? `${values.nextDueAt}T09:00:00.000Z` : undefined,
+                            administeredAt: localDateTimeToUTC(values.administeredAt, '09:00'),
+                            nextDueAt: values.nextDueAt ? localDateTimeToUTC(values.nextDueAt, '09:00') : undefined,
                         };
                         await createVaccination.mutateAsync(payload);
                         toast.success('Vacuna registrada');

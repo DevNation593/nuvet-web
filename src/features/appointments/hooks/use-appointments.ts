@@ -26,6 +26,7 @@ export interface AppointmentsParams {
     status?: string;
     dateFrom?: string;
     dateTo?: string;
+    branchId?: string;
 }
 
 export interface PaginatedAppointments {
@@ -40,22 +41,27 @@ export interface PaginatedAppointments {
     };
 }
 
-export function useAppointments(params: AppointmentsParams = {}) {
+export function useAppointments(
+    params: AppointmentsParams = {},
+    options: { enabled?: boolean } = {},
+) {
     return useQuery({
         queryKey: ['appointments', params],
         queryFn: () => fetchAppointments(params),
+        enabled: options.enabled ?? true,
     });
 }
 
 export interface AvailabilityParams {
     date: string;
     staffId: string;
+    branchId?: string;
 }
 
 export function useAvailability(params: AvailabilityParams | null) {
     return useQuery({
         queryKey: ['availability', params],
-        queryFn: () => fetchAvailability(params!.date, params!.staffId),
+        queryFn: () => fetchAvailability(params!.date, params!.staffId, params!.branchId),
         enabled: !!params?.date && !!params?.staffId,
     });
 }
@@ -64,6 +70,7 @@ export function useAppointmentStaff() {
     return useQuery({
         queryKey: ['appointment-staff'],
         queryFn: fetchAppointmentStaff,
+        staleTime: 5 * 60 * 1000,
     });
 }
 

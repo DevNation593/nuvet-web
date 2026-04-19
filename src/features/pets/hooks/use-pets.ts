@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreatePetRequest, Pet, UpdatePetRequest } from '@nuvet/types';
-import { fetchPets, fetchPet, createPet, updatePet, deactivatePet } from '../services/pets-service';
+import { fetchPets, fetchPet, createPet, updatePet, deactivatePet, reactivatePet, fetchPetClinicalHistory } from '../services/pets-service';
+export type { ClinicalHistoryResult } from '../services/pets-service';
 
 export interface PetsParams {
     page?: number;
     limit?: number;
+    includeInactive?: boolean;
 }
 
 export interface PaginatedPets {
@@ -56,6 +58,24 @@ export function useDeactivatePet() {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (id: string) => deactivatePet(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['pets'] });
+        },
+    });
+}
+
+export function usePetClinicalHistory(id: string | null) {
+    return useQuery({
+        queryKey: ['pet-clinical-history', id],
+        queryFn: () => fetchPetClinicalHistory(id!),
+        enabled: !!id,
+    });
+}
+
+export function useReactivatePet() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => reactivatePet(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['pets'] });
         },

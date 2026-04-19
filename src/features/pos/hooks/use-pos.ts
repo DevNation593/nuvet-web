@@ -1,5 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchPosTransactions, fetchPosDailySummary, createPosTransaction, voidPosTransaction } from '../services/pos-service';
+import {
+    fetchPosTransactions,
+    fetchPosDailySummary,
+    fetchPosRegisters,
+    fetchPosDiscounts,
+    createPosTransaction,
+    voidPosTransaction,
+    fetchRegisterClosureReport,
+} from '../services/pos-service';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -53,7 +61,12 @@ export interface PosTransaction {
     providerInvoiceId?: string;
     invoice?: {
         providerInvoiceId?: string;
+        status?: string;
+        documentNumber?: string;
+        accessKey?: string;
+        authorizedAt?: string;
     };
+    invoiceIssueError?: string;
     createdAt: string;
     receiptNumber: string;
 }
@@ -65,6 +78,39 @@ export interface CreatePosTransactionInput {
     cashReceived?: number;
     notes?: string;
     clientId?: string;
+    branchId?: string;
+    invoice?: {
+        buyer?: {
+            legalName: string;
+            taxId: string;
+            idType?: '04' | '05' | '06' | '07' | '08';
+            email?: string;
+            phone?: string;
+            address?: string;
+        };
+        establishmentCode?: string;
+        emissionPointCode?: string;
+        asyncEmission?: boolean;
+        issueDate?: string;
+    };
+}
+
+export interface PosDiscount {
+    id: string;
+    name: string;
+    description?: string;
+    type: 'PERCENTAGE' | 'FIXED' | 'BUY_X_GET_Y';
+    value: number;
+    buyQuantity?: number;
+    getQuantity?: number;
+    minAmount?: number;
+    maxUses?: number;
+    usedCount?: number;
+    startAt?: string;
+    endAt?: string;
+    targetType: string;
+    targetId?: string;
+    category?: string;
 }
 
 export interface PosTransactionsParams {
@@ -83,6 +129,35 @@ export interface PosDailySummary {
     byPaymentMethod: Record<PaymentMethod, { count: number; total: number }>;
 }
 
+export interface PosRegisterClosureReport {
+    registerId: string;
+    openedAt: string;
+    closedAt: string;
+    openingBalance: number;
+    closingBalance: number;
+    expectedClosingBalance: number;
+    discrepancy: number;
+    summary: {
+        ticketsCount: number;
+        byPaymentMethod: Record<string, { count: number; total: number }>;
+        refundsTotal: number;
+        salesTotal: number;
+        expectedCashBalance: number;
+    };
+}
+
+export interface PosRegister {
+    id: string;
+    status: 'OPEN' | 'CLOSED';
+    openingBalance: number;
+    closingBalance?: number;
+    openedAt: string;
+    closedAt?: string;
+    branch?: { id: string; name: string };
+    openedBy?: { id: string; firstName: string; lastName: string };
+    closedBy?: { id: string; firstName: string; lastName: string };
+}
+
 // ─── Hooks ───────────────────────────────────────────────────────────────────
 
 export function usePosTransactions(params: PosTransactionsParams = {}, options: { enabled?: boolean } = {}) {
@@ -90,6 +165,7 @@ export function usePosTransactions(params: PosTransactionsParams = {}, options: 
         queryKey: ['pos-transactions', params],
         queryFn: () => fetchPosTransactions(params),
         enabled: options.enabled ?? true,
+        staleTime: 30_000,
     });
 }
 
@@ -99,6 +175,7 @@ export function usePosDailySummary(date?: string, options: { enabled?: boolean }
         queryKey: ['pos-daily-summary', queryDate],
         queryFn: () => fetchPosDailySummary(queryDate),
         enabled: options.enabled ?? true,
+        staleTime: 30_000,
     });
 }
 
@@ -125,5 +202,31 @@ export function useVoidPosTransaction(id: string | null) {
             queryClient.invalidateQueries({ queryKey: ['pos-daily-summary'] });
             queryClient.invalidateQueries({ queryKey: ['store-products'] });
         },
+    });
+}
+
+export function useRegisterClosureReport(registerId: string | null, options: { enabled?: boolean } = {}) {
+    return useQuery({
+        queryKey: ['pos-register-closure-report', registerId],
+        queryFn: () => fetchRegisterClosureReport(registerId!),
+        enabled: (options.enabled ?? true) && !!registerId,
+    });
+}
+
+export function usePosRegisters(options: { enabled?: boolean } = {}) {
+    return useQuery({
+        queryKey: ['pos-registers'],
+        queryFn: () => fetchPosRegisters(),
+        enabled: options.enabled ?? true,
+        staleTime: 60_000,
+    });
+}
+
+export function usePosDiscounts(options: { enabled?: boolean } = {}) {
+    return useQuery({
+        queryKey: ['pos-discounts'],
+        queryFn: () => fetchPosDiscounts(),
+        enabled: options.enabled ?? true,
+        staleTime: 5 * 60 * 1000,
     });
 }
