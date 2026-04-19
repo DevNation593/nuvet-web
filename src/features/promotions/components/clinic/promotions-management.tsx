@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import {
@@ -387,7 +387,7 @@ function PromotionModal({
         },
     });
 
-    const type = form.watch('type');
+    const type = useWatch({ control: form.control, name: 'type' });
     const isEdit = Boolean(defaultValues?.id);
 
     return (

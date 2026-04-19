@@ -18,13 +18,15 @@ export declare enum PermissionModule {
     STORE = "store",
     INVENTORY = "inventory",
     ADOPTIONS = "adoptions",
-    PROMOTIONS = "promotions",
-    POS = "pos",
     USERS = "users",
     TENANT_SETTINGS = "tenant_settings",
     NOTIFICATIONS = "notifications",
     REPORTS = "reports",
-    FILES = "files"
+    FILES = "files",
+    DISCOUNTS = "discounts",
+    BRANCHES = "branches",
+    POS = "pos",
+    BILLING = "billing"
 }
 export declare enum PermissionAction {
     READ = "read",
@@ -89,6 +91,45 @@ export declare enum StockMovementType {
     OUT = "OUT",
     ADJUSTMENT = "ADJUSTMENT"
 }
+export declare enum DiscountType {
+    PERCENTAGE = "PERCENTAGE",
+    FIXED = "FIXED",
+    BUY_X_GET_Y = "BUY_X_GET_Y"
+}
+export declare enum DiscountTargetType {
+    PRODUCT = "PRODUCT",
+    PRODUCT_CATEGORY = "PRODUCT_CATEGORY",
+    SERVICE = "SERVICE",
+    ALL_PRODUCTS = "ALL_PRODUCTS",
+    ALL_SERVICES = "ALL_SERVICES"
+}
+export declare enum PaymentMethod {
+    CASH = "CASH",
+    CARD = "CARD",
+    TRANSFER = "TRANSFER",
+    OTHER = "OTHER"
+}
+export declare enum PaymentStatus {
+    PENDING = "PENDING",
+    COMPLETED = "COMPLETED",
+    FAILED = "FAILED",
+    REFUNDED = "REFUNDED"
+}
+export declare enum CashRegisterStatus {
+    OPEN = "OPEN",
+    CLOSED = "CLOSED"
+}
+export declare enum PosTicketStatus {
+    OPEN = "OPEN",
+    COMPLETED = "COMPLETED",
+    REFUNDED = "REFUNDED",
+    PARTIAL_REFUND = "PARTIAL_REFUND",
+    CANCELLED = "CANCELLED"
+}
+export declare enum PosItemType {
+    PRODUCT = "PRODUCT",
+    SERVICE = "SERVICE"
+}
 export declare enum NotificationChannel {
     EMAIL = "EMAIL",
     PUSH = "PUSH",
@@ -122,10 +163,11 @@ export interface Tenant {
     name: string;
     slug: string;
     plan: TenantPlan;
-    activeModules?: PermissionModule[];
     logoUrl?: string;
     phone?: string;
     address?: string;
+    email?: string;
+    website?: string;
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;

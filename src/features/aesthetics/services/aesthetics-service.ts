@@ -1,4 +1,5 @@
 import api from '@/shared/lib/api-client';
+import { unwrapResponse, unwrapPaginatedResponse } from '@/shared/lib/api-helpers';
 import type {
     AestheticStatus,
     ApiEnvelope,
@@ -16,19 +17,15 @@ export interface FetchAestheticsParams {
 
 export async function fetchAesthetics(params: FetchAestheticsParams = {}) {
     const { data } = await api.get<ApiEnvelope<AestheticService[]>>('/aesthetics', { params });
-    const payload = data?.data ?? data;
-    return {
-        data: Array.isArray(payload) ? payload : (payload as { data?: AestheticService[] })?.data ?? [],
-        meta: data?.meta ?? { page: 1, totalPages: 1 },
-    };
+    return unwrapPaginatedResponse<AestheticService>(data);
 }
 
 export async function createAesthetic(input: CreateAestheticRequest) {
     const { data } = await api.post<ApiEnvelope<AestheticService>>('/aesthetics', input);
-    return (data?.data ?? data) as AestheticService;
+    return unwrapResponse<AestheticService>(data);
 }
 
 export async function updateAesthetic(id: string, input: UpdateAestheticRequest) {
     const { data } = await api.patch<ApiEnvelope<AestheticService>>(`/aesthetics/${id}`, input);
-    return (data?.data ?? data) as AestheticService;
+    return unwrapResponse<AestheticService>(data);
 }

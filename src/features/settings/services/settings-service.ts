@@ -1,40 +1,40 @@
 import api from '@/shared/lib/api-client';
+import { unwrapResponse, unwrapArrayResponse } from '@/shared/lib/api-helpers';
 import type {
     ApiEnvelope,
     CreateNotificationTemplateRequest,
-    PermissionModule,
     UpdateTenantRequest,
 } from '@nuvet/types';
-import type { NotificationTemplate, TenantSettings } from '../hooks/use-settings';
+import type { BillingConfig, NotificationTemplate, TenantSettings } from '../hooks/use-settings';
 
 export async function fetchTenantSettings() {
     const { data } = await api.get<ApiEnvelope<TenantSettings>>('/tenants/me');
-    return (data?.data ?? data) as TenantSettings;
+    return unwrapResponse<TenantSettings>(data);
 }
 
 export async function updateTenantSettings(input: UpdateTenantRequest) {
     const { data } = await api.patch<ApiEnvelope<TenantSettings>>('/tenants/me', input);
-    return (data?.data ?? data) as TenantSettings;
+    return unwrapResponse<TenantSettings>(data);
 }
 
-export async function fetchActiveModules() {
-    const { data } = await api.get<ApiEnvelope<PermissionModule[]>>('/tenants/me/modules');
-    return (data?.data ?? data ?? []) as PermissionModule[];
+export async function fetchBillingConfig() {
+    const { data } = await api.get<ApiEnvelope<BillingConfig>>('/tenants/me/billing-config');
+    return unwrapResponse<BillingConfig>(data);
 }
 
-export async function updateActiveModules(activeModules: PermissionModule[]) {
-    const { data } = await api.patch<ApiEnvelope<PermissionModule[]>>('/tenants/me/modules', { activeModules });
-    return (data?.data ?? data ?? activeModules) as PermissionModule[];
+export async function updateBillingConfig(input: Partial<BillingConfig & { billingApiSecret: string }>) {
+    const { data } = await api.patch<ApiEnvelope<BillingConfig>>('/tenants/me/billing-config', input);
+    return unwrapResponse<BillingConfig>(data);
 }
 
 export async function fetchNotificationTemplates() {
     const { data } = await api.get<ApiEnvelope<NotificationTemplate[]>>('/notifications/templates');
-    return (data?.data ?? data ?? []) as NotificationTemplate[];
+    return unwrapArrayResponse<NotificationTemplate>(data);
 }
 
 export async function createNotificationTemplate(input: CreateNotificationTemplateRequest) {
     const { data } = await api.post<ApiEnvelope<NotificationTemplate>>('/notifications/templates', input);
-    return (data?.data ?? data) as NotificationTemplate;
+    return unwrapResponse<NotificationTemplate>(data);
 }
 
 export async function updateNotificationTemplate(
@@ -45,5 +45,5 @@ export async function updateNotificationTemplate(
         `/notifications/templates/${id}`,
         input,
     );
-    return (data?.data ?? data) as NotificationTemplate;
+    return unwrapResponse<NotificationTemplate>(data);
 }

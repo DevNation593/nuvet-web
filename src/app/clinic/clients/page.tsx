@@ -3,4 +3,3 @@ import { ClientsManagement } from '@/features/clients/components/clinic/clients-
 export default function ClinicClientsPage() {
     return <ClientsManagement />;
 }
-

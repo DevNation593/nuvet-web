@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { NotificationChannel, PermissionModule, UserRole } from '@nuvet/types';
-import { cn } from '@/shared/lib/utils';
-import { DISPLAYABLE_MODULES, REQUIRED_MODULES } from '@/shared/lib/permissions';
+import { NotificationChannel, UserRole } from '@nuvet/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -19,11 +17,11 @@ import {
 } from '@/shared/components/ui/dialog';
 import { useCreateUser, useUsers } from '@/features/users/hooks/use-users';
 import {
-    useActiveModules,
+    useBillingConfig,
     useCreateNotificationTemplate,
     useNotificationTemplates,
     useTenantSettings,
-    useUpdateActiveModules,
+    useUpdateBillingConfig,
     useUpdateTenantSettings,
 } from '@/features/settings/hooks/use-settings';
 import { useChangeMyPassword } from '@/features/profile/hooks/use-profile';
@@ -55,6 +53,13 @@ const templateSchema = z.object({
     bodyTemplate: z.string().min(3),
 });
 
+const billingSchema = z.object({
+    billingApiKey: z.string().optional(),
+    billingApiSecret: z.string().optional(),
+    billingEstablishmentCode: z.string().max(10).optional(),
+    billingEmissionPointCode: z.string().max(10).optional(),
+});
+
 const passwordSchema = z.object({
     currentPassword: z.string().min(1, 'Ingresa tu contraseña actual'),
     newPassword: z
@@ -74,13 +79,13 @@ export function SettingsManagement() {
     const tenantQuery = useTenantSettings();
     const usersQuery = useUsers({ limit: 100 });
     const templatesQuery = useNotificationTemplates();
-    const activeModulesQuery = useActiveModules();
+    const billingQuery = useBillingConfig();
     const updateTenant = useUpdateTenantSettings();
-    const updateActiveModules = useUpdateActiveModules();
+    const updateBilling = useUpdateBillingConfig();
     const createUser = useCreateUser();
     const createTemplate = useCreateNotificationTemplate();
     const changePassword = useChangeMyPassword();
-    const { logout, user: currentUser } = useAuthStore();
+    const { logout } = useAuthStore();
 
     const tenantForm = useForm<z.infer<typeof tenantSchema>>({
         resolver: zodResolver(tenantSchema),
@@ -95,6 +100,15 @@ export function SettingsManagement() {
     const passwordForm = useForm<z.infer<typeof passwordSchema>>({
         resolver: zodResolver(passwordSchema),
         values: { currentPassword: '', newPassword: '', confirmPassword: '' },
+    });
+    const billingForm = useForm<z.infer<typeof billingSchema>>({
+        resolver: zodResolver(billingSchema),
+        values: {
+            billingApiKey: billingQuery.data?.billingApiKey ?? '',
+            billingApiSecret: '',
+            billingEstablishmentCode: billingQuery.data?.billingEstablishmentCode ?? '001',
+            billingEmissionPointCode: billingQuery.data?.billingEmissionPointCode ?? '001',
+        },
     });
 
     return (
@@ -200,64 +214,71 @@ export function SettingsManagement() {
                 </CardContent>
             </Card>
 
-            {currentUser?.role === UserRole.CLINIC_ADMIN && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">Módulos activos</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <p className="text-xs text-muted-foreground">
-                            Activa o desactiva módulos para controlar qué funcionalidades ve tu equipo en el menú lateral.
-                        </p>
-                        {activeModulesQuery.isLoading && <ClinicRowsSkeleton rows={4} />}
-                        {activeModulesQuery.isError && (
-                            <ClinicStateCard message="No se pudieron cargar los módulos." tone="error" />
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base">Facturación electrónica</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                        Configura las credenciales de Faktur para la emisión de facturas electrónicas.
+                        {billingQuery.data?.hasBillingApiSecret && (
+                            <span className="ml-1 font-medium text-green-600">API Secret configurado.</span>
                         )}
-                        {!activeModulesQuery.isLoading && !activeModulesQuery.isError && (() => {
-                            const active = activeModulesQuery.data ?? [];
-                            return (
-                                <div className="grid gap-3 sm:grid-cols-2">
-                                    {DISPLAYABLE_MODULES.map(({ module, label, description }) => {
-                                        const isRequired = REQUIRED_MODULES.includes(module);
-                                        const isActive = isRequired || active.includes(module);
-                                        const handleToggle = () => {
-                                            if (isRequired) return;
-                                            const next = isActive
-                                                ? active.filter((m: PermissionModule) => m !== module)
-                                                : [...active, module];
-                                            updateActiveModules.mutate(next);
-                                        };
-                                        return (
-                                            <button
-                                                key={module}
-                                                type="button"
-                                                onClick={handleToggle}
-                                                disabled={isRequired || updateActiveModules.isPending}
-                                                className={cn(
-                                                    'flex items-start gap-3 rounded-lg border p-3 text-left transition-colors',
-                                                    isActive ? 'border-primary bg-primary/5' : 'border-border bg-muted/20',
-                                                    isRequired ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:bg-muted/40',
-                                                )}
-                                            >
-                                                <span className={cn(
-                                                    'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border text-xs font-bold',
-                                                    isActive ? 'border-primary bg-primary text-primary-foreground' : 'border-input',
-                                                )}>
-                                                    {isActive && '✓'}
-                                                </span>
-                                                <span>
-                                                    <span className="block text-sm font-medium">{label}</span>
-                                                    <span className="block text-xs text-muted-foreground">{description}</span>
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            );
-                        })()}
-                    </CardContent>
-                </Card>
-            )}
+                    </p>
+                    <form
+                        className="grid gap-3 sm:grid-cols-2"
+                        onSubmit={billingForm.handleSubmit(async (values) => {
+                            try {
+                                const payload: Record<string, string> = {};
+                                if (values.billingApiKey) payload.billingApiKey = values.billingApiKey;
+                                if (values.billingApiSecret) payload.billingApiSecret = values.billingApiSecret;
+                                if (values.billingEstablishmentCode) payload.billingEstablishmentCode = values.billingEstablishmentCode;
+                                if (values.billingEmissionPointCode) payload.billingEmissionPointCode = values.billingEmissionPointCode;
+                                await updateBilling.mutateAsync(payload);
+                                toast.success('Configuración de facturación actualizada');
+                                billingForm.setValue('billingApiSecret', '');
+                            } catch {
+                                toast.error('No se pudo actualizar la configuración');
+                            }
+                        })}
+                    >
+                        <Field label="API Key (Faktur)">
+                            <input
+                                className="h-10 w-full rounded-md border border-input px-3 text-sm font-mono"
+                                placeholder="fk_live_..."
+                                {...billingForm.register('billingApiKey')}
+                            />
+                        </Field>
+                        <Field label="API Secret (Faktur)">
+                            <input
+                                type="password"
+                                className="h-10 w-full rounded-md border border-input px-3 text-sm font-mono"
+                                placeholder={billingQuery.data?.hasBillingApiSecret ? '••••••••••' : 'Ingresa el secret'}
+                                {...billingForm.register('billingApiSecret')}
+                            />
+                        </Field>
+                        <Field label="Código de Establecimiento">
+                            <input
+                                className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                                placeholder="001"
+                                {...billingForm.register('billingEstablishmentCode')}
+                            />
+                        </Field>
+                        <Field label="Código Punto de Emisión">
+                            <input
+                                className="h-10 w-full rounded-md border border-input px-3 text-sm"
+                                placeholder="001"
+                                {...billingForm.register('billingEmissionPointCode')}
+                            />
+                        </Field>
+                        <div className="sm:col-span-2">
+                            <Button type="submit" disabled={updateBilling.isPending}>
+                                {updateBilling.isPending ? 'Guardando...' : 'Guardar configuración'}
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
 
             <div className="grid gap-4 lg:grid-cols-2">
                 <Card>

@@ -40,8 +40,10 @@ import { findConflictingAppointment } from '@/features/appointments/lib/appointm
 import { getSlotsForDay } from '@/features/appointments/lib/agenda-utils';
 import { getAppointmentTypeLabel, getStatusLabel } from '@/shared/lib/status-labels';
 import { cn } from '@/shared/lib/utils';
+import { localDateTimeToUTC } from '@/shared/lib/timezone';
 import { CalendarClock, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { useBranchesStore } from '@/features/branches/store/branches.store';
 
 type AppointmentWithRelations = {
     id: string;
@@ -98,11 +100,13 @@ export function AppointmentsScreen() {
 
     const from = format(periodStart, 'yyyy-MM-dd');
     const to = format(periodEnd, 'yyyy-MM-dd');
+    const activeBranchId = useBranchesStore((s) => s.activeBranchId);
 
     const appointmentsQuery = useAppointments({
         from,
         to,
         staffId: staffFilter || undefined,
+        branchId: activeBranchId ?? undefined,
         limit: 100,
     });
     const petsQuery = usePets({ limit: 100 });
@@ -219,7 +223,7 @@ export function AppointmentsScreen() {
                 baseDate={baseDate}
                 appointments={appointments}
                 onCreate={async (values) => {
-                    const scheduledAt = `${values.date}T${values.time}:00.000Z`;
+                    const scheduledAt = localDateTimeToUTC(values.date, values.time);
                     const conflict = findConflictingAppointment(
                         scheduledAt,
                         values.durationMinutes,
@@ -242,6 +246,7 @@ export function AppointmentsScreen() {
                             durationMinutes: values.durationMinutes,
                             vetId: values.staffId,
                             notes: values.notes,
+                            branchId: activeBranchId ?? undefined,
                         });
                         toast.success('Cita creada');
                         setCreateOpen(false);
@@ -487,9 +492,10 @@ function CreateAppointmentModal({
         control: form.control,
         name: ['staffId', 'date', 'time', 'durationMinutes'],
     });
+    const branchId = useBranchesStore((s) => s.activeBranchId);
     const availabilityQuery = useAvailability(
         selectedStaffId && selectedDate
-            ? { staffId: selectedStaffId, date: selectedDate }
+            ? { staffId: selectedStaffId, date: selectedDate, branchId: branchId ?? undefined }
             : null,
     );
 
@@ -636,7 +642,7 @@ function ConflictHint({
     durationMinutes: number;
 }) {
     if (!staffId || !date || !time) return null;
-    const scheduledAt = `${date}T${time}:00.000Z`;
+    const scheduledAt = localDateTimeToUTC(date, time);
     const conflict = findConflictingAppointment(
         scheduledAt,
         durationMinutes,

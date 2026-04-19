@@ -3,4 +3,3 @@ import { VaccinationsManagement } from '@/features/vaccinations/components/clini
 export default function ClinicVaccinationsPage() {
     return <VaccinationsManagement />;
 }
-

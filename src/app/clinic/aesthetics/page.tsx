@@ -3,4 +3,3 @@ import { AestheticsManagement } from '@/features/aesthetics/components/clinic/ae
 export default function ClinicAestheticsPage() {
     return <AestheticsManagement />;
 }
-

@@ -3,4 +3,3 @@ import { SurgeriesManagement } from '@/features/surgeries/components/clinic/surg
 export default function ClinicSurgeriesPage() {
     return <SurgeriesManagement />;
 }
-

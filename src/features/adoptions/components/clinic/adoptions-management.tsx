@@ -20,6 +20,7 @@ import { useAdoptions, useCreateAdoptionListing, useUpdateAdoptionStatus } from 
 import { usePets } from '@/features/pets/hooks/use-pets';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
 import { getStatusLabel } from '@/shared/lib/status-labels';
+import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -63,6 +64,8 @@ export function AdoptionsManagement() {
                 <CardHeader className="pb-3">
                     <div className="max-w-xs">
                         <select
+                            aria-label="Filtrar por estado"
+                            title="Filtrar por estado"
                             className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value as AdoptionStatus | '')}
@@ -98,7 +101,7 @@ export function AdoptionsManagement() {
                                         <tr key={item.id} className="border-b">
                                             <td className="px-4 py-3">
                                                 <p className="font-medium">{item.pet?.name ?? 'Mascota'}</p>
-                                                <p className="text-xs text-muted-foreground">{item.pet?.species ?? ''}</p>
+                                                <p className="text-xs text-muted-foreground">{getPetSpeciesLabel(item.pet?.species)}</p>
                                             </td>
                                             <td className="px-4 py-3">{item.applicantName ?? 'Sin solicitud'}</td>
                                             <td className="px-4 py-3">

@@ -15,12 +15,20 @@ export function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     if (pathname.startsWith('/auth')) {
+        const noRedirectPaths = ['/auth/verify-email', '/auth/reset-password'];
+        if (noRedirectPaths.some((p) => pathname.startsWith(p))) {
+            return NextResponse.next();
+        }
+
+        const auth = getAuthFromCookie(request);
+        if (auth) {
+            return NextResponse.redirect(new URL('/clinic', request.url));
+        }
         return NextResponse.next();
     }
 
-    const auth = getAuthFromCookie(request);
-
     if (pathname.startsWith('/clinic')) {
+        const auth = getAuthFromCookie(request);
         if (!auth) {
             const url = new URL('/auth/login', request.url);
             url.searchParams.set('from', pathname);
@@ -30,10 +38,11 @@ export function proxy(request: NextRequest) {
     }
 
     if (pathname === '/' || pathname === '') {
+        const auth = getAuthFromCookie(request);
         if (auth) {
             return NextResponse.redirect(new URL('/clinic', request.url));
         }
-        return NextResponse.redirect(new URL('/auth/login', request.url));
+        return NextResponse.next();
     }
 
     return NextResponse.next();

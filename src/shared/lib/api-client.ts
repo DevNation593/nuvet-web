@@ -1,8 +1,9 @@
 import axios, { AxiosError } from 'axios';
 import { useAuthStore } from '@/features/auth/store/auth.store';
+import { env } from './env-validation';
 
 function resolveApiBaseUrl(raw?: string) {
-    const fallback = 'http://localhost:3000/api/v1';
+    const fallback = 'https://dev.nuvet.tech/api/v1';
     const value = raw?.trim();
 
     if (!value) return fallback;
@@ -13,7 +14,7 @@ function resolveApiBaseUrl(raw?: string) {
     return `${normalized}/api/v1`;
 }
 
-const baseURL = resolveApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
+const baseURL = resolveApiBaseUrl(env.NEXT_PUBLIC_API_URL);
 
 export const api = axios.create({
     baseURL,

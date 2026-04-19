@@ -57,12 +57,11 @@ export function useUpdateClient(id: string | null) {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (input: UpdateClientInput) => updateClient(id!, input),
-        onSuccess: (_, __, context) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['clients'] });
             if (id) {
                 queryClient.invalidateQueries({ queryKey: ['client', id] });
             }
-            return context;
         },
     });
 }

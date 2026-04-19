@@ -9,6 +9,9 @@ import {
     hasAnyPermission,
 } from '@nuvet/types';
 
+const BILLING_MODULE = 'billing' as PermissionModule;
+const DISCOUNTS_MODULE = 'discounts' as PermissionModule;
+
 // --- User type ----------------------------------------------------------------
 
 export type AuthUserWithPermissions = {
@@ -39,12 +42,37 @@ export function resolveUserPermissions(user: AuthUserWithPermissions): AppPermis
  * Prioridad: activeModules explicitos -> PLAN_MODULES del plan -> lista vacia.
  */
 export function resolveActiveModules(user: AuthUserWithPermissions): PermissionModule[] {
+    const normalizeModules = (modules: PermissionModule[]) => {
+        const normalized = new Set<PermissionModule>();
+
+        for (const module of modules) {
+            if (module === ('promotions' as PermissionModule)) {
+                normalized.add(DISCOUNTS_MODULE);
+                continue;
+            }
+
+            if (module === PermissionModule.VACCINATIONS) {
+                normalized.add(PermissionModule.INVENTORY);
+                continue;
+            }
+
+            if (module === BILLING_MODULE) {
+                normalized.add(PermissionModule.POS);
+                continue;
+            }
+
+            normalized.add(module);
+        }
+
+        return Array.from(normalized);
+    };
+
     if (!user) return [];
     if (Array.isArray(user.activeModules) && user.activeModules.length > 0) {
-        return user.activeModules;
+        return normalizeModules(user.activeModules);
     }
     if (user.tenantPlan) {
-        return PLAN_MODULES[user.tenantPlan] ?? [];
+        return normalizeModules(PLAN_MODULES[user.tenantPlan] ?? []);
     }
     return [];
 }
@@ -63,12 +91,13 @@ export const DISPLAYABLE_MODULES: Array<{ module: PermissionModule; label: strin
     { module: PermissionModule.PETS,            label: 'Pacientes',               description: 'Registro y seguimiento de mascotas' },
     { module: PermissionModule.CLIENTS,         label: 'Clientes',                description: 'Base de datos de clientes / duenos' },
     { module: PermissionModule.MEDICAL_RECORDS, label: 'Expedientes medicos',     description: 'Consultas, diagnostico y tratamientos' },
-    { module: PermissionModule.VACCINATIONS,    label: 'Vacunacion',              description: 'Control y recordatorios de vacunas' },
+    { module: PermissionModule.INVENTORY,       label: 'Inventario y vacunas',    description: 'Stock, lotes y control de vacunas' },
     { module: PermissionModule.AESTHETICS,      label: 'Estetica / Grooming',     description: 'Servicios de bano, corte y estetica' },
     { module: PermissionModule.SURGERIES,       label: 'Cirugias',                description: 'Programacion y seguimiento de cirugias' },
     { module: PermissionModule.STORE,           label: 'Tienda e inventario',     description: 'Productos, stock y ordenes de venta' },
     { module: PermissionModule.POS,             label: 'Punto de venta (POS)',    description: 'Caja rapida con carrito e impresion de recibos' },
-    { module: PermissionModule.PROMOTIONS,      label: 'Promociones',             description: 'Descuentos, codigos y ofertas especiales' },
+    { module: PermissionModule.POS,             label: 'Facturacion POS',          description: 'Facturacion desde punto de venta' },
+    { module: DISCOUNTS_MODULE,       label: 'Promociones',             description: 'Descuentos, codigos y ofertas especiales' },
     { module: PermissionModule.ADOPTIONS,       label: 'Adopciones',              description: 'Publicaciones y gestion de solicitudes' },
     { module: PermissionModule.NOTIFICATIONS,   label: 'Notificaciones',          description: 'Plantillas y envio de mensajes automatizados' },
     { module: PermissionModule.USERS,           label: 'Usuarios y roles',        description: 'Alta y gestion del personal de la clinica' },
@@ -81,28 +110,32 @@ export const REQUIRED_MODULES: PermissionModule[] = [
 
 // --- Route -> Module map ------------------------------------------------------
 
-export const clinicRouteModules: Array<{ prefix: string; module: PermissionModule }> = [
+export const clinicRouteModules: Array<{ prefix: string; module: PermissionModule; adminOnly?: boolean }> = [
     { prefix: '/clinic/appointments',    module: PermissionModule.APPOINTMENTS },
     { prefix: '/clinic/clients',         module: PermissionModule.CLIENTS },
     { prefix: '/clinic/pets',            module: PermissionModule.PETS },
     { prefix: '/clinic/medical-records', module: PermissionModule.MEDICAL_RECORDS },
-    { prefix: '/clinic/vaccinations',    module: PermissionModule.VACCINATIONS },
+    { prefix: '/clinic/vaccinations',    module: PermissionModule.INVENTORY },
     { prefix: '/clinic/aesthetics',      module: PermissionModule.AESTHETICS },
     { prefix: '/clinic/surgeries',       module: PermissionModule.SURGERIES },
     { prefix: '/clinic/store',           module: PermissionModule.STORE },
     { prefix: '/clinic/pos',             module: PermissionModule.POS },
-    { prefix: '/clinic/promotions',      module: PermissionModule.PROMOTIONS },
+    { prefix: '/clinic/billing',         module: PermissionModule.POS },
+    { prefix: '/clinic/insights',        module: PermissionModule.REPORTS },
+    { prefix: '/clinic/promotions',      module: DISCOUNTS_MODULE },
     { prefix: '/clinic/adoptions',       module: PermissionModule.ADOPTIONS },
+    { prefix: '/clinic/branches',        module: PermissionModule.BRANCHES, adminOnly: true },
     { prefix: '/clinic/settings',        module: PermissionModule.TENANT_SETTINGS },
 ];
 
 /**
  * Verifica si el pathname es accesible dado el conjunto de modulos activos del tenant.
  */
-export function canAccessClinicPath(pathname: string, activeModules: PermissionModule[]): boolean {
+export function canAccessClinicPath(pathname: string, activeModules: PermissionModule[], userRole?: UserRole): boolean {
     if (pathname === '/clinic' || pathname === '/clinic/') return true;
     const match = clinicRouteModules.find((entry) => pathname.startsWith(entry.prefix));
     if (!match) return true;
+    if (match.adminOnly && userRole !== UserRole.CLINIC_ADMIN) return false;
     return activeModules.includes(match.module);
 }
 
