@@ -146,8 +146,8 @@ export function InsightsDashboard() {
         <div className="space-y-4">
             <header className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Insights operativos</h2>
-                    <p className="text-sm text-muted-foreground">KPIs ejecutivos, CRM e inventario avanzado.</p>
+                    <h2 className="text-3xl font-bold tracking-tight">Reportes operativos</h2>
+                    <p className="text-sm text-muted-foreground">Indicadores ejecutivos, CRM e inventario avanzado.</p>
                 </div>
                 {loading ? (
                     <div className="flex items-center text-sm text-muted-foreground">
@@ -159,7 +159,7 @@ export function InsightsDashboard() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Rango de analisis</CardTitle>
+                    <CardTitle className="text-base">Rango de análisis</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-2 sm:grid-cols-4">
@@ -184,7 +184,7 @@ export function InsightsDashboard() {
                             className="h-10 rounded-md border border-input px-3 text-sm"
                             value={lookbackDays}
                             onChange={(event) => setLookbackDays(Number(event.target.value) || 30)}
-                            placeholder="Lookback reposicion"
+                            placeholder="Días para reposición"
                         />
                         <input
                             type="number"
@@ -193,7 +193,7 @@ export function InsightsDashboard() {
                             className="h-10 rounded-md border border-input px-3 text-sm"
                             value={inactiveDays}
                             onChange={(event) => setInactiveDays(Number(event.target.value) || 60)}
-                            placeholder="Inactividad CRM"
+                            placeholder="Días inactividad CRM"
                         />
                     </div>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -407,12 +407,12 @@ export function InsightsDashboard() {
                             <div className="flex flex-wrap gap-2">
                                 <input
                                     className="h-10 flex-1 rounded-md border border-input px-3 text-sm"
-                                    placeholder="Filtrar por productId (opcional)"
+                                    placeholder="Filtrar por ID de producto (opcional)"
                                     value={productId}
                                     onChange={(event) => setProductId(event.target.value)}
                                 />
                                 <Button variant="outline" onClick={() => kardexQ.refetch()}>
-                                    Recargar kardex
+                                    Recargar
                                 </Button>
                             </div>
                             <div className="overflow-x-auto">
