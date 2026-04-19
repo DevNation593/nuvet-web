@@ -259,7 +259,8 @@ export function BillingManagement() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-7 w-7"
-                                                        title="Descargar PDF"
+                                                        title={inv.accessKey ? 'Descargar PDF' : 'PDF no disponible (sin clave de acceso)'}
+                                                        disabled={!inv.accessKey}
                                                         onClick={() => void openDocument(inv.providerInvoiceId, 'pdf')}
                                                     >
                                                         <FileText className="h-3.5 w-3.5" />
@@ -268,7 +269,8 @@ export function BillingManagement() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-7 w-7"
-                                                        title="Descargar XML"
+                                                        title={inv.accessKey ? 'Descargar XML' : 'XML no disponible (sin clave de acceso)'}
+                                                        disabled={!inv.accessKey}
                                                         onClick={() => void openDocument(inv.providerInvoiceId, 'xml')}
                                                     >
                                                         <Download className="h-3.5 w-3.5" />
@@ -710,6 +712,8 @@ function InvoiceDetailDialog({
                         <Button
                             variant="outline"
                             size="sm"
+                            disabled={!invoice.accessKey}
+                            title={invoice.accessKey ? undefined : 'PDF no disponible (sin clave de acceso)'}
                             onClick={() => void openDocument(invoice.providerInvoiceId, 'pdf')}
                         >
                             <FileText className="mr-1 h-3 w-3" /> Ver PDF
@@ -717,6 +721,8 @@ function InvoiceDetailDialog({
                         <Button
                             variant="outline"
                             size="sm"
+                            disabled={!invoice.accessKey}
+                            title={invoice.accessKey ? undefined : 'XML no disponible (sin clave de acceso)'}
                             onClick={() => void openDocument(invoice.providerInvoiceId, 'xml')}
                         >
                             <Download className="mr-1 h-3 w-3" /> Descargar XML
