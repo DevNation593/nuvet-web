@@ -14,13 +14,10 @@ function validate() {
         }
     }
 
-    if (missing.length > 0) {
-        const message = `[EnvValidation] Missing required environment variables: ${missing.join(', ')}`;
-        if (process.env.NODE_ENV === 'production') {
-            console.error(message);
-        } else {
-            console.warn(message + ' (using defaults in development)');
-        }
+    if (missing.length > 0 && process.env.NODE_ENV !== 'production') {
+        console.warn(
+            `[EnvValidation] Missing environment variables: ${missing.join(', ')} (using defaults)`,
+        );
     }
 }
 
