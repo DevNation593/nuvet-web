@@ -96,7 +96,7 @@ function LoginPageContent() {
         <div className="absolute inset-0 z-0">
           <Image 
             src="/assets/gato-login.webp" 
-            alt="Fondo NuVet" 
+            alt="Fondo NuVet Tech" 
             fill
             priority
             className="object-cover object-center opacity-85 mix-blend-multiply" 
@@ -110,7 +110,7 @@ function LoginPageContent() {
             <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center transition-transform group-hover:scale-105">
               <PawPrint className="w-6 h-6 text-white" />
             </div>
-            <span className="font-bold text-2xl text-white tracking-tight">NuVet</span>
+            <span className="font-bold text-2xl text-white tracking-tight">NuVet Tech</span>
           </Link>
         </div>
 
@@ -129,13 +129,13 @@ function LoginPageContent() {
               ))}
             </div>
             <p className="text-emerald-50 text-sm font-medium">
-              Más de <span className="font-bold text-white">500 veterinarias</span> ya confían en NuVet.
+              Más de <span className="font-bold text-white">500 veterinarias</span> ya confían en NuVet Tech.
             </p>
           </div>
         </div>
 
         <div className="relative z-10 text-emerald-200/40 text-xs flex justify-between items-center w-full">
-          <p>© 2026 NuVet. Todos los derechos reservados.</p>
+          <p>© 2026 NuVet Tech. Todos los derechos reservados.</p>
           <div className="flex gap-4">
             <span className="hover:text-white cursor-pointer transition-colors">Privacidad</span>
             <span className="hover:text-white cursor-pointer transition-colors">Términos</span>

@@ -18,7 +18,7 @@ const services = [
 ];
 
 const testimonials = [
-  { name: "María García", role: "Directora - Clínica NovaVet", rating: 5, comment: "Con NuVet ordenamos agenda y cobros en una semana. El equipo ahora trabaja con claridad." },
+  { name: "María García", role: "Directora - Clínica NovaVet", rating: 5, comment: "Con NuVet Tech ordenamos agenda y cobros en una semana. El equipo ahora trabaja con claridad." },
   { name: "Carlos López", role: "Admin - VetCare Quito", rating: 5, comment: "Los recordatorios y el historial clínico nos ayudaron a reducir ausencias y errores." },
   { name: "Ana Martínez", role: "Coordinadora - VetPlus", rating: 5, comment: "Los reportes nos dan visibilidad diaria. Tomamos mejores decisiones con datos reales." },
 ];
@@ -33,7 +33,7 @@ export default function LandingPage() {
             <div className="w-9 h-9 rounded-lg bg-emerald-600 flex items-center justify-center transition-transform group-hover:scale-105">
               <PawPrint className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl text-emerald-950 tracking-tight">NuVet</span>
+            <span className="font-bold text-xl text-emerald-950 tracking-tight">NuVet Tech</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
@@ -130,7 +130,7 @@ export default function LandingPage() {
               <div>
                 <h2 className="text-4xl font-bold text-emerald-950 mb-4">¿Por qué elegirnos?</h2>
                 <p className="text-emerald-800/60 font-medium max-w-lg">
-                  NuVet simplifica la gestión diaria con procesos claros y soporte cercano para cada equipo.
+                  NuVet Tech simplifica la gestión diaria con procesos claros y soporte cercano para cada equipo.
                 </p>
               </div>
               <div className="space-y-6">
@@ -154,7 +154,7 @@ export default function LandingPage() {
             <div className="lg:w-1/2 relative">
               <div className="absolute -inset-4 border-2 border-emerald-300 rounded-[4rem] rounded-tr-none translate-x-6 translate-y-6" />
               <div className="relative h-[400px] w-full rounded-[3rem] rounded-tr-none overflow-hidden border-1 border-white shadow-2xl">
-                <Image src="/assets/vet2.webp" alt="Equipo NuVet" fill className="object-cover" />
+                <Image src="/assets/vet2.webp" alt="Equipo NuVet Tech" fill className="object-cover" />
               </div>
             </div>
           </div>
@@ -197,14 +197,14 @@ export default function LandingPage() {
               <Heart className="h-12 w-12 text-emerald-400 mb-6" />
               <h2 className="text-4xl font-bold text-white mb-6">¿Listo para ordenar tu operación?</h2>
               <p className="text-emerald-100/80 text-lg mb-8">
-                Agenda una demo y mira cómo NuVet unifica agenda, pacientes, cobros y reportes en un solo flujo.
+                Agenda una demo y mira cómo NuVet Tech unifica agenda, pacientes, cobros y reportes en un solo flujo.
               </p>
               <Button size="lg" variant="secondary" className="bg-white text-emerald-900 hover:bg-emerald-50 h-12 px-8 font-bold rounded-xl" asChild>
                 <Link href="/pages/contacto">Solicitar demo</Link>
               </Button>
             </div>
             <div className="absolute right-0 bottom-0 hidden lg:block w-1/2 h-full">
-               <Image src="/assets/gato2.webp" alt="Equipo NuVet" fill className="object-cover opacity-50" />
+               <Image src="/assets/gato2.webp" alt="Equipo NuVet Tech" fill className="object-cover opacity-50" />
             </div>
           </div>
         </div>
@@ -213,7 +213,7 @@ export default function LandingPage() {
       {/* Testimonios */}
       <section id="testimonios" className="py-24">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-emerald-950 mb-16">Lo que dicen las clínicas que usan NuVet</h2>
+          <h2 className="text-3xl font-bold text-center text-emerald-950 mb-16">Lo que dicen las clínicas que usan NuVet Tech</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((t, i) => (
               <Card key={i} className="bg-white border border-emerald-200 rounded-2xl p-2 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-300 transform hover:scale-[1.10]">
@@ -245,7 +245,7 @@ export default function LandingPage() {
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
                   <PawPrint className="w-6 h-6 text-emerald-400" />
                 </div>
-                <span className="font-bold text-2xl text-white tracking-tight">NuVet</span>
+                <span className="font-bold text-2xl text-white tracking-tight">NuVet Tech</span>
               </Link>
               <p className="text-sm text-emerald-100/70 leading-relaxed">
                 Plataforma digital para gestionar tu veterinaria: agenda, historiales, cobros y reportes en un solo lugar.

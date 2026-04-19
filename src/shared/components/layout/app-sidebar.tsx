@@ -73,7 +73,7 @@ export function AppSidebar() {
     return (
         <aside className="hidden w-64 flex-shrink-0 border-r bg-card md:block">
             <div className="flex h-16 items-center justify-center border-b px-4">
-                <span className="text-lg font-semibold text-primary">NuVet</span>
+                <span className="text-lg font-semibold text-primary">NuVet Tech</span>
             </div>
             <nav className="flex flex-col gap-1 p-3">
                 {navItems.map((item) => {
