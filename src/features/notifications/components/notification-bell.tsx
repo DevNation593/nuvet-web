@@ -30,7 +30,7 @@ export function NotificationBell() {
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative" aria-label="Notificaciones">
+                <Button variant="ghost" size="icon" className="relative" title="Ver notificaciones" aria-label="Notificaciones">
                     <Bell className="h-4 w-4" />
                     {unreadCount > 0 && (
                         <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
@@ -47,6 +47,7 @@ export function NotificationBell() {
                             variant="ghost"
                             size="sm"
                             className="h-auto p-1 text-xs text-muted-foreground"
+                            title="Marcar todas las notificaciones como leídas"
                             onClick={() => markAllRead.mutate()}
                             disabled={markAllRead.isPending}
                         >
@@ -93,6 +94,7 @@ export function NotificationBell() {
                                             variant="ghost"
                                             size="icon"
                                             className="h-6 w-6"
+                                            title="Marcar como leída"
                                             onClick={() => markRead.mutate(n.id)}
                                             aria-label="Marcar como leída"
                                         >
@@ -103,6 +105,7 @@ export function NotificationBell() {
                                         variant="ghost"
                                         size="icon"
                                         className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                        title="Eliminar notificación"
                                         onClick={() => deleteNotif.mutate(n.id)}
                                         aria-label="Eliminar notificación"
                                     >

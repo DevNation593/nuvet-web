@@ -33,7 +33,7 @@ import {
 } from '@/features/store/hooks/use-store';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
 import { getStatusLabel } from '@/shared/lib/status-labels';
-import { PackagePlus } from 'lucide-react';
+import { PackagePlus, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { resolveUserPermissions } from '@/shared/lib/permissions';
@@ -53,6 +53,9 @@ type ProductFormValues = z.infer<typeof productSchema>;
 export function StoreManagement() {
     const [productModalOpen, setProductModalOpen] = useState(false);
     const [stockDialogProductId, setStockDialogProductId] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('');
+    const [stockFilter, setStockFilter] = useState('');
 
     const user = useAuthStore((state) => state.user);
     const permissions = resolveUserPermissions(user);
@@ -70,34 +73,105 @@ export function StoreManagement() {
     const adjustStock = useAdjustStock();
     const updateOrderStatus = useUpdateOrderStatus(null);
 
-    const products = useMemo(() => (canReadStore ? (productsQuery.data?.data ?? []) : []), [canReadStore, productsQuery.data?.data]);
+    const allProducts = useMemo(() => (canReadStore ? (productsQuery.data?.data ?? []) : []), [canReadStore, productsQuery.data?.data]);
+
+    const categories = useMemo(() => {
+        const set = new Set(allProducts.map((p) => p.category).filter(Boolean));
+        return Array.from(set).sort();
+    }, [allProducts]);
+
+    const products = useMemo(() => {
+        let filtered = allProducts;
+        if (searchTerm.trim()) {
+            const term = searchTerm.trim().toLowerCase();
+            filtered = filtered.filter(
+                (p) => p.name.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term),
+            );
+        }
+        if (categoryFilter) {
+            filtered = filtered.filter((p) => p.category === categoryFilter);
+        }
+        if (stockFilter === 'low') {
+            filtered = filtered.filter((p) => p.stock > 0 && p.stock <= p.lowStockThreshold);
+        } else if (stockFilter === 'out') {
+            filtered = filtered.filter((p) => p.stock === 0);
+        } else if (stockFilter === 'ok') {
+            filtered = filtered.filter((p) => p.stock > p.lowStockThreshold);
+        }
+        return filtered;
+    }, [allProducts, searchTerm, categoryFilter, stockFilter]);
+
     const orders = useMemo(() => (canReadStore ? (ordersQuery.data?.data ?? []) : []), [canReadStore, ordersQuery.data?.data]);
     const lowStock = useMemo(() => (canReadInventory ? (lowStockQuery.data ?? []) : []), [canReadInventory, lowStockQuery.data]);
-    const stockTarget = useMemo(() => products.find((p) => p.id === stockDialogProductId), [products, stockDialogProductId]);
+    const stockTarget = useMemo(() => allProducts.find((p) => p.id === stockDialogProductId), [allProducts, stockDialogProductId]);
 
     return (
         <div className="space-y-4">
             <header className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Tienda / Inventario</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">Inventario</h2>
                     <p className="text-sm text-muted-foreground">Catálogo de productos y control de stock</p>
                 </div>
-                <Button onClick={() => setProductModalOpen(true)}>
+                <Button title="Crear un nuevo producto en el catálogo" onClick={() => setProductModalOpen(true)}>
                     <PackagePlus className="mr-2 h-4 w-4" />
                     Nuevo producto
                 </Button>
             </header>
 
+            <Card>
+                <CardContent className="pt-4">
+                    <div className="flex flex-wrap gap-3">
+                        <div className="relative flex-1 min-w-[200px]">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <input
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Buscar por nombre o SKU..."
+                                className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm"
+                            />
+                        </div>
+                        <select
+                            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            aria-label="Filtrar por categoría"
+                            title="Filtrar productos por categoría"
+                        >
+                            <option value="">Todas las categorías</option>
+                            {categories.map((cat) => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
+                        <select
+                            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                            value={stockFilter}
+                            onChange={(e) => setStockFilter(e.target.value)}
+                            aria-label="Filtrar por estado de stock"
+                            title="Filtrar productos por nivel de stock"
+                        >
+                            <option value="">Todo el stock</option>
+                            <option value="ok">Con stock</option>
+                            <option value="low">Stock bajo</option>
+                            <option value="out">Sin stock</option>
+                        </select>
+                    </div>
+                </CardContent>
+            </Card>
+
             <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base">Productos</CardTitle>
+                        <CardTitle className="text-base">
+                            Productos {products.length !== allProducts.length ? `(${products.length} de ${allProducts.length})` : `(${allProducts.length})`}
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         {!canReadStore ? (
                             <ClinicStateCard message="Sin permiso para ver catálogo de tienda." />
                         ) : productsQuery.isLoading ? (
                             <ClinicRowsSkeleton rows={6} />
+                        ) : products.length === 0 ? (
+                            <ClinicStateCard message={searchTerm || categoryFilter || stockFilter ? 'No se encontraron productos con los filtros aplicados.' : 'No hay productos registrados.'} />
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[760px] text-sm">
@@ -127,6 +201,7 @@ export function StoreManagement() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Ajustar cantidad en inventario"
                                                         onClick={() => setStockDialogProductId(product.id)}
                                                     >
                                                         Ajustar stock
@@ -203,6 +278,7 @@ export function StoreManagement() {
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
+                                                    title="Marcar esta orden como completada"
                                                     onClick={async () => {
                                                         try {
                                                             await updateOrderStatus.mutateAsync(OrderStatus.COMPLETED);
@@ -326,10 +402,10 @@ function ProductModal({
                         <textarea rows={3} className="w-full rounded-md border border-input px-3 py-2 text-sm" {...form.register('description')} />
                     </Field>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" title="Cancelar sin guardar" onClick={() => onOpenChange(false)}>
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" title="Guardar nuevo producto" disabled={loading}>
                             {loading ? 'Guardando...' : 'Guardar'}
                         </Button>
                     </DialogFooter>
@@ -385,10 +461,10 @@ function StockAdjustDialog({
                         <input className="h-10 w-full rounded-md border border-input px-3 text-sm" {...form.register('reason')} />
                     </Field>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" title="Cancelar ajuste de stock" onClick={() => onOpenChange(false)}>
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" title="Aplicar ajuste de stock" disabled={loading}>
                             {loading ? 'Aplicando...' : 'Aplicar'}
                         </Button>
                     </DialogFooter>

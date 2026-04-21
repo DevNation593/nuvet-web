@@ -37,7 +37,7 @@ export function UsersManagement() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Usuarios del equipo</h2>
-                <Button>Agregar usuario</Button>
+                <Button title="Agregar nuevo usuario al sistema">Agregar usuario</Button>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

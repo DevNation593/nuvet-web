@@ -85,6 +85,7 @@ export function BillingManagement() {
 
     const [page, setPage] = useState(1);
     const [statusFilter, setStatusFilter] = useState('');
+    const [paymentFilter, setPaymentFilter] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -102,10 +103,11 @@ export function BillingManagement() {
         page,
         limit: 15,
         ...(statusFilter && { invoiceStatus: statusFilter }),
+        ...(paymentFilter && { paymentMethod: paymentFilter }),
         ...(dateFrom && { dateFrom }),
         ...(dateTo && { dateTo }),
         ...(debouncedSearch && { search: debouncedSearch }),
-    }), [page, statusFilter, dateFrom, dateTo, debouncedSearch]);
+    }), [page, statusFilter, paymentFilter, dateFrom, dateTo, debouncedSearch]);
 
     const invoicesQ = useInvoices(queryParams, { enabled: canReadBilling });
     const invoices = invoicesQ.data?.data ?? [];
@@ -127,7 +129,10 @@ export function BillingManagement() {
                     </p>
                 </div>
                 {canCreateBilling && (
-                    <Button onClick={() => setIssueDialogOpen(true)}>
+                    <Button
+                        onClick={() => setIssueDialogOpen(true)}
+                        title="Emitir una nueva factura electrónica"
+                    >
                         <Plus className="mr-2 h-4 w-4" />
                         Emitir factura
                     </Button>
@@ -152,6 +157,7 @@ export function BillingManagement() {
                             value={statusFilter}
                             onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
                             aria-label="Filtrar por estado"
+                            title="Filtrar por estado de factura"
                         >
                             <option value="">Todos los estados</option>
                             <option value="AUTHORIZED">Autorizada (SRI)</option>
@@ -159,6 +165,18 @@ export function BillingManagement() {
                             <option value="SUBMITTED">Enviada al SRI</option>
                             <option value="REJECTED">Rechazada (SRI)</option>
                             <option value="ERROR">Error</option>
+                        </select>
+                        <select
+                            className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                            value={paymentFilter}
+                            onChange={(e) => { setPaymentFilter(e.target.value); setPage(1); }}
+                            aria-label="Filtrar por método de pago"
+                            title="Filtrar por método de pago"
+                        >
+                            <option value="">Todos los pagos</option>
+                            <option value="CASH">Efectivo</option>
+                            <option value="CARD">Tarjeta</option>
+                            <option value="TRANSFER">Transferencia</option>
                         </select>
                         <Input
                             type="date"
@@ -259,7 +277,8 @@ export function BillingManagement() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-7 w-7"
-                                                        title="Descargar PDF"
+                                                        title={inv.accessKey ? 'Descargar PDF' : 'PDF no disponible (sin clave de acceso)'}
+                                                        disabled={!inv.accessKey}
                                                         onClick={() => void openDocument(inv.providerInvoiceId, 'pdf')}
                                                     >
                                                         <FileText className="h-3.5 w-3.5" />
@@ -268,7 +287,8 @@ export function BillingManagement() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-7 w-7"
-                                                        title="Descargar XML"
+                                                        title={inv.accessKey ? 'Descargar XML' : 'XML no disponible (sin clave de acceso)'}
+                                                        disabled={!inv.accessKey}
                                                         onClick={() => void openDocument(inv.providerInvoiceId, 'xml')}
                                                     >
                                                         <Download className="h-3.5 w-3.5" />
@@ -293,6 +313,7 @@ export function BillingManagement() {
                                     variant="outline"
                                     size="icon"
                                     className="h-7 w-7"
+                                    title="Página anterior"
                                     disabled={!meta.hasPrevPage}
                                     onClick={() => setPage((p) => p - 1)}
                                 >
@@ -302,6 +323,7 @@ export function BillingManagement() {
                                     variant="outline"
                                     size="icon"
                                     className="h-7 w-7"
+                                    title="Página siguiente"
                                     disabled={!meta.hasNextPage}
                                     onClick={() => setPage((p) => p + 1)}
                                 >
@@ -478,6 +500,7 @@ function IssueInvoiceDialog({
 
                     <Button
                         className="w-full"
+                        title="Emitir factura electrónica desde este ticket"
                         disabled={!canCreate || issueInvoice.isPending || !ticketId.trim()}
                         onClick={() => void handleIssue()}
                     >
@@ -504,6 +527,7 @@ function IssueInvoiceDialog({
                                     variant="secondary"
                                     size="sm"
                                     className="flex-1"
+                                    title="Descargar PDF de la factura"
                                     onClick={() => void openDocument(lastIssuedInvoice.providerInvoiceId, 'pdf')}
                                 >
                                     <FileText className="mr-1 h-3 w-3" /> PDF
@@ -512,6 +536,7 @@ function IssueInvoiceDialog({
                                     variant="outline"
                                     size="sm"
                                     className="flex-1"
+                                    title="Descargar XML de la factura"
                                     onClick={() => void openDocument(lastIssuedInvoice.providerInvoiceId, 'xml')}
                                 >
                                     <Download className="mr-1 h-3 w-3" /> XML
@@ -701,6 +726,7 @@ function InvoiceDetailDialog({
                         <Button
                             variant="outline"
                             size="sm"
+                            title="Consultar estado actual en el SRI"
                             onClick={() => void handleCheckStatus()}
                             disabled={checkingStatus}
                         >
@@ -710,6 +736,8 @@ function InvoiceDetailDialog({
                         <Button
                             variant="outline"
                             size="sm"
+                            disabled={!invoice.accessKey}
+                            title={invoice.accessKey ? 'Ver PDF de la factura' : 'PDF no disponible (sin clave de acceso)'}
                             onClick={() => void openDocument(invoice.providerInvoiceId, 'pdf')}
                         >
                             <FileText className="mr-1 h-3 w-3" /> Ver PDF
@@ -717,6 +745,8 @@ function InvoiceDetailDialog({
                         <Button
                             variant="outline"
                             size="sm"
+                            disabled={!invoice.accessKey}
+                            title={invoice.accessKey ? 'Descargar XML de la factura' : 'XML no disponible (sin clave de acceso)'}
                             onClick={() => void openDocument(invoice.providerInvoiceId, 'xml')}
                         >
                             <Download className="mr-1 h-3 w-3" /> Descargar XML
@@ -724,6 +754,7 @@ function InvoiceDetailDialog({
                         <Button
                             variant="outline"
                             size="sm"
+                            title="Imprimir factura"
                             onClick={() => void printInvoice(invoice)}
                         >
                             <Printer className="mr-1 h-3 w-3" /> Imprimir
@@ -740,9 +771,32 @@ function InvoiceDetailDialog({
 async function openDocument(providerInvoiceId: string, format: 'pdf' | 'xml') {
     try {
         const doc = await fetchExternalInvoiceDocumentUrl(providerInvoiceId, format);
-        const tab = window.open(doc.url, '_blank', 'noopener,noreferrer');
-        if (!tab) {
-            toast.error(`El navegador bloqueó la apertura del ${format.toUpperCase()}. Habilita popups.`);
+
+        if (doc.url.startsWith('data:')) {
+            const res = await fetch(doc.url);
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `factura-${providerInvoiceId.slice(0, 8)}.${format}`;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+
+            setTimeout(() => {
+                URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(link);
+            }, 500);
+        } else {
+            const link = document.createElement('a');
+            link.href = doc.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     } catch {
         toast.warning(`No se pudo obtener el ${format.toUpperCase()} de esta factura.`);
@@ -750,12 +804,6 @@ async function openDocument(providerInvoiceId: string, format: 'pdf' | 'xml') {
 }
 
 function printInvoice(invoice: InvoiceListItem) {
-    const popup = window.open('', '_blank', 'noopener,noreferrer,width=760,height=920');
-    if (!popup) {
-        toast.error('No se pudo abrir la vista de impresión.');
-        return;
-    }
-
     const itemsHtml = invoice.items.map((item) =>
         `<tr>
             <td style="padding:4px 8px;border-bottom:1px solid #e2e8f0">${item.description}</td>
@@ -765,7 +813,7 @@ function printInvoice(invoice: InvoiceListItem) {
         </tr>`
     ).join('');
 
-    popup.document.write(`<!doctype html>
+    const html = `<!doctype html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
@@ -804,10 +852,36 @@ function printInvoice(invoice: InvoiceListItem) {
         <div class="row total-row">Total: $${invoice.total.toFixed(2)}</div>
     </div>
 </body>
-</html>`);
-    popup.document.close();
-    popup.focus();
-    popup.print();
+</html>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '-9999px';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentDocument ?? iframe.contentWindow?.document;
+    if (!iframeDoc) {
+        toast.error('No se pudo generar la vista de impresión.');
+        document.body.removeChild(iframe);
+        return;
+    }
+
+    iframeDoc.open();
+    iframeDoc.write(html);
+    iframeDoc.close();
+
+    iframe.onload = () => {
+        try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+        } catch {
+            toast.error('No se pudo abrir el diálogo de impresión.');
+        }
+        setTimeout(() => document.body.removeChild(iframe), 1000);
+    };
 }
 
 function extractErrorMessage(error: unknown): string | undefined {

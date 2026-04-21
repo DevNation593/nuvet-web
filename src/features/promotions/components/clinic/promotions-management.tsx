@@ -146,7 +146,7 @@ export function PromotionsManagement() {
                     <h2 className="text-3xl font-bold tracking-tight">Promociones</h2>
                     <p className="text-sm text-muted-foreground">Gestiona descuentos, códigos y ofertas especiales</p>
                 </div>
-                <Button onClick={openCreate}>
+                <Button onClick={openCreate} title="Crear nueva promoción">
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva promoción
                 </Button>
@@ -261,6 +261,7 @@ export function PromotionsManagement() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Editar promoción"
                                                         onClick={() => openEdit(promo)}
                                                     >
                                                         <Pencil className="h-3.5 w-3.5" />
@@ -268,6 +269,7 @@ export function PromotionsManagement() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title={promo.isActive ? 'Desactivar promoción' : 'Activar promoción'}
                                                         onClick={() => handleToggle(promo)}
                                                         disabled={togglePromotion.isPending && selectedId === promo.id}
                                                     >
@@ -282,6 +284,7 @@ export function PromotionsManagement() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Eliminar promoción"
                                                         onClick={() => setDeleteTarget(promo)}
                                                     >
                                                         <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -319,13 +322,14 @@ export function PromotionsManagement() {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)} title="Cancelar eliminación">
                             Cancelar
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={handleDelete}
                             disabled={deletePromotion.isPending}
+                            title="Confirmar eliminación"
                         >
                             {deletePromotion.isPending ? (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -502,10 +506,10 @@ function PromotionModal({
                         </Field>
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} title="Cancelar sin guardar">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} title="Guardar promoción">
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             {isEdit ? 'Guardar cambios' : 'Crear promoción'}
                         </Button>

@@ -19,6 +19,13 @@ import {
 } from '@/features/reports/hooks/use-reports';
 import { usePromotions } from '@/features/promotions/hooks/use-promotions';
 
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+    CASH: 'Efectivo',
+    CARD: 'Tarjeta',
+    TRANSFER: 'Transferencia',
+    OTHER: 'Otro',
+};
+
 function todayISO() {
     return new Date().toISOString().slice(0, 10);
 }
@@ -146,8 +153,8 @@ export function InsightsDashboard() {
         <div className="space-y-4">
             <header className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Insights operativos</h2>
-                    <p className="text-sm text-muted-foreground">KPIs ejecutivos, CRM e inventario avanzado.</p>
+                    <h2 className="text-3xl font-bold tracking-tight">Reportes operativos</h2>
+                    <p className="text-sm text-muted-foreground">Indicadores ejecutivos, CRM e inventario avanzado.</p>
                 </div>
                 {loading ? (
                     <div className="flex items-center text-sm text-muted-foreground">
@@ -159,7 +166,7 @@ export function InsightsDashboard() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Rango de analisis</CardTitle>
+                    <CardTitle className="text-base">Rango de análisis</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-2 sm:grid-cols-4">
@@ -184,7 +191,7 @@ export function InsightsDashboard() {
                             className="h-10 rounded-md border border-input px-3 text-sm"
                             value={lookbackDays}
                             onChange={(event) => setLookbackDays(Number(event.target.value) || 30)}
-                            placeholder="Lookback reposicion"
+                            placeholder="Días para reposición"
                         />
                         <input
                             type="number"
@@ -193,7 +200,7 @@ export function InsightsDashboard() {
                             className="h-10 rounded-md border border-input px-3 text-sm"
                             value={inactiveDays}
                             onChange={(event) => setInactiveDays(Number(event.target.value) || 60)}
-                            placeholder="Inactividad CRM"
+                            placeholder="Días inactividad CRM"
                         />
                     </div>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -270,6 +277,35 @@ export function InsightsDashboard() {
                         </CardContent>
                     </Card>
 
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-base">Ventas por método de pago</CardTitle>
+                        </CardHeader>
+                        <CardContent className="overflow-x-auto p-0">
+                            <table className="w-full min-w-[500px] text-sm">
+                                <thead className="border-y bg-muted/30 text-muted-foreground">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left">Método</th>
+                                        <th className="px-4 py-3 text-right">Transacciones</th>
+                                        <th className="px-4 py-3 text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(kpisQ.data?.byPaymentMethod ?? []).map((pm) => (
+                                        <tr key={pm.method} className="border-b">
+                                            <td className="px-4 py-3">{PAYMENT_METHOD_LABELS[pm.method] ?? pm.method}</td>
+                                            <td className="px-4 py-3 text-right">{pm.count}</td>
+                                            <td className="px-4 py-3 text-right font-mono">${pm.total.toFixed(2)}</td>
+                                        </tr>
+                                    ))}
+                                    {(kpisQ.data?.byPaymentMethod ?? []).length === 0 && (
+                                        <tr><td colSpan={3} className="px-4 py-3 text-center text-muted-foreground">Sin datos en el rango</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </CardContent>
+                    </Card>
+
                     <div className="grid gap-3 sm:grid-cols-2">
                         <Card>
                             <CardHeader>
@@ -322,6 +358,7 @@ export function InsightsDashboard() {
                     <div className="flex justify-end">
                         <Button
                             variant="outline"
+                            title="Enviar recordatorios clínicos pendientes"
                             disabled={triggerReminders.isPending}
                             onClick={async () => {
                                 try {
@@ -407,12 +444,12 @@ export function InsightsDashboard() {
                             <div className="flex flex-wrap gap-2">
                                 <input
                                     className="h-10 flex-1 rounded-md border border-input px-3 text-sm"
-                                    placeholder="Filtrar por productId (opcional)"
+                                    placeholder="Filtrar por ID de producto (opcional)"
                                     value={productId}
                                     onChange={(event) => setProductId(event.target.value)}
                                 />
-                                <Button variant="outline" onClick={() => kardexQ.refetch()}>
-                                    Recargar kardex
+                                <Button variant="outline" onClick={() => kardexQ.refetch()} title="Recargar datos del kardex">
+                                    Recargar
                                 </Button>
                             </div>
                             <div className="overflow-x-auto">

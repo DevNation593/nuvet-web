@@ -54,7 +54,7 @@ export function AdoptionsManagement() {
                     <h2 className="text-3xl font-bold tracking-tight">Adopciones</h2>
                     <p className="text-sm text-muted-foreground">Publicaciones y aprobación de solicitudes</p>
                 </div>
-                <Button onClick={() => setModalOpen(true)}>
+                <Button onClick={() => setModalOpen(true)} title="Crear nueva publicación de adopción">
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva publicación
                 </Button>
@@ -118,6 +118,7 @@ export function AdoptionsManagement() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Aprobar solicitud"
                                                         onClick={async () => {
                                                             try {
                                                                 setSelectedId(item.id);
@@ -134,6 +135,7 @@ export function AdoptionsManagement() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Rechazar solicitud"
                                                         onClick={async () => {
                                                             try {
                                                                 setSelectedId(item.id);
@@ -237,10 +239,10 @@ function AdoptionListingModal({
                         <textarea rows={3} className="w-full rounded-md border border-input px-3 py-2 text-sm" {...form.register('notes')} />
                     </Field>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} title="Cancelar sin guardar">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} title="Guardar publicación">
                             {loading ? 'Guardando...' : 'Guardar'}
                         </Button>
                     </DialogFooter>
