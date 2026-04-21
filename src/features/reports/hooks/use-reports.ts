@@ -26,6 +26,7 @@ export interface ExecutiveKpisResult {
         averageTicket: number;
     }>;
     byProfessional: Array<{ professionalId: string; name: string; appointments: number }>;
+    byPaymentMethod: Array<{ method: string; total: number; count: number }>;
 }
 
 export interface PosDiscountUsageReportResult {

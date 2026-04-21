@@ -3,7 +3,7 @@ import { InsightsDashboard } from '@/features/reports/components/clinic/insights
 
 export default function ClinicInsightsPage() {
     return (
-        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Cargando insights...</div>}>
+        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Cargando reportes...</div>}>
             <InsightsDashboard />
         </Suspense>
     );

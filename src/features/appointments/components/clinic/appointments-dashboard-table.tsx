@@ -44,7 +44,7 @@ export function AppointmentsDashboardTable() {
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                     Citas
                 </h1>
-                <Button>Nueva cita</Button>
+                <Button title="Crear una nueva cita">Nueva cita</Button>
             </div>
 
             <div className="rounded-md border bg-white dark:bg-gray-800 dark:border-gray-700">

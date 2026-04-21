@@ -58,7 +58,7 @@ export function SurgeriesManagement() {
                     <h2 className="text-3xl font-bold tracking-tight">Cirugías</h2>
                     <p className="text-sm text-muted-foreground">Programación y seguimiento quirúrgico</p>
                 </div>
-                <Button onClick={() => setModalOpen(true)}>
+                <Button onClick={() => setModalOpen(true)} title="Registrar nueva cirugía">
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva cirugía
                 </Button>
@@ -119,6 +119,7 @@ export function SurgeriesManagement() {
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
+                                                    title="Marcar cirugía como completada"
                                                     onClick={async () => {
                                                         try {
                                                             setSelectedId(surgery.id);
@@ -246,10 +247,10 @@ function SurgeryModal({
                         <textarea rows={3} className="w-full rounded-md border border-input px-3 py-2 text-sm" {...form.register('notes')} />
                     </Field>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} title="Cancelar sin guardar">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} title="Guardar cirugía">
                             {loading ? 'Guardando...' : 'Guardar'}
                         </Button>
                     </DialogFooter>

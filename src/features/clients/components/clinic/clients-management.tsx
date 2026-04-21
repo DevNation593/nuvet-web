@@ -89,6 +89,7 @@ export function ClientsManagement() {
                         setEditingClient(null);
                         setModalOpen(true);
                     }}
+                    title="Registrar nuevo cliente"
                 >
                     <UserPlus className="mr-2 h-4 w-4" />
                     Nuevo Cliente
@@ -115,7 +116,7 @@ export function ClientsManagement() {
                             message="No se pudieron cargar los clientes."
                             tone="error"
                             action={
-                                <Button variant="outline" onClick={() => clientsQuery.refetch()}>
+                                <Button variant="outline" onClick={() => clientsQuery.refetch()} title="Reintentar carga de datos">
                                     Reintentar
                                 </Button>
                             }
@@ -161,6 +162,7 @@ export function ClientsManagement() {
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
+                                                    title="Editar cliente"
                                                     onClick={(event) => {
                                                         event.stopPropagation();
                                                         setEditingClient(client);
@@ -336,10 +338,10 @@ function ClientModal({
                     )}
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} title="Cancelar sin guardar">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} title="Guardar cliente">
                             {loading ? 'Guardando...' : 'Guardar'}
                         </Button>
                     </DialogFooter>
