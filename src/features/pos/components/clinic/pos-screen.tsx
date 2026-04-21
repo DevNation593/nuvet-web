@@ -92,6 +92,7 @@ export function PosScreen() {
                 <div className="flex gap-2">
                     <Button
                         variant={view === 'pos' ? 'default' : 'outline'}
+                        title="Ver caja registradora"
                         onClick={() => setView('pos')}
                     >
                         <ShoppingCart className="mr-2 h-4 w-4" />
@@ -99,6 +100,7 @@ export function PosScreen() {
                     </Button>
                     <Button
                         variant={view === 'history' ? 'default' : 'outline'}
+                        title="Ver historial de ventas"
                         onClick={() => setView('history')}
                     >
                         <ReceiptText className="mr-2 h-4 w-4" />
@@ -360,7 +362,7 @@ function PosRegister() {
                             Carrito
                         </CardTitle>
                         {cart.length > 0 && (
-                            <Button size="sm" variant="ghost" onClick={clearCart}>
+                            <Button size="sm" variant="ghost" title="Vaciar carrito de productos" onClick={clearCart}>
                                 <X className="mr-1 h-3.5 w-3.5" /> Vaciar
                             </Button>
                         )}
@@ -441,6 +443,7 @@ function PosRegister() {
                             <Button
                                 size="sm"
                                 variant="outline"
+                                title="Aplicar código de promoción"
                                 onClick={applyPromoCode}
                                 disabled={!selectedPromotionId}
                             >
@@ -490,6 +493,7 @@ function PosRegister() {
 
                         <Button
                             className="w-full"
+                            title="Proceder al cobro"
                             disabled={cart.length === 0}
                             onClick={() => setPaymentModalOpen(true)}
                         >
@@ -785,10 +789,11 @@ function PaymentModal({
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                    <Button variant="outline" title="Cancelar cobro" onClick={() => onOpenChange(false)}>
                         Cancelar
                     </Button>
                     <Button
+                        title="Confirmar y registrar venta"
                         onClick={() => {
                             void onConfirm(
                                 method,
@@ -1303,6 +1308,7 @@ function TransactionHistory() {
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
+                                                    title="Ver detalle del cierre de caja"
                                                     disabled={register.status !== 'CLOSED' || closureReportQ.isFetching}
                                                     onClick={() => {
                                                         void handleFetchClosureReport(register.id);
@@ -1334,6 +1340,7 @@ function TransactionHistory() {
                         />
                         <Button
                             variant="outline"
+                            title="Consultar cierre de caja"
                             onClick={() => {
                                 void handleFetchClosureReport();
                             }}
@@ -1372,6 +1379,7 @@ function TransactionHistory() {
                             <Button
                                 variant="secondary"
                                 className="w-full"
+                                title="Imprimir reporte del cierre"
                                 onClick={() => printClosureReport(closureReportQ.data!)}
                             >
                                 <Printer className="mr-2 h-4 w-4" />
@@ -1431,6 +1439,7 @@ function TransactionHistory() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Anular venta"
                                                         onClick={() => {
                                                             setSelectedId(tx.id);
                                                             setVoidTarget(tx);
@@ -1441,6 +1450,7 @@ function TransactionHistory() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Emitir factura"
                                                         disabled={!canCreateBilling}
                                                         onClick={() => {
                                                             router.push(buildBillingUrl(tx, 'issue'));
@@ -1451,6 +1461,7 @@ function TransactionHistory() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Imprimir comprobante"
                                                         disabled={!canReadBilling || printingId === tx.id}
                                                         onClick={() => {
                                                             void handlePrintInvoice(tx);
@@ -1466,6 +1477,7 @@ function TransactionHistory() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Ver PDF de factura"
                                                         disabled={!canReadBilling || pdfLoadingId === tx.id}
                                                         onClick={() => {
                                                             void handleOpenPdf(tx);
@@ -1481,6 +1493,7 @@ function TransactionHistory() {
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Descargar XML de factura"
                                                         disabled={!canReadBilling || xmlLoadingId === tx.id}
                                                         onClick={() => {
                                                             void handleDownloadXml(tx);
@@ -1496,6 +1509,7 @@ function TransactionHistory() {
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
+                                                        title="Consultar estado de factura"
                                                         disabled={!canReadBilling}
                                                         onClick={() => {
                                                             router.push(buildBillingUrl(tx, 'status'));
@@ -1532,10 +1546,15 @@ function TransactionHistory() {
                         />
                     </label>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setVoidTarget(null)}>
+                        <Button variant="outline" title="Cancelar anulación" onClick={() => setVoidTarget(null)}>
                             Cancelar
                         </Button>
-                        <Button variant="destructive" onClick={confirmVoid} disabled={voidTransaction.isPending}>
+                        <Button
+                            variant="destructive"
+                            title="Confirmar anulación de venta"
+                            onClick={confirmVoid}
+                            disabled={voidTransaction.isPending}
+                        >
                             {voidTransaction.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Confirmar anulación
                         </Button>

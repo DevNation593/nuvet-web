@@ -159,7 +159,7 @@ export function SettingsManagement() {
                             <input className="h-10 w-full rounded-md border border-input px-3 text-sm" {...tenantForm.register('website')} />
                         </Field>
                         <div className="sm:col-span-2">
-                            <Button type="submit" disabled={updateTenant.isPending}>
+                            <Button type="submit" disabled={updateTenant.isPending} title="Guardar configuración del negocio">
                                 {updateTenant.isPending ? 'Guardando...' : 'Guardar cambios'}
                             </Button>
                         </div>
@@ -206,7 +206,7 @@ export function SettingsManagement() {
                             <input type="password" className="h-10 w-full rounded-md border border-input px-3 text-sm" {...passwordForm.register('confirmPassword')} />
                         </Field>
                         <div className="sm:col-span-2">
-                            <Button type="submit" disabled={changePassword.isPending}>
+                            <Button type="submit" disabled={changePassword.isPending} title="Cambiar contraseña">
                                 {changePassword.isPending ? 'Actualizando...' : 'Cambiar contraseña'}
                             </Button>
                         </div>
@@ -272,7 +272,7 @@ export function SettingsManagement() {
                             />
                         </Field>
                         <div className="sm:col-span-2">
-                            <Button type="submit" disabled={updateBilling.isPending}>
+                            <Button type="submit" disabled={updateBilling.isPending} title="Guardar datos de facturación">
                                 {updateBilling.isPending ? 'Guardando...' : 'Guardar configuración'}
                             </Button>
                         </div>
@@ -284,7 +284,7 @@ export function SettingsManagement() {
                 <Card>
                     <CardHeader className="flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-base">Usuarios del personal</CardTitle>
-                        <Button size="sm" onClick={() => setUserModalOpen(true)}>
+                        <Button size="sm" onClick={() => setUserModalOpen(true)} title="Abrir formulario para crear usuario del personal">
                             Nuevo usuario
                         </Button>
                     </CardHeader>
@@ -312,7 +312,7 @@ export function SettingsManagement() {
                 <Card>
                     <CardHeader className="flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-base">Plantillas de notificación</CardTitle>
-                        <Button size="sm" onClick={() => setTemplateModalOpen(true)}>
+                        <Button size="sm" onClick={() => setTemplateModalOpen(true)} title="Abrir formulario para nueva plantilla de notificación">
                             Nueva plantilla
                         </Button>
                     </CardHeader>
@@ -426,10 +426,10 @@ function UserModal({
                         <input type="password" className="h-10 w-full rounded-md border border-input px-3 text-sm" {...form.register('password')} />
                     </Field>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} title="Cancelar">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} title="Guardar">
                             {loading ? 'Guardando...' : 'Guardar'}
                         </Button>
                     </DialogFooter>
@@ -487,10 +487,10 @@ function TemplateModal({
                         <textarea rows={3} className="w-full rounded-md border border-input px-3 py-2 text-sm" {...form.register('bodyTemplate')} />
                     </Field>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} title="Cancelar">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} title="Guardar">
                             {loading ? 'Guardando...' : 'Guardar'}
                         </Button>
                     </DialogFooter>

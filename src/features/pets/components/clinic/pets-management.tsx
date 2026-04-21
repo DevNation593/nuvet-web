@@ -138,6 +138,7 @@ export function PetsManagement() {
                     <p className="text-sm text-muted-foreground">Gestiona el registro de mascotas</p>
                 </div>
                 <Button
+                    title="Registrar una nueva mascota"
                     onClick={() => {
                         setEditingPet(null);
                         setModalOpen(true);
@@ -195,7 +196,11 @@ export function PetsManagement() {
                             message="No se pudieron cargar las mascotas."
                             tone="error"
                             action={
-                                <Button variant="outline" onClick={() => petsQuery.refetch()}>
+                                <Button
+                                    variant="outline"
+                                    title="Reintentar carga de datos"
+                                    onClick={() => petsQuery.refetch()}
+                                >
                                     Reintentar
                                 </Button>
                             }
@@ -265,6 +270,7 @@ export function PetsManagement() {
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
+                                                        title={(pet.isActive ?? true) ? 'Desactivar mascota' : 'Activar mascota'}
                                                         onClick={async (event) => {
                                                             event.stopPropagation();
                                                             try {
@@ -358,6 +364,7 @@ export function PetsManagement() {
                                                         type="button"
                                                         size="sm"
                                                         variant="outline"
+                                                        title="Ver historial clínico completo"
                                                         onClick={() =>
                                                             router.push(
                                                                 `/clinic/medical-records?petId=${selectedPet.id}&recordId=${record.id}`,
@@ -517,10 +524,15 @@ function PetModal({
                         <textarea rows={3} className="w-full rounded-md border border-input px-3 py-2 text-sm" {...form.register('notes')} />
                     </InputField>
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            title="Cancelar sin guardar"
+                            onClick={() => onOpenChange(false)}
+                        >
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} title="Guardar mascota">
                             {loading ? 'Guardando...' : 'Guardar'}
                         </Button>
                     </DialogFooter>

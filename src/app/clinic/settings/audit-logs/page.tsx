@@ -132,6 +132,7 @@ function AuditLogsContent() {
                         <Button
                             variant="outline"
                             size="sm"
+                            title="Página anterior"
                             disabled={!meta.hasPrevPage}
                             onClick={() => setPage((p) => p - 1)}
                         >
@@ -140,6 +141,7 @@ function AuditLogsContent() {
                         <Button
                             variant="outline"
                             size="sm"
+                            title="Página siguiente"
                             disabled={!meta.hasNextPage}
                             onClick={() => setPage((p) => p + 1)}
                         >

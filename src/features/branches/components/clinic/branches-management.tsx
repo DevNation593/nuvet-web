@@ -81,7 +81,7 @@ export function BranchesManagement() {
                         Administra las sucursales de tu clínica
                     </p>
                 </div>
-                <Button onClick={openCreate} size="sm">
+                <Button onClick={openCreate} size="sm" title="Crear nueva sucursal">
                     <Plus className="mr-2 h-4 w-4" /> Nueva sucursal
                 </Button>
             </div>
@@ -95,7 +95,7 @@ export function BranchesManagement() {
                         <ClinicStateCard
                             message="No hay sucursales registradas. Crea la primera."
                             action={
-                                <Button size="sm" onClick={openCreate}>
+                                <Button size="sm" onClick={openCreate} title="Crear primera sucursal">
                                     <Plus className="mr-2 h-4 w-4" /> Crear sucursal
                                 </Button>
                             }
@@ -334,10 +334,10 @@ function BranchFormDialog({
                     )}
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} title="Cancelar sin guardar">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={saving}>
+                        <Button type="submit" disabled={saving} title="Guardar sucursal">
                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             {editing ? 'Guardar' : 'Crear'}
                         </Button>
@@ -370,10 +370,10 @@ function DeleteBranchDialog({
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                    <Button variant="outline" onClick={() => onOpenChange(false)} title="Cancelar eliminación">
                         Cancelar
                     </Button>
-                    <Button variant="destructive" disabled={deleting} onClick={onConfirm}>
+                    <Button variant="destructive" disabled={deleting} onClick={onConfirm} title="Confirmar eliminación">
                         {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Eliminar
                     </Button>
