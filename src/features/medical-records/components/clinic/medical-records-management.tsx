@@ -103,7 +103,7 @@ export function MedicalRecordsManagement() {
                     <h2 className="text-3xl font-bold tracking-tight">Consulta</h2>
                     <p className="text-sm text-muted-foreground">Historial médico y evolución clínica</p>
                 </div>
-                <Button onClick={() => setModalOpen(true)} disabled={!selectedPetId}>
+                <Button onClick={() => setModalOpen(true)} disabled={!selectedPetId} title="Crear nuevo registro médico">
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva Consulta
                 </Button>
@@ -151,7 +151,7 @@ export function MedicalRecordsManagement() {
                                 message="No se pudieron cargar las consultas."
                                 tone="error"
                                 action={
-                                    <Button variant="outline" onClick={() => recordsQuery.refetch()}>
+                                    <Button variant="outline" onClick={() => recordsQuery.refetch()} title="Actualizar datos">
                                         Reintentar
                                     </Button>
                                 }
@@ -372,10 +372,10 @@ function MedicalRecordModal({
                     </InputField>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} title="Cancelar sin guardar">
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" disabled={loading} title="Guardar registro">
                             {loading ? 'Guardando...' : 'Guardar consulta'}
                         </Button>
                     </DialogFooter>

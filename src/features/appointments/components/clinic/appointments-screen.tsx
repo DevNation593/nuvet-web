@@ -132,7 +132,12 @@ export function AppointmentsScreen() {
             <header className="rounded-xl border bg-card p-3 sm:p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" onClick={() => setBaseDate((d) => (view === 'day' ? addDays(d, -1) : subWeeks(d, 1)))}>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            title="Fecha anterior"
+                            onClick={() => setBaseDate((d) => (view === 'day' ? addDays(d, -1) : subWeeks(d, 1)))}
+                        >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <div className="min-w-[190px] text-center text-sm font-semibold sm:text-base">
@@ -140,7 +145,12 @@ export function AppointmentsScreen() {
                                 ? format(baseDate, "EEEE d 'de' MMMM yyyy", { locale: es })
                                 : `${format(periodStart, 'd MMM', { locale: es })} - ${format(addDays(periodEnd, -1), 'd MMM yyyy', { locale: es })}`}
                         </div>
-                        <Button variant="outline" size="icon" onClick={() => setBaseDate((d) => (view === 'day' ? addDays(d, 1) : addWeeks(d, 1)))}>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            title="Fecha siguiente"
+                            onClick={() => setBaseDate((d) => (view === 'day' ? addDays(d, 1) : addWeeks(d, 1)))}
+                        >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                     </div>
@@ -150,6 +160,8 @@ export function AppointmentsScreen() {
                             value={staffFilter}
                             onChange={(e) => setStaffFilter(e.target.value)}
                             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            aria-label="Filtrar por profesional"
+                            title="Filtrar citas por profesional"
                         >
                             <option value="">Todo el personal</option>
                             {staff.map((user) => (
@@ -158,13 +170,23 @@ export function AppointmentsScreen() {
                                 </option>
                             ))}
                         </select>
-                        <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => setView('day')}>
+                        <Button
+                            variant={view === 'day' ? 'default' : 'outline'}
+                            size="sm"
+                            title="Vista diaria"
+                            onClick={() => setView('day')}
+                        >
                             Día
                         </Button>
-                        <Button variant={view === 'week' ? 'default' : 'outline'} size="sm" onClick={() => setView('week')}>
+                        <Button
+                            variant={view === 'week' ? 'default' : 'outline'}
+                            size="sm"
+                            title="Vista semanal"
+                            onClick={() => setView('week')}
+                        >
                             Semana
                         </Button>
-                        <Button size="sm" onClick={() => setCreateOpen(true)}>
+                        <Button size="sm" title="Crear una nueva cita" onClick={() => setCreateOpen(true)}>
                             <Plus className="mr-1 h-4 w-4" />
                             Nueva Cita
                         </Button>
@@ -185,7 +207,7 @@ export function AppointmentsScreen() {
                                 message="No se pudo cargar la agenda."
                                 tone="error"
                                 action={
-                                    <Button variant="outline" onClick={() => appointmentsQuery.refetch()}>
+                                    <Button variant="outline" title="Actualizar datos" onClick={() => appointmentsQuery.refetch()}>
                                         Reintentar
                                     </Button>
                                 }
@@ -427,16 +449,36 @@ function AppointmentDetailPanel({
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 pt-2">
-                            <Button size="sm" variant="outline" onClick={() => onUpdateStatus('CONFIRMED')}>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                title="Confirmar cita"
+                                onClick={() => onUpdateStatus('CONFIRMED')}
+                            >
                                 Confirmar
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => onUpdateStatus('IN_PROGRESS')}>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                title="Iniciar atención"
+                                onClick={() => onUpdateStatus('IN_PROGRESS')}
+                            >
                                 En curso
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => onUpdateStatus('COMPLETED')}>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                title="Completar cita"
+                                onClick={() => onUpdateStatus('COMPLETED')}
+                            >
                                 Completar
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => onUpdateStatus('CANCELLED')}>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                title="Cancelar cita"
+                                onClick={() => onUpdateStatus('CANCELLED')}
+                            >
                                 Cancelar
                             </Button>
                         </div>
@@ -597,10 +639,10 @@ function CreateAppointmentModal({
                     />
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="outline" title="Cancelar" onClick={() => onOpenChange(false)}>
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={creating}>
+                        <Button type="submit" title="Guardar cita" disabled={creating}>
                             {creating ? 'Creando...' : 'Crear cita'}
                         </Button>
                     </DialogFooter>

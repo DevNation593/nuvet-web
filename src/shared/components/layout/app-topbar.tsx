@@ -37,6 +37,7 @@ export function AppTopbar({ title }: { title?: string }) {
                         variant="ghost"
                         size="icon"
                         className="md:hidden"
+                        title="Abrir menú"
                         onClick={() => setMobileOpen(true)}
                         aria-label="Abrir menú"
                     >
@@ -50,7 +51,7 @@ export function AppTopbar({ title }: { title?: string }) {
                     <span className="hidden text-sm text-muted-foreground sm:inline">
                         {user?.firstName} {user?.lastName}
                     </span>
-                    <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Cerrar sesión">
+                    <Button variant="ghost" size="icon" title="Cerrar sesión" onClick={handleLogout} aria-label="Cerrar sesión">
                         <LogOut className="h-4 w-4" />
                     </Button>
                 </div>

@@ -36,7 +36,7 @@ export function PetsDashboardTable() {
                 <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                     Pacientes
                 </h1>
-                <Button>Agregar paciente</Button>
+                <Button title="Agregar nuevo paciente">Agregar paciente</Button>
             </div>
 
             <div className="rounded-md border bg-white dark:bg-gray-800 dark:border-gray-700">
