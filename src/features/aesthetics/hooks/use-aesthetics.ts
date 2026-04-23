@@ -4,7 +4,7 @@ import type {
     CreateAestheticRequest,
     UpdateAestheticRequest,
 } from '@nuvet/types';
-import { fetchAesthetics, createAesthetic, updateAesthetic } from '../services/aesthetics-service';
+import { fetchAesthetics, createAesthetic, updateAesthetic, deleteAesthetic } from '../services/aesthetics-service';
 
 export interface AestheticService {
     id: string;
@@ -43,6 +43,16 @@ export function useUpdateAesthetic(id: string | null) {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (input: UpdateAestheticRequest) => updateAesthetic(id!, input),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['aesthetics'] });
+        },
+    });
+}
+
+export function useDeleteAesthetic() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => deleteAesthetic(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['aesthetics'] });
         },

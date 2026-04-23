@@ -1,12 +1,13 @@
 'use client';
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { 
   PawPrint, CalendarCheck, ClipboardList, CreditCard, BarChart3, Heart,
-  Star, Clock, Shield, Users, ArrowRight, Menu,
+  Clock, Shield, Users, ArrowRight, Menu,
   Facebook, Instagram, Twitter, Phone, Mail
 } from "lucide-react";
 
@@ -17,13 +18,8 @@ const services = [
   { icon: BarChart3, title: "Reportes de gestión", description: "Indicadores clave para tomar decisiones con datos reales." },
 ];
 
-const testimonials = [
-  { name: "María García", role: "Directora - Clínica NovaVet", rating: 5, comment: "Con NuVet Tech ordenamos agenda y cobros en una semana. El equipo ahora trabaja con claridad." },
-  { name: "Carlos López", role: "Admin - VetCare Quito", rating: 5, comment: "Los recordatorios y el historial clínico nos ayudaron a reducir ausencias y errores." },
-  { name: "Ana Martínez", role: "Coordinadora - VetPlus", rating: 5, comment: "Los reportes nos dan visibilidad diaria. Tomamos mejores decisiones con datos reales." },
-];
-
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
     <main className="min-h-screen bg-white">
       {/* HEADER / NAVBAR INTEGRADO */}
@@ -37,8 +33,9 @@ export default function LandingPage() {
           </Link>
 
           <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-            <Link href="#inicio" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Inicio</Link>
+            <Link href="/" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Inicio</Link>
             <Link href="/pages/services" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Servicios</Link>
+            <Link href="/pages/precios" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Precios</Link>
             <Link href="/pages/nosotros" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Nosotros</Link>
             <Link href="/pages/contacto" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Contacto</Link>
           </div>
@@ -47,14 +44,27 @@ export default function LandingPage() {
             <Link href="/auth/login">Iniciar sesión</Link>
           </Button>
 
-          <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9">
+          <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             <Menu className="w-5 h-5" />
           </Button>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-emerald-100 px-4 py-4 flex flex-col gap-3">
+            <Link href="/" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
+            <Link href="/pages/services" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Servicios</Link>
+            <Link href="/pages/precios" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Precios</Link>
+            <Link href="/pages/nosotros" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Nosotros</Link>
+            <Link href="/pages/contacto" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Contacto</Link>
+            <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 px-5 text-sm w-full mt-2">
+              <Link href="/auth/login">Iniciar sesión</Link>
+            </Button>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-60 lg:pb-32 overflow-hidden">
+      <section className="relative pt-32 pb-20 lg:pt-60 lg:pb-32 overflow-hidden min-h-[400px]">
         <div className="absolute inset-0">
           <Image 
             src="/assets/hero-vet.webp" 
@@ -80,7 +90,7 @@ export default function LandingPage() {
               Agenda, historiales, cobros y reportes en una sola plataforma. Tu equipo trabaja más rápido y tus clientes reciben mejor atención.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" asChild className="bg-emerald-600 hover:bg-emerald-700 gap-2 h-14 px-8 text-lg rounded-xl shadow-x1 shadow-emerald-200">
+              <Button size="lg" asChild className="bg-emerald-600 hover:bg-emerald-700 gap-2 h-14 px-8 text-lg rounded-xl shadow-xl shadow-emerald-200">
                 <Link href="/pages/contacto">
                   Solicitar demo
                   <ArrowRight className="h-5 w-5" />
@@ -151,9 +161,9 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
-            <div className="lg:w-1/2 relative">
-              <div className="absolute -inset-4 border-2 border-emerald-300 rounded-[4rem] rounded-tr-none translate-x-6 translate-y-6" />
-              <div className="relative h-[400px] w-full rounded-[3rem] rounded-tr-none overflow-hidden border-1 border-white shadow-2xl">
+            <div className="lg:w-1/2 relative w-full">
+              <div className="absolute -inset-4 border-2 border-emerald-300 rounded-[4rem] rounded-tr-none translate-x-6 translate-y-6 hidden lg:block" />
+              <div className="relative h-[280px] sm:h-[340px] lg:h-[400px] w-full rounded-[3rem] rounded-tr-none overflow-hidden border-1 border-white shadow-2xl">
                 <Image src="/assets/vet2.webp" alt="Equipo NuVet Tech" fill className="object-cover" />
               </div>
             </div>
@@ -179,9 +189,9 @@ export default function LandingPage() {
                 <Link href="/pages/contacto">Solicitar demo</Link>
               </Button>
             </div>
-            <div className="lg:w-1/2 relative">
-              <div className="absolute -inset-4 border-2 border-emerald-300 rounded-[4rem] rounded-bl-none -translate-x-6 -translate-y-6" />
-              <div className="relative h-[400px] w-full rounded-[3rem] rounded-bl-none overflow-hidden border-1 border-white shadow-2xl">
+            <div className="lg:w-1/2 relative w-full">
+              <div className="absolute -inset-4 border-2 border-emerald-300 rounded-[4rem] rounded-bl-none -translate-x-6 -translate-y-6 hidden lg:block" />
+              <div className="relative h-[280px] sm:h-[340px] lg:h-[400px] w-full rounded-[3rem] rounded-bl-none overflow-hidden border-1 border-white shadow-2xl">
                 <Image src="/assets/gato3.webp" alt="Gestión veterinaria" fill className="object-cover" />
               </div>
             </div>
@@ -203,35 +213,9 @@ export default function LandingPage() {
                 <Link href="/pages/contacto">Solicitar demo</Link>
               </Button>
             </div>
-            <div className="absolute right-0 bottom-0 hidden lg:block w-1/2 h-full">
+            <div className="absolute right-0 bottom-0 hidden lg:block w-1/2 h-full overflow-hidden">
                <Image src="/assets/gato2.webp" alt="Equipo NuVet Tech" fill className="object-cover opacity-50" />
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonios */}
-      <section id="testimonios" className="py-24">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-emerald-950 mb-16">Lo que dicen las clínicas que usan NuVet Tech</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
-              <Card key={i} className="bg-white border border-emerald-200 rounded-2xl p-2 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-300 transform hover:scale-[1.10]">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(t.rating)].map((_, i) => <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)}
-                  </div>
-                  <p className="text-emerald-900 font-medium italic mb-6 leading-relaxed">&ldquo;{t.comment}&rdquo;</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">{t.name[0]}</div>
-                    <div>
-                      <p className="font-bold text-emerald-950 text-sm">{t.name}</p>
-                      <p className="text-emerald-600 text-xs font-semibold">{t.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         </div>
       </section>
@@ -258,24 +242,21 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Enlaces Rápidos</h4>
+              <h4 className="font-bold text-white mb-4">Enlaces rápidos</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
                 <li><Link href="/" className="hover:text-emerald-400 transition-colors">Inicio</Link></li>
                 <li><Link href="/pages/services" className="hover:text-emerald-400 transition-colors">Servicios</Link></li>
+                <li><Link href="/pages/precios" className="hover:text-emerald-400 transition-colors">Precios</Link></li>
                 <li><Link href="/pages/nosotros" className="hover:text-emerald-400 transition-colors">Nosotros</Link></li>
                 <li><Link href="/pages/contacto" className="hover:text-emerald-400 transition-colors">Contacto</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Servicios</h4>
+              <h4 className="font-bold text-white mb-4">Legal</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Agenda inteligente</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clínico digital</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automáticos</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturación</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestión</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Inventario conectado</Link></li>
+                <li><Link href="/pages/privacidad" className="hover:text-emerald-400 transition-colors">Política de privacidad</Link></li>
+                <li><Link href="/pages/terminos" className="hover:text-emerald-400 transition-colors">Términos y condiciones</Link></li>
               </ul>
             </div>
 
@@ -287,8 +268,12 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
-          <div className="pt-6 border-t border-emerald-800/50 text-center">
-            <p className="text-xs text-emerald-100/40">© 2026 Nuvet. Todos los derechos reservados.</p>
+          <div className="pt-6 border-t border-emerald-800/50 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-xs text-emerald-100/40">© 2026 NuVet Tech. Todos los derechos reservados.</p>
+            <div className="flex gap-4 text-xs text-emerald-100/40">
+              <Link href="/pages/privacidad" className="hover:text-emerald-400 transition-colors">Privacidad</Link>
+              <Link href="/pages/terminos" className="hover:text-emerald-400 transition-colors">Términos</Link>
+            </div>
           </div>
         </div>
       </footer>

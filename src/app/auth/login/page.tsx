@@ -137,8 +137,8 @@ function LoginPageContent() {
         <div className="relative z-10 text-emerald-200/40 text-xs flex justify-between items-center w-full">
           <p>© 2026 NuVet Tech. Todos los derechos reservados.</p>
           <div className="flex gap-4">
-            <span className="hover:text-white cursor-pointer transition-colors">Privacidad</span>
-            <span className="hover:text-white cursor-pointer transition-colors">Términos</span>
+            <Link href="/pages/privacidad" className="hover:text-white transition-colors">Privacidad</Link>
+            <Link href="/pages/terminos" className="hover:text-white transition-colors">Términos</Link>
           </div>
         </div>
       </div>
