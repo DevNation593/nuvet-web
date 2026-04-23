@@ -11,7 +11,7 @@ function getAuthFromCookie(request: NextRequest): { role: string; tenantId: stri
     };
 }
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     if (pathname.startsWith('/auth')) {

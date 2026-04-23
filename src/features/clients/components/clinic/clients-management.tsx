@@ -34,7 +34,6 @@ const clientSchema = z.object({
     lastName: z.string().min(2, 'Apellido requerido'),
     email: z.string().email('Correo inválido'),
     phone: z.string().optional(),
-    password: z.string().min(8, 'Mínimo 8 caracteres').optional(),
     isActive: z.boolean().default(true),
 });
 
@@ -231,7 +230,6 @@ export function ClientsManagement() {
                                 email: values.email,
                                 phone: values.phone,
                                 isActive: values.isActive,
-                                ...(values.password ? { password: values.password } : {}),
                             });
                             toast.success('Cliente actualizado');
                         } else {
@@ -240,7 +238,6 @@ export function ClientsManagement() {
                                 lastName: values.lastName,
                                 email: values.email,
                                 phone: values.phone,
-                                password: values.password ?? '',
                             };
                             await createClient.mutateAsync(payload);
                             toast.success('Cliente creado');
@@ -273,21 +270,12 @@ function ClientModal({
     loading: boolean;
 }) {
     const form = useForm<ClientFormValues>({
-        resolver: zodResolver(clientSchema.superRefine((value, context) => {
-            if (!initialData && !value.password) {
-                context.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    path: ['password'],
-                    message: 'Contraseña requerida para crear',
-                });
-            }
-        })),
+        resolver: zodResolver(clientSchema),
         values: {
             firstName: initialData?.firstName ?? '',
             lastName: initialData?.lastName ?? '',
             email: initialData?.email ?? '',
             phone: initialData?.phone ?? '',
-            password: '',
             isActive: initialData?.isActive ?? true,
         },
     });
@@ -323,13 +311,6 @@ function ClientModal({
                     <InputField label="Teléfono" error={form.formState.errors.phone?.message}>
                         <input className="h-10 w-full rounded-md border border-input px-3 text-sm" {...form.register('phone')} />
                     </InputField>
-                    <InputField
-                        label={initialData ? 'Contraseña (opcional)' : 'Contraseña'}
-                        error={form.formState.errors.password?.message}
-                    >
-                        <input type="password" className="h-10 w-full rounded-md border border-input px-3 text-sm" {...form.register('password')} />
-                    </InputField>
-
                     {initialData && (
                         <label className="flex items-center gap-2 text-sm">
                             <input type="checkbox" {...form.register('isActive')} />
