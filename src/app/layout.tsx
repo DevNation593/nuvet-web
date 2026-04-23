@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/shared/components/providers';
 import { Toaster } from 'sonner';
+import { CookieConsentBanner } from '@/shared/components/cookie-consent-banner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -39,6 +40,7 @@ export default function RootLayout({
                 <Providers>
                     {children}
                     <Toaster position="top-right" />
+                    <CookieConsentBanner />
                 </Providers>
             </body>
         </html>

@@ -6,7 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { 
   PawPrint, CalendarCheck, ClipboardList, CreditCard, BarChart3, Heart,
-  Star, Clock, Shield, Users, ArrowRight, Menu,
+  Clock, Shield, Users, ArrowRight, Menu,
   Facebook, Instagram, Twitter, Phone, Mail
 } from "lucide-react";
 
@@ -15,12 +15,6 @@ const services = [
   { icon: ClipboardList, title: "Historial clínico", description: "Todo el seguimiento médico de cada paciente en un solo lugar." },
   { icon: CreditCard, title: "Cobros y facturación", description: "Caja diaria, comprobantes y control de pagos claros." },
   { icon: BarChart3, title: "Reportes de gestión", description: "Indicadores clave para tomar decisiones con datos reales." },
-];
-
-const testimonials = [
-  { name: "María García", role: "Directora - Clínica NovaVet", rating: 5, comment: "Con NuVet Tech ordenamos agenda y cobros en una semana. El equipo ahora trabaja con claridad." },
-  { name: "Carlos López", role: "Admin - VetCare Quito", rating: 5, comment: "Los recordatorios y el historial clínico nos ayudaron a reducir ausencias y errores." },
-  { name: "Ana Martínez", role: "Coordinadora - VetPlus", rating: 5, comment: "Los reportes nos dan visibilidad diaria. Tomamos mejores decisiones con datos reales." },
 ];
 
 export default function LandingPage() {
@@ -206,32 +200,6 @@ export default function LandingPage() {
             <div className="absolute right-0 bottom-0 hidden lg:block w-1/2 h-full">
                <Image src="/assets/gato2.webp" alt="Equipo NuVet Tech" fill className="object-cover opacity-50" />
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonios */}
-      <section id="testimonios" className="py-24">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center text-emerald-950 mb-16">Lo que dicen las clínicas que usan NuVet Tech</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t, i) => (
-              <Card key={i} className="bg-white border border-emerald-200 rounded-2xl p-2 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all duration-300 transform hover:scale-[1.10]">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(t.rating)].map((_, i) => <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)}
-                  </div>
-                  <p className="text-emerald-900 font-medium italic mb-6 leading-relaxed">&ldquo;{t.comment}&rdquo;</p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">{t.name[0]}</div>
-                    <div>
-                      <p className="font-bold text-emerald-950 text-sm">{t.name}</p>
-                      <p className="text-emerald-600 text-xs font-semibold">{t.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         </div>
       </section>
