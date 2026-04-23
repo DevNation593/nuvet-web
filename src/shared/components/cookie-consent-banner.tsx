@@ -53,7 +53,7 @@ export function CookieConsentBanner() {
                         <p className="text-xs text-emerald-800/60 leading-relaxed">
                             Utilizamos cookies propias y de terceros para mejorar tu experiencia, analizar el tráfico y recordar tu sesión. 
                             Puedes aceptar todas o rechazarlas. Consulta nuestra{' '}
-                            <a href="#" className="text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
+                            <a href="/pages/privacidad" className="text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
                                 política de privacidad
                             </a>
                             .

@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
+import { useState } from 'react';
 import { PawPrint, HeartHandshake, ShieldCheck, Sparkles, Users, Target, Menu, Facebook, Instagram, Twitter, Phone, Mail } from 'lucide-react';
 
 const values = [
@@ -40,6 +41,7 @@ const teamHighlights = [
 ];
 
 export default function NosotrosPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
     <main className="min-h-screen bg-white">
       <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-emerald-200">
@@ -54,6 +56,7 @@ export default function NosotrosPage() {
           <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
             <Link href="/" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Inicio</Link>
             <Link href="/pages/services" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Servicios</Link>
+            <Link href="/pages/precios" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Precios</Link>
             <Link href="/pages/nosotros" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Nosotros</Link>
             <Link href="/pages/contacto" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Contacto</Link>
           </div>
@@ -62,10 +65,23 @@ export default function NosotrosPage() {
             <Link href="/auth/login">Iniciar sesión</Link>
           </Button>
 
-          <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9">
+          <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             <Menu className="w-5 h-5" />
           </Button>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-emerald-100 px-4 py-4 flex flex-col gap-3">
+            <Link href="/" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
+            <Link href="/pages/services" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Servicios</Link>
+            <Link href="/pages/precios" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Precios</Link>
+            <Link href="/pages/nosotros" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Nosotros</Link>
+            <Link href="/pages/contacto" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Contacto</Link>
+            <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 px-5 text-sm w-full mt-2">
+              <Link href="/auth/login">Iniciar sesión</Link>
+            </Button>
+          </div>
+        )}
       </nav>
 
       <section className="relative overflow-hidden pt-24 pb-12">
@@ -98,7 +114,7 @@ export default function NosotrosPage() {
               </Button>
             </div>
           </div>
-          <div className="relative h-[320px] sm:h-[380px] w-full overflow-hidden rounded-3xl ">
+          <div className="relative h-[260px] sm:h-[320px] lg:h-[380px] w-full overflow-hidden rounded-3xl">
             <Image src="/assets/about-us.webp" alt="Equipo NuVet Tech" fill className="object-cover" priority />
           </div>
         </div>
@@ -217,24 +233,21 @@ export default function NosotrosPage() {
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Enlaces Rápidos</h4>
+              <h4 className="font-bold text-white mb-4">Enlaces rápidos</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
                 <li><Link href="/" className="hover:text-emerald-400 transition-colors">Inicio</Link></li>
                 <li><Link href="/pages/services" className="hover:text-emerald-400 transition-colors">Servicios</Link></li>
+                <li><Link href="/pages/precios" className="hover:text-emerald-400 transition-colors">Precios</Link></li>
                 <li><Link href="/pages/nosotros" className="hover:text-emerald-400 transition-colors">Nosotros</Link></li>
                 <li><Link href="/pages/contacto" className="hover:text-emerald-400 transition-colors">Contacto</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Servicios</h4>
+              <h4 className="font-bold text-white mb-4">Legal</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Agenda inteligente</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clínico digital</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automáticos</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturación</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestión</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Inventario conectado</Link></li>
+                <li><Link href="/pages/privacidad" className="hover:text-emerald-400 transition-colors">Política de privacidad</Link></li>
+                <li><Link href="/pages/terminos" className="hover:text-emerald-400 transition-colors">Términos y condiciones</Link></li>
               </ul>
             </div>
 
@@ -246,8 +259,12 @@ export default function NosotrosPage() {
               </ul>
             </div>
           </div>
-          <div className="pt-6 border-t border-emerald-800/50 text-center">
-            <p className="text-xs text-emerald-100/40">© 2026 Nuvet. Todos los derechos reservados.</p>
+          <div className="pt-6 border-t border-emerald-800/50 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-xs text-emerald-100/40">© 2026 NuVet Tech. Todos los derechos reservados.</p>
+            <div className="flex gap-4 text-xs text-emerald-100/40">
+              <Link href="/pages/privacidad" className="hover:text-emerald-400 transition-colors">Privacidad</Link>
+              <Link href="/pages/terminos" className="hover:text-emerald-400 transition-colors">Términos</Link>
+            </div>
           </div>
         </div>
       </footer>

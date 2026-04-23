@@ -9,7 +9,7 @@ export default function ClinicLayout({
 }) {
     return (
         <AuthHydrationGuard>
-            <div className="min-h-screen bg-background md:grid md:grid-cols-[16rem_1fr]">
+            <div className="min-h-screen bg-background md:grid md:grid-cols-[auto_1fr]">
                 <AppSidebar />
                 <div className="flex min-h-screen flex-col">
                     <AppTopbar title="Panel clínico" />

@@ -17,12 +17,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/shared/components/ui/dialog';
-import { useAesthetics, useCreateAesthetic, useUpdateAesthetic } from '@/features/aesthetics/hooks/use-aesthetics';
+import { useAesthetics, useCreateAesthetic, useUpdateAesthetic, useDeleteAesthetic } from '@/features/aesthetics/hooks/use-aesthetics';
 import { usePets } from '@/features/pets/hooks/use-pets';
 import { useStaffUsers } from '@/features/users/hooks/use-users';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
 import { getStatusLabel } from '@/shared/lib/status-labels';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { localDateTimeToUTC } from '@/shared/lib/timezone';
 
@@ -37,7 +37,10 @@ const aestheticSchema = z.object({
 
 export function AestheticsManagement() {
     const [modalOpen, setModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [editingItem, setEditingItem] = useState<(typeof items)[number] | null>(null);
     const [statusFilter, setStatusFilter] = useState<AestheticStatus | ''>('');
 
     const aestheticsQuery = useAesthetics({ limit: 100, ...(statusFilter ? { status: statusFilter } : {}) });
@@ -45,6 +48,7 @@ export function AestheticsManagement() {
     const staffQuery = useStaffUsers();
     const createAesthetic = useCreateAesthetic();
     const updateAesthetic = useUpdateAesthetic(selectedId);
+    const deleteAesthetic = useDeleteAesthetic();
 
     const items = aestheticsQuery.data?.data ?? [];
     const pets = (petsQuery.data?.data ?? []) as Array<{ id: string; name: string }>;
@@ -94,11 +98,11 @@ export function AestheticsManagement() {
                                     <tr>
                                         <th className="px-4 py-3 text-left font-medium">Servicio</th>
                                         <th className="px-4 py-3 text-left font-medium">Mascota</th>
-                                        <th className="px-4 py-3 text-left font-medium">Groomer</th>
+                                        <th className="px-4 py-3 text-left font-medium">Estilista</th>
                                         <th className="px-4 py-3 text-left font-medium">Fecha</th>
                                         <th className="px-4 py-3 text-left font-medium">Precio</th>
                                         <th className="px-4 py-3 text-left font-medium">Estado</th>
-                                        <th className="px-4 py-3 text-left font-medium">Acción</th>
+                                        <th className="px-4 py-3 text-left font-medium">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -117,25 +121,48 @@ export function AestheticsManagement() {
                                                 </Badge>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    title="Marcar servicio como completado"
-                                                    onClick={async () => {
-                                                        try {
+                                                <div className="flex flex-wrap gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        title="Marcar servicio como completado"
+                                                        onClick={async () => {
+                                                            try {
+                                                                setSelectedId(item.id);
+                                                                await updateAesthetic.mutateAsync({ status: AestheticStatus.COMPLETED });
+                                                                toast.success('Estado actualizado');
+                                                            } catch {
+                                                                toast.error('No se pudo actualizar');
+                                                            } finally {
+                                                                setSelectedId(null);
+                                                            }
+                                                        }}
+                                                        disabled={item.status === AestheticStatus.COMPLETED}
+                                                    >
+                                                        Completar
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        title="Editar servicio"
+                                                        onClick={() => {
+                                                            setEditingItem(item);
                                                             setSelectedId(item.id);
-                                                            await updateAesthetic.mutateAsync({ status: AestheticStatus.COMPLETED });
-                                                            toast.success('Estado actualizado');
-                                                        } catch {
-                                                            toast.error('No se pudo actualizar');
-                                                        } finally {
-                                                            setSelectedId(null);
-                                                        }
-                                                    }}
-                                                    disabled={item.status === AestheticStatus.COMPLETED}
-                                                >
-                                                    Completar
-                                                </Button>
+                                                            setEditModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        title="Eliminar servicio"
+                                                        className="text-destructive hover:text-destructive"
+                                                        onClick={() => setDeleteConfirmId(item.id)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -169,6 +196,76 @@ export function AestheticsManagement() {
                     }
                 }}
             />
+
+            {editingItem && (
+                <AestheticModal
+                    open={editModalOpen}
+                    onOpenChange={(open) => {
+                        setEditModalOpen(open);
+                        if (!open) { setEditingItem(null); setSelectedId(null); }
+                    }}
+                    pets={pets}
+                    groomers={groomers}
+                    initialValues={{
+                        petId: editingItem.petId,
+                        groomerId: editingItem.groomerId,
+                        serviceName: editingItem.serviceName,
+                        scheduledDate: format(new Date(editingItem.scheduledAt), 'yyyy-MM-dd'),
+                        price: editingItem.price ?? 0,
+                        notes: editingItem.notes ?? '',
+                    }}
+                    loading={updateAesthetic.isPending}
+                    onSubmit={async (values) => {
+                        try {
+                            await updateAesthetic.mutateAsync({
+                                petId: values.petId,
+                                groomerId: values.groomerId,
+                                serviceName: values.serviceName,
+                                scheduledAt: localDateTimeToUTC(values.scheduledDate, '09:00'),
+                                price: values.price,
+                                notes: values.notes,
+                            });
+                            toast.success('Servicio actualizado');
+                            setEditModalOpen(false);
+                            setEditingItem(null);
+                            setSelectedId(null);
+                        } catch {
+                            toast.error('No se pudo actualizar el servicio');
+                        }
+                    }}
+                />
+            )}
+
+            <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Eliminar servicio</DialogTitle>
+                        <DialogDescription>¿Estás seguro de que deseas eliminar este servicio de estética? Esta acción no se puede deshacer.</DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteConfirmId(null)} title="Cancelar eliminación">
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            title="Confirmar eliminación"
+                            disabled={deleteAesthetic.isPending}
+                            onClick={async () => {
+                                if (!deleteConfirmId) return;
+                                try {
+                                    await deleteAesthetic.mutateAsync(deleteConfirmId);
+                                    toast.success('Servicio eliminado');
+                                    setDeleteConfirmId(null);
+                                } catch {
+                                    toast.error('No se pudo eliminar el servicio');
+                                }
+                            }}
+                        >
+                            Eliminar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
@@ -180,6 +277,7 @@ function AestheticModal({
     groomers,
     loading,
     onSubmit,
+    initialValues,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -187,16 +285,17 @@ function AestheticModal({
     groomers: Array<{ id: string; firstName: string; lastName: string }>;
     loading: boolean;
     onSubmit: (values: z.infer<typeof aestheticSchema>) => Promise<void>;
+    initialValues?: Partial<z.infer<typeof aestheticSchema>>;
 }) {
     const form = useForm<z.infer<typeof aestheticSchema>>({
         resolver: zodResolver(aestheticSchema),
         values: {
-            petId: '',
-            groomerId: '',
-            serviceName: '',
-            scheduledDate: format(new Date(), 'yyyy-MM-dd'),
-            price: 0,
-            notes: '',
+            petId: initialValues?.petId ?? '',
+            groomerId: initialValues?.groomerId ?? '',
+            serviceName: initialValues?.serviceName ?? '',
+            scheduledDate: initialValues?.scheduledDate ?? format(new Date(), 'yyyy-MM-dd'),
+            price: initialValues?.price ?? 0,
+            notes: initialValues?.notes ?? '',
         },
     });
 
@@ -204,8 +303,10 @@ function AestheticModal({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Nuevo servicio</DialogTitle>
-                    <DialogDescription>Agenda un servicio de estética</DialogDescription>
+                    <DialogTitle>{initialValues ? 'Editar servicio' : 'Nuevo servicio'}</DialogTitle>
+                    <DialogDescription>
+                        {initialValues ? 'Modifica los datos del servicio de estética.' : 'Agenda un servicio de estética'}
+                    </DialogDescription>
                 </DialogHeader>
                 <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
                     <Field label="Mascota">
@@ -218,7 +319,7 @@ function AestheticModal({
                             ))}
                         </select>
                     </Field>
-                    <Field label="Groomer">
+                    <Field label="Estilista">
                         <select className="h-10 w-full rounded-md border border-input px-3 text-sm" {...form.register('groomerId')}>
                             <option value="">Seleccionar</option>
                             {groomers.map((groomer) => (
