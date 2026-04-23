@@ -4,6 +4,9 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
@@ -26,6 +29,18 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
+
+const contactSchema = z.object({
+  name: z.string().min(2, 'Nombre requerido (mín. 2 caracteres)'),
+  clinic: z.string().min(2, 'Nombre de veterinaria requerido'),
+  email: z.string().email('Correo electrónico inválido'),
+  phone: z.string().optional(),
+  subject: z.string().min(1, 'Selecciona un asunto'),
+  teamSize: z.string().optional(),
+  message: z.string().min(10, 'El mensaje debe tener al menos 10 caracteres'),
+});
+
+type ContactFormValues = z.infer<typeof contactSchema>;
 
 const subjects = [
   { value: 'demo', label: 'Solicitar demo' },
@@ -69,30 +84,23 @@ const countryCodes = [
 ];
 
 export default function ContactoPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    clinic: '',
-    email: '',
-    phone: '',
-    subject: '',
-    teamSize: '',
-    message: '',
-  });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [callPhone, setCallPhone] = useState('');
   const [callCountry, setCallCountry] = useState('ec');
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
+  });
+
+  const onSubmit = (_data: ContactFormValues) => {
     toast.success('Hemos recibido tu mensaje. Te responderemos a la brevedad.');
-    setFormData({
-      name: '',
-      clinic: '',
-      email: '',
-      phone: '',
-      subject: '',
-      teamSize: '',
-      message: '',
-    });
+    reset();
   };
 
   const handleScheduleCall = () => {
@@ -118,6 +126,7 @@ export default function ContactoPage() {
           <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
             <Link href="/" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Inicio</Link>
             <Link href="/pages/services" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Servicios</Link>
+            <Link href="/pages/precios" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Precios</Link>
             <Link href="/pages/nosotros" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Nosotros</Link>
             <Link href="/pages/contacto" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium transition-colors">Contacto</Link>
           </div>
@@ -126,10 +135,23 @@ export default function ContactoPage() {
             <Link href="/auth/login">Iniciar sesión</Link>
           </Button>
 
-          <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9">
+          <Button variant="ghost" size="icon" className="md:hidden text-emerald-900 h-9 w-9" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
             <Menu className="w-5 h-5" />
           </Button>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-emerald-100 px-4 py-4 flex flex-col gap-3">
+            <Link href="/" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
+            <Link href="/pages/services" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Servicios</Link>
+            <Link href="/pages/precios" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Precios</Link>
+            <Link href="/pages/nosotros" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Nosotros</Link>
+            <Link href="/pages/contacto" className="text-sm text-emerald-900/70 hover:text-emerald-600 font-medium py-1" onClick={() => setMobileMenuOpen(false)}>Contacto</Link>
+            <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-9 px-5 text-sm w-full mt-2">
+              <Link href="/auth/login">Iniciar sesión</Link>
+            </Button>
+          </div>
+        )}
       </nav>
 
       <section className="relative overflow-hidden py-10 pt-20">
@@ -158,28 +180,26 @@ export default function ContactoPage() {
             <Card className="border-emerald-200">
               <CardContent className="p-8">
                 <h2 className="text-2xl font-bold mb-6 text-emerald-950">Escríbenos y te respondemos hoy</h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="contactName">Nombre completo *</Label>
                       <Input
                         id="contactName"
-                        value={formData.name}
-                        onChange={(event) => setFormData({ ...formData, name: event.target.value })}
+                        {...register('name')}
                         className="h-12 bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl outline-none"
-                        required
                       />
+                      {errors.name && <p className="text-xs text-red-500 font-medium ml-1">{errors.name.message}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="contactClinic">Veterinaria *</Label>
                       <Input
                         id="contactClinic"
-                        value={formData.clinic}
-                        onChange={(event) => setFormData({ ...formData, clinic: event.target.value })}
+                        {...register('clinic')}
                         placeholder="Nombre de la veterinaria"
                         className="h-12 bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl outline-none"
-                        required
                       />
+                      {errors.clinic && <p className="text-xs text-red-500 font-medium ml-1">{errors.clinic.message}</p>}
                     </div>
                   </div>
 
@@ -189,19 +209,17 @@ export default function ContactoPage() {
                       <Input
                         id="contactEmail"
                         type="email"
-                        value={formData.email}
-                        onChange={(event) => setFormData({ ...formData, email: event.target.value })}
+                        {...register('email')}
                         className="h-12 bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl outline-none"
-                        required
                       />
+                      {errors.email && <p className="text-xs text-red-500 font-medium ml-1">{errors.email.message}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="contactPhone">Teléfono</Label>
                       <Input
                         id="contactPhone"
                         type="tel"
-                        value={formData.phone}
-                        onChange={(event) => setFormData({ ...formData, phone: event.target.value })}
+                        {...register('phone')}
                         className="h-12 bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl outline-none"
                       />
                     </div>
@@ -210,42 +228,49 @@ export default function ContactoPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="contactSubject">Asunto *</Label>
-                      <Select
-                        value={formData.subject}
-                        onValueChange={(value) => setFormData({ ...formData, subject: value })}
-                      >
-                        <SelectTrigger className="h-12 bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl">
-                          <SelectValue placeholder="Selecciona un asunto" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {subjects.map((subject) => (
-                            <SelectItem key={subject.value} value={subject.value}>
-                              {subject.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        control={control}
+                        name="subject"
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger className="h-12 bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl">
+                              <SelectValue placeholder="Selecciona un asunto" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {subjects.map((subject) => (
+                                <SelectItem key={subject.value} value={subject.value}>
+                                  {subject.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {errors.subject && <p className="text-xs text-red-500 font-medium ml-1">{errors.subject.message}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="contactTeam">Tamaño de equipo</Label>
-                      <Select
-                        value={formData.teamSize}
-                        onValueChange={(value) => setFormData({ ...formData, teamSize: value })}
-                      >
-                        <SelectTrigger
-                          id="contactTeam"
-                          className="h-12 bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl"
-                        >
-                          <SelectValue placeholder="Selecciona un rango" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {teamSizes.map((size) => (
-                            <SelectItem key={size.value} value={size.value}>
-                              {size.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        control={control}
+                        name="teamSize"
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger
+                              id="contactTeam"
+                              className="h-12 bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl"
+                            >
+                              <SelectValue placeholder="Selecciona un rango" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teamSizes.map((size) => (
+                                <SelectItem key={size.value} value={size.value}>
+                                  {size.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
                   </div>
 
@@ -253,16 +278,15 @@ export default function ContactoPage() {
                     <Label htmlFor="contactMessage">Mensaje *</Label>
                     <Textarea
                       id="contactMessage"
-                      value={formData.message}
-                      onChange={(event) => setFormData({ ...formData, message: event.target.value })}
+                      {...register('message')}
                       placeholder="Escribe tu mensaje aquí..."
                       className="bg-emerald-50/30 border-emerald-100 focus:ring-emerald-500 focus:border-emerald-500 hover:border-emerald-500 hover:bg-white transition-all rounded-xl outline-none"
                       rows={5}
-                      required
                     />
+                    {errors.message && <p className="text-xs text-red-500 font-medium ml-1">{errors.message.message}</p>}
                   </div>
 
-                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" size="lg">
+                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" size="lg" disabled={isSubmitting}>
                     <Send className="h-4 w-4 mr-2" />
                     Enviar mensaje
                   </Button>
@@ -350,24 +374,21 @@ export default function ContactoPage() {
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Enlaces Rápidos</h4>
+              <h4 className="font-bold text-white mb-4">Enlaces rápidos</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
                 <li><Link href="/" className="hover:text-emerald-400 transition-colors">Inicio</Link></li>
                 <li><Link href="/pages/services" className="hover:text-emerald-400 transition-colors">Servicios</Link></li>
+                <li><Link href="/pages/precios" className="hover:text-emerald-400 transition-colors">Precios</Link></li>
                 <li><Link href="/pages/nosotros" className="hover:text-emerald-400 transition-colors">Nosotros</Link></li>
                 <li><Link href="/pages/contacto" className="hover:text-emerald-400 transition-colors">Contacto</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-bold text-white mb-4">Servicios</h4>
+              <h4 className="font-bold text-white mb-4">Legal</h4>
               <ul className="space-y-3 text-sm text-emerald-100/70">
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Agenda inteligente</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Historial clínico digital</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Recordatorios automáticos</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Cobros y facturación</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Reportes de gestión</Link></li>
-                <li><Link href="#" className="hover:text-emerald-400 transition-colors">Inventario conectado</Link></li>
+                <li><Link href="/pages/privacidad" className="hover:text-emerald-400 transition-colors">Política de privacidad</Link></li>
+                <li><Link href="/pages/terminos" className="hover:text-emerald-400 transition-colors">Términos y condiciones</Link></li>
               </ul>
             </div>
 
@@ -379,8 +400,12 @@ export default function ContactoPage() {
               </ul>
             </div>
           </div>
-          <div className="pt-6 border-t border-emerald-800/50 text-center">
-            <p className="text-xs text-emerald-100/40">© 2026 Nuvet. Todos los derechos reservados.</p>
+          <div className="pt-6 border-t border-emerald-800/50 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-xs text-emerald-100/40">© 2026 NuVet Tech. Todos los derechos reservados.</p>
+            <div className="flex gap-4 text-xs text-emerald-100/40">
+              <Link href="/pages/privacidad" className="hover:text-emerald-400 transition-colors">Privacidad</Link>
+              <Link href="/pages/terminos" className="hover:text-emerald-400 transition-colors">Términos</Link>
+            </div>
           </div>
         </div>
       </footer>

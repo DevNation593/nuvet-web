@@ -29,3 +29,7 @@ export async function updateAesthetic(id: string, input: UpdateAestheticRequest)
     const { data } = await api.patch<ApiEnvelope<AestheticService>>(`/aesthetics/${id}`, input);
     return unwrapResponse<AestheticService>(data);
 }
+
+export async function deleteAesthetic(id: string) {
+    await api.delete(`/aesthetics/${id}`);
+}

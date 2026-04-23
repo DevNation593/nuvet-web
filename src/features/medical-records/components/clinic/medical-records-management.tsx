@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -53,22 +54,22 @@ const medicalRecordSchema = z.object({
 type MedicalRecordFormValues = z.infer<typeof medicalRecordSchema>;
 
 export function MedicalRecordsManagement() {
-    const [selectedPetId, setSelectedPetId] = useState('');
-    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
+    const searchParams = useSearchParams();
+    const petIdFromUrl = searchParams.get('petId') ?? '';
+    const recordIdFromUrl = searchParams.get('recordId');
+
+    const [selectedPetId, setSelectedPetId] = useState(petIdFromUrl);
+    const [selectedRecordId, setSelectedRecordId] = useState<string | null>(recordIdFromUrl);
     const [modalOpen, setModalOpen] = useState(false);
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const petIdFromUrl = params.get('petId') ?? '';
-        const recordIdFromUrl = params.get('recordId');
-
         if (petIdFromUrl) {
             setSelectedPetId(petIdFromUrl);
         }
         if (recordIdFromUrl) {
             setSelectedRecordId(recordIdFromUrl);
         }
-    }, []);
+    }, [petIdFromUrl, recordIdFromUrl]);
 
     const petsQuery = usePets({ limit: 100 });
     const recordsQuery = useMedicalRecords(selectedPetId || null, { limit: 50 });
