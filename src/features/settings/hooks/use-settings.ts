@@ -23,7 +23,6 @@ export interface TenantSettings {
     phone?: string;
     address?: string;
     email?: string;
-    website?: string;
     billingApiKey?: string;
     billingEstablishmentCode?: string;
     billingEmissionPointCode?: string;

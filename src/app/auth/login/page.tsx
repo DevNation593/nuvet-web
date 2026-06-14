@@ -69,6 +69,11 @@ function LoginPageContent() {
 
       if (!user || !accessToken) throw new Error('Error en la respuesta del servidor');
 
+      if (user.role === 'CLIENT') {
+        toast.error('El portal web es exclusivo para el personal de la clínica. Los clientes deben usar la app móvil.');
+        return;
+      }
+
       setAuth(accessToken, refreshToken ?? '', {
         ...user,
         tenantPlan: tenant?.plan ?? user.tenantPlan,
@@ -77,8 +82,8 @@ function LoginPageContent() {
       });
 
       toast.success('¡Bienvenido de nuevo!');
-      
-      const from = searchParams.get('from') || (user.role === 'CLIENT' ? '/client' : '/clinic');
+
+      const from = searchParams.get('from') || '/clinic';
       router.push(from);
     } catch (err: unknown) {
       const message = resolveAuthErrorMessage(err);

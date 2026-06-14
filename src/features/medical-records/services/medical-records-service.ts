@@ -18,7 +18,10 @@ export interface FetchMedicalRecordsParams {
 }
 
 export async function fetchMedicalRecords(params: FetchMedicalRecordsParams = {}) {
-    const { data } = await api.get<ApiEnvelope<MedicalRecord[]>>('/medical-records', { params });
+    const { petId, ...rest } = params;
+    const queryParams: Record<string, unknown> = { ...rest };
+    if (petId) queryParams.petId = petId;
+    const { data } = await api.get<ApiEnvelope<MedicalRecord[]>>('/medical-records', { params: queryParams });
     return unwrapPaginatedResponse<MedicalRecord>(data);
 }
 

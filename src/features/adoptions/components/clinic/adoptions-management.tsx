@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ChangeEvent, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -45,10 +45,25 @@ const animalSchema = z.object({
     color: z.string().optional(),
     weight: z.coerce.number().optional(),
     birthDate: z.string().optional(),
+    photoUrl: z.string().optional(),
     description: z.string().optional(),
     isNeutered: z.boolean().optional(),
     notes: z.string().optional(),
 });
+
+async function compressImageToDataUrl(file: File, maxSize = 1024, quality = 0.82): Promise<string> {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('No se pudo procesar la imagen');
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', quality);
+}
 
 type AnimalFormValues = z.infer<typeof animalSchema>;
 
@@ -115,6 +130,7 @@ export function AdoptionsManagement() {
                                 <table className="w-full min-w-[640px] text-sm">
                                     <thead className="border-y bg-muted/30 text-muted-foreground">
                                         <tr>
+                                            <th className="px-4 py-3 text-left font-medium">Foto</th>
                                             <th className="px-4 py-3 text-left font-medium">Nombre</th>
                                             <th className="px-4 py-3 text-left font-medium">Especie</th>
                                             <th className="px-4 py-3 text-left font-medium">Sexo</th>
@@ -125,6 +141,20 @@ export function AdoptionsManagement() {
                                     <tbody>
                                         {animals.map((animal) => (
                                             <tr key={animal.id} className="border-b">
+                                                <td className="px-4 py-3">
+                                                    {animal.photoUrl ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img
+                                                            src={animal.photoUrl}
+                                                            alt={animal.name}
+                                                            className="h-12 w-12 rounded-md border object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-12 w-12 items-center justify-center rounded-md border bg-muted/40 text-[10px] text-muted-foreground">
+                                                            Sin foto
+                                                        </div>
+                                                    )}
+                                                </td>
                                                 <td className="px-4 py-3 font-medium">{animal.name}</td>
                                                 <td className="px-4 py-3">{getPetSpeciesLabel(animal.species)}</td>
                                                 <td className="px-4 py-3">{animal.sex === PetSex.MALE ? 'Macho' : 'Hembra'}</td>
@@ -326,6 +356,7 @@ export function AdoptionsManagement() {
                     color: editingAnimal.color ?? '',
                     weight: editingAnimal.weight ?? undefined,
                     birthDate: editingAnimal.birthDate?.slice(0, 10) ?? '',
+                    photoUrl: editingAnimal.photoUrl ?? '',
                     description: editingAnimal.description ?? '',
                     isNeutered: editingAnimal.isNeutered,
                     notes: editingAnimal.notes ?? '',
@@ -425,11 +456,38 @@ function AnimalModal({
             color: initialValues?.color ?? '',
             weight: initialValues?.weight,
             birthDate: initialValues?.birthDate ?? '',
+            photoUrl: initialValues?.photoUrl ?? '',
             description: initialValues?.description ?? '',
             isNeutered: initialValues?.isNeutered ?? false,
             notes: initialValues?.notes ?? '',
         },
     });
+
+    const photoUrl = form.watch('photoUrl');
+    const [photoLoading, setPhotoLoading] = useState(false);
+
+    async function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            toast.error('Selecciona un archivo de imagen válido');
+            return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+            toast.error('La imagen no puede superar 8MB');
+            return;
+        }
+        setPhotoLoading(true);
+        try {
+            const dataUrl = await compressImageToDataUrl(file);
+            form.setValue('photoUrl', dataUrl, { shouldDirty: true });
+        } catch {
+            toast.error('No se pudo procesar la imagen');
+        } finally {
+            setPhotoLoading(false);
+        }
+    }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -475,6 +533,41 @@ function AnimalModal({
                             </div>
                         </Field>
                     </div>
+                    <Field label="Foto de la mascota">
+                        <div className="space-y-2">
+                            {photoUrl ? (
+                                <div className="flex items-start gap-3">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={photoUrl}
+                                        alt="Vista previa"
+                                        className="h-24 w-24 rounded-md border object-cover"
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => form.setValue('photoUrl', '', { shouldDirty: true })}
+                                        title="Eliminar foto actual"
+                                    >
+                                        Quitar foto
+                                    </Button>
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">Sin foto cargada</p>
+                            )}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handlePhotoChange}
+                                disabled={photoLoading}
+                                title="Seleccionar foto de la mascota"
+                                aria-label="Seleccionar foto de la mascota"
+                                className="block w-full text-xs file:mr-3 file:rounded-md file:border file:border-input file:bg-background file:px-3 file:py-1.5 file:text-xs file:font-medium hover:file:bg-accent"
+                            />
+                            {photoLoading && <p className="text-xs text-muted-foreground">Procesando imagen…</p>}
+                        </div>
+                    </Field>
                     <Field label="Descripción">
                         <textarea rows={2} className="w-full rounded-md border border-input px-3 py-2 text-sm" {...form.register('description')} />
                     </Field>
@@ -548,7 +641,7 @@ function AdoptionListingModal({
     );
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
     return (
         <label className="block space-y-1">
             <span className="text-sm font-medium">{label}</span>

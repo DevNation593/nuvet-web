@@ -34,7 +34,6 @@ const tenantSchema = z.object({
     phone: z.string().optional(),
     address: z.string().optional(),
     email: z.string().email().optional().or(z.literal('')),
-    website: z.string().url().optional().or(z.literal('')),
 });
 
 const userSchema = z.object({
@@ -94,7 +93,6 @@ export function SettingsManagement() {
             phone: tenantQuery.data?.phone ?? '',
             address: tenantQuery.data?.address ?? '',
             email: tenantQuery.data?.email ?? '',
-            website: tenantQuery.data?.website ?? '',
         },
     });
     const passwordForm = useForm<z.infer<typeof passwordSchema>>({
@@ -135,7 +133,6 @@ export function SettingsManagement() {
                                 await updateTenant.mutateAsync({
                                     ...values,
                                     email: values.email || undefined,
-                                    website: values.website || undefined,
                                 });
                                 toast.success('Configuración actualizada');
                             } catch {
@@ -154,9 +151,6 @@ export function SettingsManagement() {
                         </Field>
                         <Field label="Correo">
                             <input className="h-10 w-full rounded-md border border-input px-3 text-sm" {...tenantForm.register('email')} />
-                        </Field>
-                        <Field label="Sitio web">
-                            <input className="h-10 w-full rounded-md border border-input px-3 text-sm" {...tenantForm.register('website')} />
                         </Field>
                         <div className="sm:col-span-2">
                             <Button type="submit" disabled={updateTenant.isPending} title="Guardar configuración del negocio">

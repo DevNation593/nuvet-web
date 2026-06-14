@@ -17,7 +17,6 @@ export interface Promotion {
     id: string;
     name: string;
     description?: string;
-    code?: string;
     type: PromotionType;
     value: number;
     buyQuantity?: number;
@@ -35,7 +34,6 @@ export interface Promotion {
 export interface CreatePromotionInput {
     name: string;
     description?: string;
-    code?: string;
     type: PromotionType;
     value: number;
     buyQuantity?: number;

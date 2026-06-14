@@ -160,7 +160,7 @@ function PosRegister() {
     const [search, setSearch] = useState('');
     const [cart, setCart] = useState<PosCartItem[]>([]);
     const [selectedPromotionId, setSelectedPromotionId] = useState('');
-    const [appliedPromo, setAppliedPromo] = useState<{ id?: string; code: string; type: string; value: number } | null>(null);
+    const [appliedPromo, setAppliedPromo] = useState<{ id?: string; name: string; type: string; value: number } | null>(null);
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
     const activeBranchId = useBranchesStore((s) => s.activeBranchId);
@@ -262,7 +262,7 @@ function PosRegister() {
 
         setAppliedPromo({
             id: selectedDiscount.id,
-            code: selectedDiscount.name,
+            name: selectedDiscount.name,
             type: selectedDiscount.type,
             value: Number(selectedDiscount.value ?? 0),
         });
@@ -454,7 +454,7 @@ function PosRegister() {
                         {appliedPromo && (
                             <div className="flex items-center justify-between rounded-md bg-green-50 px-3 py-1.5 text-xs text-green-700 dark:bg-green-900/20 dark:text-green-400">
                                 <span>
-                                    <strong>{appliedPromo.code}</strong> —{' '}
+                                    <strong>{appliedPromo.name}</strong> —{' '}
                                     {appliedPromo.type === 'PERCENTAGE'
                                         ? `${appliedPromo.value}% de descuento`
                                         : `$${appliedPromo.value} de descuento`}
