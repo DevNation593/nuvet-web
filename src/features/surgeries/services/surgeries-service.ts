@@ -29,3 +29,7 @@ export async function updateSurgery(id: string, input: UpdateSurgeryRequest) {
     const { data } = await api.patch<ApiEnvelope<Surgery>>(`/surgeries/${id}`, input);
     return unwrapResponse<Surgery>(data);
 }
+
+export async function deleteSurgery(id: string) {
+    await api.delete(`/surgeries/${id}`);
+}

@@ -22,6 +22,7 @@ import {
     useClient,
     useClients,
     useCreateClient,
+    useLookupClientByIdentification,
     useUpdateClient,
 } from '@/features/clients/hooks/use-clients';
 import { usePets } from '@/features/pets/hooks/use-pets';
@@ -34,6 +35,8 @@ const clientSchema = z.object({
     lastName: z.string().min(2, 'Apellido requerido'),
     email: z.string().email('Correo inválido'),
     phone: z.string().optional(),
+    identification: z.string().optional(),
+    billingAddress: z.string().optional(),
     isActive: z.boolean().default(true),
 });
 
@@ -197,8 +200,13 @@ export function ClientsManagement() {
                     ) : (
                         <div className="grid gap-2 text-sm sm:grid-cols-2">
                             <DetailItem label="Nombre" value={`${selectedClientQuery.data.firstName} ${selectedClientQuery.data.lastName}`} />
+                            <DetailItem label="Cédula / RUC" value={selectedClientQuery.data.identification ?? '—'} />
                             <DetailItem label="Correo" value={selectedClientQuery.data.email} />
                             <DetailItem label="Teléfono" value={selectedClientQuery.data.phone ?? '—'} />
+                            <DetailItem
+                                label="Dirección de facturación"
+                                value={selectedClientQuery.data.billingAddress ?? '—'}
+                            />
                             <DetailItem
                                 label="Estado"
                                 value={selectedClientQuery.data.isActive ? 'Activo' : 'Inactivo'}
@@ -229,8 +237,10 @@ export function ClientsManagement() {
                                 lastName: values.lastName,
                                 email: values.email,
                                 phone: values.phone,
+                                identification: values.identification,
+                                billingAddress: values.billingAddress,
                                 isActive: values.isActive,
-                            });
+                            } as never);
                             toast.success('Cliente actualizado');
                         } else {
                             const payload: CreateClientInput = {
@@ -238,7 +248,9 @@ export function ClientsManagement() {
                                 lastName: values.lastName,
                                 email: values.email,
                                 phone: values.phone,
-                            };
+                                identification: values.identification,
+                                billingAddress: values.billingAddress,
+                            } as CreateClientInput;
                             await createClient.mutateAsync(payload);
                             toast.success('Cliente creado');
                         }
@@ -269,6 +281,7 @@ function ClientModal({
     onSubmit: (values: ClientFormValues) => Promise<void>;
     loading: boolean;
 }) {
+    const lookupByIdentification = useLookupClientByIdentification();
     const form = useForm<ClientFormValues>({
         resolver: zodResolver(clientSchema),
         values: {
@@ -276,9 +289,31 @@ function ClientModal({
             lastName: initialData?.lastName ?? '',
             email: initialData?.email ?? '',
             phone: initialData?.phone ?? '',
+            identification: initialData?.identification ?? '',
+            billingAddress: initialData?.billingAddress ?? '',
             isActive: initialData?.isActive ?? true,
         },
     });
+
+    async function handleIdentificationBlur() {
+        if (initialData) return;
+        const value = form.getValues('identification')?.trim() ?? '';
+        if (!value || value.length < 5) return;
+
+        try {
+            const found = await lookupByIdentification.mutateAsync(value);
+            if (found) {
+                form.setValue('firstName', found.firstName, { shouldDirty: false });
+                form.setValue('lastName', found.lastName, { shouldDirty: false });
+                form.setValue('email', found.email, { shouldDirty: false });
+                form.setValue('phone', found.phone ?? '', { shouldDirty: false });
+                form.setValue('billingAddress', found.billingAddress ?? '', { shouldDirty: false });
+                toast.success('Datos de facturación cargados desde cliente existente');
+            }
+        } catch {
+            /* silencioso: si no existe, no interrumpir al usuario */
+        }
+    }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -286,7 +321,7 @@ function ClientModal({
                 <DialogHeader>
                     <DialogTitle>{initialData ? 'Editar cliente' : 'Nuevo cliente'}</DialogTitle>
                     <DialogDescription>
-                        Completa la información del cliente para habilitar su acceso.
+                        Completa la información del cliente. Si ingresas una cédula/RUC registrada, se completarán los datos de facturación.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -296,6 +331,21 @@ function ClientModal({
                         await onSubmit(values);
                     })}
                 >
+                    <InputField label="Cédula o RUC" error={form.formState.errors.identification?.message}>
+                        <div className="relative">
+                            <input
+                                className="h-10 w-full rounded-md border border-input px-3 pr-9 text-sm"
+                                placeholder="Ej. 1712345678"
+                                {...form.register('identification', {
+                                    onBlur: handleIdentificationBlur,
+                                })}
+                            />
+                            {lookupByIdentification.isPending && (
+                                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                            )}
+                        </div>
+                    </InputField>
+
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <InputField label="Nombre" error={form.formState.errors.firstName?.message}>
                             <input className="h-10 w-full rounded-md border border-input px-3 text-sm" {...form.register('firstName')} />
@@ -310,6 +360,14 @@ function ClientModal({
                     </InputField>
                     <InputField label="Teléfono" error={form.formState.errors.phone?.message}>
                         <input className="h-10 w-full rounded-md border border-input px-3 text-sm" {...form.register('phone')} />
+                    </InputField>
+                    <InputField label="Dirección de facturación" error={form.formState.errors.billingAddress?.message}>
+                        <textarea
+                            rows={2}
+                            className="w-full rounded-md border border-input px-3 py-2 text-sm"
+                            placeholder="Calle principal y secundaria, ciudad"
+                            {...form.register('billingAddress')}
+                        />
                     </InputField>
                     {initialData && (
                         <label className="flex items-center gap-2 text-sm">
