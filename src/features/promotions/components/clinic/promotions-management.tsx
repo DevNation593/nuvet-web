@@ -35,7 +35,6 @@ import { toast } from 'sonner';
 const promotionSchema = z.object({
     name: z.string().min(2, 'El nombre es obligatorio'),
     description: z.string().optional(),
-    code: z.string().optional(),
     type: z.enum(['PERCENTAGE', 'FIXED_AMOUNT', 'BUY_X_GET_Y'] as const),
     value: z.coerce.number().min(0, 'El valor debe ser mayor o igual a 0'),
     buyQuantity: z.coerce.number().optional(),
@@ -144,7 +143,7 @@ export function PromotionsManagement() {
             <header className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">Promociones</h2>
-                    <p className="text-sm text-muted-foreground">Gestiona descuentos, códigos y ofertas especiales</p>
+                    <p className="text-sm text-muted-foreground">Gestiona descuentos y ofertas aplicables en punto de venta</p>
                 </div>
                 <Button onClick={openCreate} title="Crear nueva promoción">
                     <Plus className="mr-2 h-4 w-4" />
@@ -196,12 +195,11 @@ export function PromotionsManagement() {
                     ) : promotions.length === 0 ? (
                         <ClinicStateCard message="No hay promociones registradas." />
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[800px] text-sm">
-                                <thead className="border-y bg-muted/30 text-muted-foreground">
+                        <div className="max-h-[560px] overflow-auto">
+                            <table className="w-full min-w-[720px] text-sm">
+                                <thead className="sticky top-0 z-10 border-y bg-muted/30 text-muted-foreground shadow-sm">
                                     <tr>
                                         <th className="px-4 py-3 text-left font-medium">Nombre</th>
-                                        <th className="px-4 py-3 text-left font-medium">Código</th>
                                         <th className="px-4 py-3 text-left font-medium">Tipo</th>
                                         <th className="px-4 py-3 text-left font-medium">Descuento</th>
                                         <th className="px-4 py-3 text-left font-medium">Usos</th>
@@ -217,15 +215,6 @@ export function PromotionsManagement() {
                                                 <p className="font-medium">{promo.name}</p>
                                                 {promo.description && (
                                                     <p className="text-xs text-muted-foreground line-clamp-1">{promo.description}</p>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {promo.code ? (
-                                                    <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">
-                                                        {promo.code}
-                                                    </code>
-                                                ) : (
-                                                    <span className="text-muted-foreground">—</span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3">{PROMOTION_TYPE_LABELS[promo.type]}</td>
@@ -379,7 +368,6 @@ function PromotionModal({
         values: {
             name: defaultValues?.name ?? '',
             description: defaultValues?.description ?? '',
-            code: defaultValues?.code ?? '',
             type: (defaultValues?.type as PromotionType) ?? 'PERCENTAGE',
             value: defaultValues?.value ?? 0,
             buyQuantity: defaultValues?.buyQuantity,
@@ -410,13 +398,6 @@ function PromotionModal({
                                 className="h-10 w-full rounded-md border border-input px-3 text-sm"
                                 placeholder="Ej. Descuento Black Friday"
                                 {...form.register('name')}
-                            />
-                        </Field>
-                        <Field label="Código (opcional)">
-                            <input
-                                className="h-10 w-full rounded-md border border-input px-3 text-sm uppercase"
-                                placeholder="DESCUENTO20"
-                                {...form.register('code')}
                             />
                         </Field>
                         <Field label="Tipo *" error={form.formState.errors.type?.message}>

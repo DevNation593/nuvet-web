@@ -56,13 +56,30 @@ export function AdoptionsClientView() {
                 <ClientStateCard message="No hay publicaciones de adopción disponibles por ahora." />
             ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {records.map((item) => (
-                        <Card key={item.id}>
+                    {records.map((item) => {
+                        const animal = (item as { adoptionAnimal?: { name?: string; species?: string; photoUrl?: string | null } }).adoptionAnimal;
+                        const displayName = animal?.name ?? item.pet?.name ?? 'Mascota';
+                        const displaySpecies = animal?.species ?? item.pet?.species;
+                        const displayPhoto = animal?.photoUrl ?? null;
+                        return (
+                        <Card key={item.id} className="overflow-hidden">
+                            {displayPhoto ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    src={displayPhoto}
+                                    alt={displayName}
+                                    className="h-40 w-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-40 w-full items-center justify-center bg-muted/40 text-xs text-muted-foreground">
+                                    Sin foto
+                                </div>
+                            )}
                             <CardHeader className="pb-2">
                                 <div className="flex items-start justify-between gap-2">
                                     <div>
-                                        <h3 className="font-semibold">{item.pet?.name ?? 'Mascota'}</h3>
-                                        <p className="text-xs text-muted-foreground">{getPetSpeciesLabel(item.pet?.species)}</p>
+                                        <h3 className="font-semibold">{displayName}</h3>
+                                        <p className="text-xs text-muted-foreground">{getPetSpeciesLabel(displaySpecies)}</p>
                                     </div>
                                     <Badge variant="secondary">{getStatusLabel(item.status)}</Badge>
                                 </div>
@@ -80,7 +97,8 @@ export function AdoptionsClientView() {
                                 </Button>
                             </CardContent>
                         </Card>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 

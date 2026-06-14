@@ -32,7 +32,6 @@ function toPromotion(raw: RawDiscount): Promotion {
         id: raw.id,
         name: raw.name,
         description: raw.description ?? undefined,
-        code: raw.name,
         type: raw.type === 'FIXED' ? 'FIXED_AMOUNT' : raw.type,
         value: Number(raw.value ?? 0),
         buyQuantity: raw.buyQuantity ?? undefined,

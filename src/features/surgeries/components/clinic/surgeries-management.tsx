@@ -19,10 +19,16 @@ import {
 } from '@/shared/components/ui/dialog';
 import { usePets } from '@/features/pets/hooks/use-pets';
 import { useStaffUsers } from '@/features/users/hooks/use-users';
-import { useCreateSurgery, useSurgeries, useUpdateSurgery } from '@/features/surgeries/hooks/use-surgeries';
+import {
+    useCreateSurgery,
+    useDeleteSurgery,
+    useSurgeries,
+    useUpdateSurgery,
+    type Surgery,
+} from '@/features/surgeries/hooks/use-surgeries';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
 import { getStatusLabel } from '@/shared/lib/status-labels';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { localDateTimeToUTC } from '@/shared/lib/timezone';
 
@@ -36,20 +42,72 @@ const surgerySchema = z.object({
     notes: z.string().optional(),
 });
 
+type SurgeryFormValues = z.infer<typeof surgerySchema>;
+
 export function SurgeriesManagement() {
     const [modalOpen, setModalOpen] = useState(false);
+    const [editingSurgery, setEditingSurgery] = useState<Surgery | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<SurgeryStatus | ''>('');
+    const [deleteTarget, setDeleteTarget] = useState<Surgery | null>(null);
 
     const surgeriesQuery = useSurgeries({ limit: 100, ...(statusFilter ? { status: statusFilter } : {}) });
     const petsQuery = usePets({ limit: 100 });
     const staffQuery = useStaffUsers();
     const createSurgery = useCreateSurgery();
-    const updateSurgery = useUpdateSurgery(selectedId);
+    const updateSurgery = useUpdateSurgery(selectedId ?? editingSurgery?.id ?? null);
+    const deleteSurgery = useDeleteSurgery();
 
     const surgeries = surgeriesQuery.data?.data ?? [];
     const pets = (petsQuery.data?.data ?? []) as Array<{ id: string; name: string }>;
     const vets = (staffQuery.data?.data ?? []).filter((u) => u.role === 'VET' || u.role === 'CLINIC_ADMIN');
+
+    function openCreate() {
+        setEditingSurgery(null);
+        setModalOpen(true);
+    }
+
+    function openEdit(surgery: Surgery) {
+        setEditingSurgery(surgery);
+        setModalOpen(true);
+    }
+
+    async function handleSubmit(values: SurgeryFormValues) {
+        try {
+            const payload = {
+                petId: values.petId,
+                vetId: values.vetId,
+                type: values.type,
+                scheduledAt: localDateTimeToUTC(values.scheduledDate, '09:00'),
+                durationMinutes: values.durationMinutes,
+                anesthesiaType: values.anesthesiaType,
+                notes: values.notes,
+            };
+
+            if (editingSurgery) {
+                await updateSurgery.mutateAsync(payload);
+                toast.success('Cirugía actualizada');
+            } else {
+                await createSurgery.mutateAsync(payload);
+                toast.success('Cirugía creada');
+            }
+            setModalOpen(false);
+            setEditingSurgery(null);
+        } catch {
+            toast.error(editingSurgery ? 'No se pudo actualizar' : 'No se pudo crear la cirugía');
+        }
+    }
+
+    async function handleDelete() {
+        if (!deleteTarget) return;
+        try {
+            await deleteSurgery.mutateAsync(deleteTarget.id);
+            toast.success('Cirugía eliminada');
+            setDeleteTarget(null);
+        } catch {
+            toast.error('No se pudo eliminar la cirugía');
+        }
+    }
 
     return (
         <div className="space-y-4">
@@ -58,7 +116,7 @@ export function SurgeriesManagement() {
                     <h2 className="text-3xl font-bold tracking-tight">Cirugías</h2>
                     <p className="text-sm text-muted-foreground">Programación y seguimiento quirúrgico</p>
                 </div>
-                <Button onClick={() => setModalOpen(true)} title="Registrar nueva cirugía">
+                <Button onClick={openCreate} title="Registrar nueva cirugía">
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva cirugía
                 </Button>
@@ -116,25 +174,43 @@ export function SurgeriesManagement() {
                                                 </Badge>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    title="Marcar cirugía como completada"
-                                                    onClick={async () => {
-                                                        try {
-                                                            setSelectedId(surgery.id);
-                                                            await updateSurgery.mutateAsync({ status: SurgeryStatus.COMPLETED });
-                                                            toast.success('Estado actualizado');
-                                                        } catch {
-                                                            toast.error('No se pudo actualizar');
-                                                        } finally {
-                                                            setSelectedId(null);
-                                                        }
-                                                    }}
-                                                    disabled={surgery.status === SurgeryStatus.COMPLETED}
-                                                >
-                                                    Completar
-                                                </Button>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        title="Marcar cirugía como completada"
+                                                        onClick={async () => {
+                                                            try {
+                                                                setSelectedId(surgery.id);
+                                                                await updateSurgery.mutateAsync({ status: SurgeryStatus.COMPLETED });
+                                                                toast.success('Estado actualizado');
+                                                            } catch {
+                                                                toast.error('No se pudo actualizar');
+                                                            } finally {
+                                                                setSelectedId(null);
+                                                            }
+                                                        }}
+                                                        disabled={surgery.status === SurgeryStatus.COMPLETED}
+                                                    >
+                                                        Completar
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        title="Editar cirugía"
+                                                        onClick={() => openEdit(surgery)}
+                                                    >
+                                                        <Pencil className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        title="Eliminar cirugía"
+                                                        onClick={() => setDeleteTarget(surgery)}
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -147,28 +223,40 @@ export function SurgeriesManagement() {
 
             <SurgeryModal
                 open={modalOpen}
-                onOpenChange={setModalOpen}
+                onOpenChange={(open) => {
+                    setModalOpen(open);
+                    if (!open) setEditingSurgery(null);
+                }}
                 pets={pets}
                 vets={vets}
-                loading={createSurgery.isPending}
-                onSubmit={async (values) => {
-                    try {
-                        await createSurgery.mutateAsync({
-                            petId: values.petId,
-                            vetId: values.vetId,
-                            type: values.type,
-                            scheduledAt: localDateTimeToUTC(values.scheduledDate, '09:00'),
-                            durationMinutes: values.durationMinutes,
-                            anesthesiaType: values.anesthesiaType,
-                            notes: values.notes,
-                        });
-                        toast.success('Cirugía creada');
-                        setModalOpen(false);
-                    } catch {
-                        toast.error('No se pudo crear la cirugía');
-                    }
-                }}
+                initialValues={editingSurgery}
+                loading={createSurgery.isPending || updateSurgery.isPending}
+                onSubmit={handleSubmit}
             />
+
+            <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Eliminar cirugía</DialogTitle>
+                        <DialogDescription>
+                            ¿Eliminar la cirugía <strong>{deleteTarget?.type}</strong>? Esta acción no se puede deshacer.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteTarget(null)} title="Cancelar eliminación">
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={deleteSurgery.isPending}
+                            title="Confirmar eliminación"
+                        >
+                            {deleteSurgery.isPending ? 'Eliminando...' : 'Eliminar'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
@@ -179,6 +267,7 @@ function SurgeryModal({
     pets,
     vets,
     loading,
+    initialValues,
     onSubmit,
 }: {
     open: boolean;
@@ -186,27 +275,34 @@ function SurgeryModal({
     pets: Array<{ id: string; name: string }>;
     vets: Array<{ id: string; firstName: string; lastName: string }>;
     loading: boolean;
-    onSubmit: (values: z.infer<typeof surgerySchema>) => Promise<void>;
+    initialValues?: Surgery | null;
+    onSubmit: (values: SurgeryFormValues) => Promise<void>;
 }) {
-    const form = useForm<z.infer<typeof surgerySchema>>({
+    const form = useForm<SurgeryFormValues>({
         resolver: zodResolver(surgerySchema),
         values: {
-            petId: '',
-            vetId: '',
-            type: '',
-            scheduledDate: format(new Date(), 'yyyy-MM-dd'),
-            durationMinutes: 90,
-            anesthesiaType: '',
-            notes: '',
+            petId: initialValues?.petId ?? '',
+            vetId: initialValues?.vetId ?? '',
+            type: initialValues?.type ?? '',
+            scheduledDate: initialValues?.scheduledAt
+                ? format(new Date(initialValues.scheduledAt), 'yyyy-MM-dd')
+                : format(new Date(), 'yyyy-MM-dd'),
+            durationMinutes: initialValues?.durationMinutes ?? 90,
+            anesthesiaType: initialValues?.anesthesiaType ?? '',
+            notes: initialValues?.notes ?? '',
         },
     });
+
+    const isEdit = Boolean(initialValues?.id);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Nueva cirugía</DialogTitle>
-                    <DialogDescription>Programa un procedimiento quirúrgico</DialogDescription>
+                    <DialogTitle>{isEdit ? 'Editar cirugía' : 'Nueva cirugía'}</DialogTitle>
+                    <DialogDescription>
+                        {isEdit ? 'Modifica los datos del procedimiento.' : 'Programa un procedimiento quirúrgico'}
+                    </DialogDescription>
                 </DialogHeader>
                 <form className="space-y-3" onSubmit={form.handleSubmit(onSubmit)}>
                     <Field label="Mascota">
@@ -251,7 +347,7 @@ function SurgeryModal({
                             Cancelar
                         </Button>
                         <Button type="submit" disabled={loading} title="Guardar cirugía">
-                            {loading ? 'Guardando...' : 'Guardar'}
+                            {loading ? 'Guardando...' : isEdit ? 'Guardar cambios' : 'Guardar'}
                         </Button>
                     </DialogFooter>
                 </form>

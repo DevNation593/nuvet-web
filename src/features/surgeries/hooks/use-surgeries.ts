@@ -4,7 +4,7 @@ import type {
     SurgeryStatus,
     UpdateSurgeryRequest,
 } from '@nuvet/types';
-import { fetchSurgeries, createSurgery, updateSurgery } from '../services/surgeries-service';
+import { fetchSurgeries, createSurgery, updateSurgery, deleteSurgery } from '../services/surgeries-service';
 
 export interface Surgery {
     id: string;
@@ -49,6 +49,16 @@ export function useUpdateSurgery(id: string | null) {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (input: UpdateSurgeryRequest) => updateSurgery(id!, input),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['surgeries'] });
+        },
+    });
+}
+
+export function useDeleteSurgery() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => deleteSurgery(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['surgeries'] });
         },
