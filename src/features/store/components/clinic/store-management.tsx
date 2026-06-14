@@ -173,9 +173,9 @@ export function StoreManagement() {
                         ) : products.length === 0 ? (
                             <ClinicStateCard message={searchTerm || categoryFilter || stockFilter ? 'No se encontraron productos con los filtros aplicados.' : 'No hay productos registrados.'} />
                         ) : (
-                            <div className="overflow-x-auto">
+                            <div className="max-h-[560px] overflow-auto">
                                 <table className="w-full min-w-[760px] text-sm">
-                                    <thead className="border-y bg-muted/30 text-muted-foreground">
+                                    <thead className="sticky top-0 z-10 border-y bg-muted/30 text-muted-foreground shadow-sm">
                                         <tr>
                                             <th className="px-4 py-3 text-left font-medium">Producto</th>
                                             <th className="px-4 py-3 text-left font-medium">SKU</th>
@@ -252,9 +252,9 @@ export function StoreManagement() {
                     ) : orders.length === 0 ? (
                         <ClinicStateCard message="No hay órdenes registradas." />
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="max-h-[480px] overflow-auto">
                             <table className="w-full min-w-[720px] text-sm">
-                                <thead className="border-y bg-muted/30 text-muted-foreground">
+                                <thead className="sticky top-0 z-10 border-y bg-muted/30 text-muted-foreground shadow-sm">
                                     <tr>
                                         <th className="px-4 py-3 text-left font-medium">ID</th>
                                         <th className="px-4 py-3 text-left font-medium">Total</th>

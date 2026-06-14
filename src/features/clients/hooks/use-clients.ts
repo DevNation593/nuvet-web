@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateClientRequest, UpdateClientRequest } from '@nuvet/types';
-import { fetchClients, fetchClient, createClient, updateClient } from '../services/clients-service';
+import {
+    fetchClients,
+    fetchClient,
+    createClient,
+    updateClient,
+    fetchClientByIdentification,
+} from '../services/clients-service';
 
 export interface ClinicClient {
     id: string;
@@ -9,6 +15,8 @@ export interface ClinicClient {
     firstName: string;
     lastName: string;
     phone?: string;
+    identification?: string;
+    billingAddress?: string;
     isActive: boolean;
     createdAt: string;
     updatedAt?: string;
@@ -63,5 +71,11 @@ export function useUpdateClient(id: string | null) {
                 queryClient.invalidateQueries({ queryKey: ['client', id] });
             }
         },
+    });
+}
+
+export function useLookupClientByIdentification() {
+    return useMutation({
+        mutationFn: (identification: string) => fetchClientByIdentification(identification),
     });
 }

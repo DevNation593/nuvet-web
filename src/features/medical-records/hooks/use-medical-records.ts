@@ -46,7 +46,6 @@ export function useMedicalRecords(petId: string | null, params: { page?: number;
     return useQuery({
         queryKey: ['medical-records', petId, params],
         queryFn: () => fetchMedicalRecords({ ...params, petId }),
-        enabled: !!petId,
     });
 }
 

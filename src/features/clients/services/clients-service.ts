@@ -27,3 +27,16 @@ export async function updateClient(id: string, input: UpdateClientRequest) {
     const { data } = await api.patch<ApiEnvelope<ClinicClient>>(`/clients/${id}`, input);
     return unwrapResponse<ClinicClient>(data);
 }
+
+export async function fetchClientByIdentification(identification: string): Promise<ClinicClient | null> {
+    const normalized = identification.trim();
+    if (!normalized) return null;
+    try {
+        const { data } = await api.get<ApiEnvelope<ClinicClient | null>>(
+            `/clients/by-identification/${encodeURIComponent(normalized)}`,
+        );
+        return unwrapResponse<ClinicClient | null>(data);
+    } catch {
+        return null;
+    }
+}

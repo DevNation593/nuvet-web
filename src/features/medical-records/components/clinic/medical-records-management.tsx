@@ -104,7 +104,7 @@ export function MedicalRecordsManagement() {
                     <h2 className="text-3xl font-bold tracking-tight">Consulta</h2>
                     <p className="text-sm text-muted-foreground">Historial médico y evolución clínica</p>
                 </div>
-                <Button onClick={() => setModalOpen(true)} disabled={!selectedPetId} title="Crear nuevo registro médico">
+                <Button onClick={() => setModalOpen(true)} title="Crear nuevo registro médico">
                     <Plus className="mr-2 h-4 w-4" />
                     Nueva Consulta
                 </Button>
@@ -114,8 +114,8 @@ export function MedicalRecordsManagement() {
                 <CardHeader className="pb-3">
                     <div className="grid gap-2 sm:grid-cols-[1fr_260px]">
                         <select
-                            aria-label="Seleccionar paciente"
-                            title="Seleccionar paciente"
+                            aria-label="Filtrar por paciente"
+                            title="Filtrar por paciente"
                             className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                             value={selectedPetId}
                             onChange={(event) => {
@@ -123,7 +123,7 @@ export function MedicalRecordsManagement() {
                                 setSelectedRecordId(null);
                             }}
                         >
-                            <option value="">Selecciona paciente</option>
+                            <option value="">Todos los pacientes</option>
                             {pets.map((pet) => (
                                 <option key={pet.id} value={pet.id}>
                                     {pet.name}
@@ -131,7 +131,7 @@ export function MedicalRecordsManagement() {
                             ))}
                         </select>
                         <div className="h-10 rounded-md border border-input bg-muted/20 px-3 text-sm leading-10 text-muted-foreground">
-                            {petLabel}
+                            {selectedPetId ? petLabel : 'Mostrando todas las consultas'}
                         </div>
                     </div>
                 </CardHeader>
@@ -143,9 +143,7 @@ export function MedicalRecordsManagement() {
                         <CardTitle className="text-base">Consultas registradas</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
-                        {!selectedPetId ? (
-                            <ClinicStateCard message="Selecciona un paciente para ver consultas." />
-                        ) : recordsQuery.isLoading ? (
+                        {recordsQuery.isLoading ? (
                             <ClinicRowsSkeleton rows={6} />
                         ) : recordsQuery.isError ? (
                             <ClinicStateCard
@@ -176,11 +174,16 @@ export function MedicalRecordsManagement() {
                                             selectedRecordId === record.id ? 'bg-muted/30' : ''
                                         }`}
                                     >
-                                        <p className="text-sm font-semibold">
-                                            {format(new Date(record.createdAt), "d MMM yyyy · HH:mm", {
-                                                locale: es,
-                                            })}
-                                        </p>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <p className="text-sm font-semibold">
+                                                {format(new Date(record.createdAt), "d MMM yyyy · HH:mm", {
+                                                    locale: es,
+                                                })}
+                                            </p>
+                                            {record.pet?.name && (
+                                                <span className="text-xs text-muted-foreground">{record.pet.name}</span>
+                                            )}
+                                        </div>
                                         <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
                                             Motivo: {record.chiefComplaint}
                                         </p>
