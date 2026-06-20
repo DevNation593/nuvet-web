@@ -327,3 +327,209 @@ import { useAppointments } from '@/features/appointments/hooks';
 # 4. Aplicar estilos con TailwindCSS
 ```
 
+
+
+---
+
+## Patrón de Tablas Responsivas
+
+### Componente Estandarizado
+
+**Todas las tablas de la aplicación deben usar `ResponsiveDataTable`** para consistencia y optimización móvil.
+
+### Ubicación
+
+```typescript
+import { ResponsiveDataTable } from '@/shared/components/ui/responsive-data-table';
+```
+
+### Características
+
+- ✅ **Desktop:** Tabla HTML tradicional con scroll horizontal/vertical
+- ✅ **Móvil (<768px):** Vista de cards optimizada para touch
+- ✅ **Sticky headers:** Headers fijos al hacer scroll
+- ✅ **Tipado fuerte:** TypeScript genérico para type-safety
+- ✅ **Customizable:** Columnas configurables con hideOnMobile
+
+### Ejemplo de Uso
+
+```typescript
+import { ResponsiveDataTable, type ResponsiveColumn } from '@/shared/components/ui/responsive-data-table';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { Pencil } from 'lucide-react';
+
+// 1. Definir columnas
+const columns: ResponsiveColumn<Invoice>[] = [
+    {
+        key: 'invoiceNumber',
+        header: 'N° Factura',
+        cell: (inv) => (
+            <div>
+                <div className="font-mono text-xs font-medium">{inv.invoiceNumber}</div>
+                <div className="text-[10px] text-muted-foreground">{inv.providerInvoiceId}</div>
+            </div>
+        ),
+    },
+    {
+        key: 'client',
+        header: 'Cliente',
+        cell: (inv) => inv.client?.name || 'Consumidor final',
+    },
+    {
+        key: 'total',
+        header: 'Total',
+        cell: (inv) => `$${inv.total.toFixed(2)}`,
+        cellClassName: 'font-mono font-semibold',
+    },
+    {
+        key: 'status',
+        header: 'Estado',
+        cell: (inv) => (
+            <Badge variant={inv.status === 'AUTHORIZED' ? 'default' : 'secondary'}>
+                {inv.status}
+            </Badge>
+        ),
+        hideOnMobile: false, // Mostrar en móvil vía badge
+    },
+    {
+        key: 'actions',
+        header: 'Acciones',
+        headerClassName: 'text-right',
+        cell: (inv) => (
+            <div className="flex gap-1 justify-end">
+                <Button size="icon" variant="ghost" onClick={() => handleEdit(inv)}>
+                    <Pencil className="h-4 w-4" />
+                </Button>
+            </div>
+        ),
+        hideOnMobile: true, // Ocultar en móvil, usar getMobileActions
+    },
+];
+
+// 2. Usar el componente
+<ResponsiveDataTable
+    data={invoices}
+    columns={columns}
+    getRowKey={(inv) => inv.id}
+    maxHeight="max-h-[600px]"
+    minWidth="min-w-[900px]"
+    onRowClick={(inv) => setSelectedInvoice(inv)}
+    getMobileTitle={(inv) => inv.invoiceNumber}
+    getMobileBadge={(inv) => (
+        <Badge variant={inv.status === 'AUTHORIZED' ? 'default' : 'secondary'}>
+            {inv.status}
+        </Badge>
+    )}
+    getMobileActions={(inv) => (
+        <>
+            <Button size="sm" variant="outline" onClick={() => handleEdit(inv)}>
+                Editar
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleDelete(inv)}>
+                Eliminar
+            </Button>
+        </>
+    )}
+/>
+```
+
+### Props de ResponsiveDataTable
+
+| Prop | Tipo | Descripción |
+|------|------|-------------|
+| `data` | `T[]` | Array de datos a mostrar |
+| `columns` | `ResponsiveColumn<T>[]` | Definición de columnas |
+| `getRowKey` | `(item: T) => string` | Función para obtener key única |
+| `maxHeight` | `string` | Altura máxima del scroll (default: `max-h-[600px]`) |
+| `minWidth` | `string` | Ancho mínimo en desktop (default: `min-w-[760px]`) |
+| `onRowClick` | `(item: T) => void` | Callback al hacer click (opcional) |
+| `getMobileTitle` | `(item: T) => ReactNode` | Título principal en card móvil |
+| `getMobileBadge` | `(item: T) => ReactNode` | Badge/estado en header móvil |
+| `getMobileActions` | `(item: T) => ReactNode` | Botones de acción en móvil |
+
+### Definición de Columna
+
+```typescript
+interface ResponsiveColumn<T> {
+    key: string;                        // ID único
+    header: string;                     // Label del header
+    cell: (item: T) => ReactNode;      // Renderer del contenido
+    mobileLabel?: string;               // Label alternativo en móvil
+    hideOnMobile?: boolean;             // Ocultar columna en móvil
+    headerClassName?: string;           // Clase para <th>
+    cellClassName?: string;             // Clase para <td>
+}
+```
+
+### Reglas de Uso
+
+1. **Siempre usar `ResponsiveDataTable`** para listas tabulares
+2. **No crear tablas HTML manualmente** (usar componentes compartidos)
+3. **Definir `getMobileTitle` y `getMobileBadge`** para UX móvil óptima
+4. **Usar `hideOnMobile: true`** para columnas secundarias (ej: acciones)
+5. **Proporcionar `getMobileActions`** para botones en vista móvil
+
+### Migración de Tablas Existentes
+
+Si encuentras una tabla HTML nativa:
+
+```typescript
+// ❌ ANTES (tabla HTML nativa)
+<div className="overflow-x-auto max-h-[600px]">
+    <table className="w-full min-w-[760px]">
+        <thead className="sticky top-0 bg-white">
+            <tr><th>Columna</th></tr>
+        </thead>
+        <tbody>
+            {data.map(item => <tr key={item.id}><td>{item.name}</td></tr>)}
+        </tbody>
+    </table>
+</div>
+
+// ✅ DESPUÉS (componente estandarizado)
+<ResponsiveDataTable
+    data={data}
+    columns={[{ key: 'name', header: 'Columna', cell: (item) => item.name }]}
+    getRowKey={(item) => item.id}
+/>
+```
+
+### Hooks Relacionados
+
+```typescript
+import { useIsMobile, useIsTablet, useIsDesktop } from '@/shared/hooks/use-media-query';
+
+// Uso en lógica condicional
+const isMobile = useIsMobile(); // < 768px
+if (isMobile) {
+    // Lógica específica de móvil
+}
+```
+
+### Módulos Migrados
+
+Todos los siguientes módulos ya usan `ResponsiveDataTable`:
+
+- ✅ `features/billing` - Facturación electrónica
+- ✅ `features/clients` - Gestión de clientes
+- ✅ `features/pets` - Registro de mascotas
+- ✅ `features/store` - Inventario y productos
+- ✅ `features/vaccinations` - Calendario de vacunas
+- ✅ `features/surgeries` - Programación quirúrgica
+- ✅ `features/promotions` - Descuentos y ofertas
+- ✅ `features/appointments` - Agenda veterinaria
+- ✅ `features/medical-records` - Historial médico
+
+### Troubleshooting
+
+**Problema:** La tabla no se ve bien en móvil
+- **Solución:** Verifica que `getMobileTitle` esté definido y sea descriptivo
+
+**Problema:** Faltan botones de acción en móvil
+- **Solución:** Define `getMobileActions` y marca columna de acciones con `hideOnMobile: true`
+
+**Problema:** Demasiadas columnas en móvil
+- **Solución:** Marca columnas secundarias con `hideOnMobile: true`
+
+---

@@ -29,6 +29,9 @@ import { usePets } from '@/features/pets/hooks/use-pets';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
 import { Loader2, Pencil, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
+import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 
 const clientSchema = z.object({
     firstName: z.string().min(2, 'Nombre requerido'),
@@ -44,11 +47,13 @@ type ClientFormValues = z.infer<typeof clientSchema>;
 
 export function ClientsManagement() {
     const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<ClinicClient | null>(null);
+    const isMobile = useIsMobile();
 
-    const clientsQuery = useClients({ limit: 100 });
+    const clientsQuery = useClients({ page, limit: 10 });
     const selectedClientQuery = useClient(selectedId);
     const petsQuery = usePets({ limit: 100 });
     const createClient = useCreateClient();
@@ -125,63 +130,139 @@ export function ClientsManagement() {
                         />
                     ) : filteredClients.length === 0 ? (
                         <ClinicStateCard message="No hay clientes para mostrar." />
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[760px] text-sm">
-                                <thead className="border-y bg-muted/30 text-muted-foreground">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left font-medium">Nombre</th>
-                                        <th className="px-4 py-3 text-left font-medium">Correo</th>
-                                        <th className="px-4 py-3 text-left font-medium">Teléfono</th>
-                                        <th className="px-4 py-3 text-left font-medium">Mascotas</th>
-                                        <th className="px-4 py-3 text-left font-medium">Estado</th>
-                                        <th className="px-4 py-3 text-left font-medium">Registro</th>
-                                        <th className="px-4 py-3 text-left font-medium">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredClients.map((client) => (
-                                        <tr
-                                            key={client.id}
-                                            className="cursor-pointer border-b hover:bg-muted/20"
-                                            onClick={() => setSelectedId(client.id)}
-                                        >
-                                            <td className="px-4 py-3 font-medium">
-                                                {client.firstName} {client.lastName}
-                                            </td>
-                                            <td className="px-4 py-3">{client.email}</td>
-                                            <td className="px-4 py-3">{client.phone ?? '—'}</td>
-                                            <td className="px-4 py-3">{petCountByOwner.get(client.id) ?? 0}</td>
-                                            <td className="px-4 py-3">
-                                                <Badge variant={client.isActive ? 'confirmed' : 'cancelled'}>
-                                                    {client.isActive ? 'Activo' : 'Inactivo'}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {format(new Date(client.createdAt), 'dd/MM/yy')}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    title="Editar cliente"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        setEditingClient(client);
-                                                        setModalOpen(true);
-                                                    }}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                    ) : isMobile ? (
+                        <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
+                            {filteredClients.map((client) => (
+                                <MobileCard key={client.id} className="cursor-pointer" onClick={() => setSelectedId(client.id)}>
+                                    <MobileCardHeader>
+                                        <MobileCardTitle>
+                                            {client.firstName} {client.lastName}
+                                        </MobileCardTitle>
+                                        <Badge variant={client.isActive ? 'confirmed' : 'cancelled'}>
+                                            {client.isActive ? 'Activo' : 'Inactivo'}
+                                        </Badge>
+                                    </MobileCardHeader>
+                                    <MobileCardContent>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Correo:</MobileCardLabel>
+                                            <MobileCardValue>{client.email}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Teléfono:</MobileCardLabel>
+                                            <MobileCardValue>{client.phone ?? '—'}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Mascotas:</MobileCardLabel>
+                                            <MobileCardValue>{petCountByOwner.get(client.id) ?? 0}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Registro:</MobileCardLabel>
+                                            <MobileCardValue>{format(new Date(client.createdAt), 'dd/MM/yy')}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardActions>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingClient(client);
+                                                    setModalOpen(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-3.5 w-3.5 mr-1" />
+                                                Editar
+                                            </Button>
+                                        </MobileCardActions>
+                                    </MobileCardContent>
+                                </MobileCard>
+                            ))}
                         </div>
+                    ) : (
+                        <ScrollableTable maxHeight="max-h-[600px]" minWidth="min-w-[760px]">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nombre</TableHead>
+                                    <TableHead>Correo</TableHead>
+                                    <TableHead>Teléfono</TableHead>
+                                    <TableHead>Mascotas</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                    <TableHead>Registro</TableHead>
+                                    <TableHead>Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredClients.map((client) => (
+                                    <TableRow
+                                        key={client.id}
+                                        clickable
+                                        onClick={() => setSelectedId(client.id)}
+                                    >
+                                        <TableCell className="font-medium">
+                                            {client.firstName} {client.lastName}
+                                        </TableCell>
+                                        <TableCell>{client.email}</TableCell>
+                                        <TableCell>{client.phone ?? '—'}</TableCell>
+                                        <TableCell>{petCountByOwner.get(client.id) ?? 0}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={client.isActive ? 'confirmed' : 'cancelled'}>
+                                                {client.isActive ? 'Activo' : 'Inactivo'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            {format(new Date(client.createdAt), 'dd/MM/yy')}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                title="Editar cliente"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    setEditingClient(client);
+                                                    setModalOpen(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </ScrollableTable>
                     )}
                 </CardContent>
             </Card>
+
+            {/* Paginación */}
+            {!clientsQuery.isLoading && filteredClients.length > 0 && (
+                <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                        Mostrando {filteredClients.length} de {String(clientsQuery.data?.meta?.total ?? 0)} clientes
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage(page - 1)}
+                            disabled={page === 1}
+                        >
+                            Anterior
+                        </Button>
+                        <span className="text-sm">
+                            Página {page} de {clientsQuery.data?.meta.totalPages ?? 1}
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage(page + 1)}
+                            disabled={page >= (clientsQuery.data?.meta.totalPages ?? 1)}
+                        >
+                            Siguiente
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             <Card>
                 <CardHeader>

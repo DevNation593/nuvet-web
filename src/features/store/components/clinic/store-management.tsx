@@ -37,6 +37,9 @@ import { PackagePlus, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { resolveUserPermissions } from '@/shared/lib/permissions';
+import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
+import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 
 const productSchema = z.object({
     name: z.string().min(2),
@@ -56,6 +59,7 @@ export function StoreManagement() {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [stockFilter, setStockFilter] = useState('');
+    const isMobile = useIsMobile();
 
     const user = useAuthStore((state) => state.user);
     const permissions = resolveUserPermissions(user);
@@ -172,46 +176,83 @@ export function StoreManagement() {
                             <ClinicRowsSkeleton rows={6} />
                         ) : products.length === 0 ? (
                             <ClinicStateCard message={searchTerm || categoryFilter || stockFilter ? 'No se encontraron productos con los filtros aplicados.' : 'No hay productos registrados.'} />
-                        ) : (
-                            <div className="max-h-[560px] overflow-auto">
-                                <table className="w-full min-w-[760px] text-sm">
-                                    <thead className="sticky top-0 z-10 border-y bg-muted/30 text-muted-foreground shadow-sm">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left font-medium">Producto</th>
-                                            <th className="px-4 py-3 text-left font-medium">SKU</th>
-                                            <th className="px-4 py-3 text-left font-medium">Categoría</th>
-                                            <th className="px-4 py-3 text-left font-medium">Precio</th>
-                                            <th className="px-4 py-3 text-left font-medium">Stock</th>
-                                            <th className="px-4 py-3 text-left font-medium">Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {products.map((product) => (
-                                            <tr key={product.id} className="border-b">
-                                                <td className="px-4 py-3 font-medium">{product.name}</td>
-                                                <td className="px-4 py-3">{product.sku}</td>
-                                                <td className="px-4 py-3">{product.category}</td>
-                                                <td className="px-4 py-3">${Number(product.price).toFixed(2)}</td>
-                                                <td className="px-4 py-3">
-                                                    <span className={product.stock <= product.lowStockThreshold ? 'text-destructive' : 'text-green-700'}>
-                                                        {product.stock}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        title="Ajustar cantidad en inventario"
-                                                        onClick={() => setStockDialogProductId(product.id)}
-                                                    >
-                                                        Ajustar stock
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                        ) : isMobile ? (
+                            <div className="space-y-3 p-4 max-h-[560px] overflow-y-auto">
+                                {products.map((product) => (
+                                    <MobileCard key={product.id}>
+                                        <MobileCardHeader>
+                                            <MobileCardTitle>{product.name}</MobileCardTitle>
+                                            <Badge variant={product.stock <= product.lowStockThreshold ? 'destructive' : 'default'}>
+                                                Stock: {product.stock}
+                                            </Badge>
+                                        </MobileCardHeader>
+                                        <MobileCardContent>
+                                            <MobileCardRow>
+                                                <MobileCardLabel>SKU:</MobileCardLabel>
+                                                <MobileCardValue>{product.sku}</MobileCardValue>
+                                            </MobileCardRow>
+                                            <MobileCardRow>
+                                                <MobileCardLabel>Categoría:</MobileCardLabel>
+                                                <MobileCardValue>{product.category}</MobileCardValue>
+                                            </MobileCardRow>
+                                            <MobileCardRow>
+                                                <MobileCardLabel>Precio:</MobileCardLabel>
+                                                <MobileCardValue className="font-mono font-semibold">
+                                                    ${Number(product.price).toFixed(2)}
+                                                </MobileCardValue>
+                                            </MobileCardRow>
+                                            <MobileCardActions>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="flex-1"
+                                                    onClick={() => setStockDialogProductId(product.id)}
+                                                >
+                                                    Ajustar stock
+                                                </Button>
+                                            </MobileCardActions>
+                                        </MobileCardContent>
+                                    </MobileCard>
+                                ))}
                             </div>
+                        ) : (
+                            <ScrollableTable maxHeight="max-h-[560px]" minWidth="min-w-[760px]">
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Producto</TableHead>
+                                        <TableHead>SKU</TableHead>
+                                        <TableHead>Categoría</TableHead>
+                                        <TableHead>Precio</TableHead>
+                                        <TableHead>Stock</TableHead>
+                                        <TableHead>Acción</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {products.map((product) => (
+                                        <TableRow key={product.id}>
+                                            <TableCell className="font-medium">{product.name}</TableCell>
+                                            <TableCell>{product.sku}</TableCell>
+                                            <TableCell>{product.category}</TableCell>
+                                            <TableCell>${Number(product.price).toFixed(2)}</TableCell>
+                                            <TableCell>
+                                                <span className={product.stock <= product.lowStockThreshold ? 'text-destructive' : 'text-green-700'}>
+                                                    {product.stock}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    title="Ajustar cantidad en inventario"
+                                                    onClick={() => setStockDialogProductId(product.id)}
+                                                >
+                                                    Ajustar stock
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </ScrollableTable>
                         )}
                     </CardContent>
                 </Card>
@@ -251,51 +292,93 @@ export function StoreManagement() {
                         <ClinicRowsSkeleton rows={6} />
                     ) : orders.length === 0 ? (
                         <ClinicStateCard message="No hay órdenes registradas." />
-                    ) : (
-                        <div className="max-h-[480px] overflow-auto">
-                            <table className="w-full min-w-[720px] text-sm">
-                                <thead className="sticky top-0 z-10 border-y bg-muted/30 text-muted-foreground shadow-sm">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left font-medium">ID</th>
-                                        <th className="px-4 py-3 text-left font-medium">Total</th>
-                                        <th className="px-4 py-3 text-left font-medium">Estado</th>
-                                        <th className="px-4 py-3 text-left font-medium">Items</th>
-                                        <th className="px-4 py-3 text-left font-medium">Acción</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {orders.map((order) => (
-                                        <tr key={order.id} className="border-b">
-                                            <td className="px-4 py-3 font-medium">{order.id.slice(0, 8)}...</td>
-                                            <td className="px-4 py-3">${Number(order.total).toFixed(2)}</td>
-                                            <td className="px-4 py-3">
-                                                <Badge variant={order.status === 'COMPLETED' ? 'confirmed' : 'scheduled'}>
-                                                    {getStatusLabel(order.status)}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-4 py-3">{order.items?.length ?? 0}</td>
-                                            <td className="px-4 py-3">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    title="Marcar esta orden como completada"
-                                                    onClick={async () => {
-                                                        try {
-                                                            await updateOrderStatus.mutateAsync(OrderStatus.COMPLETED);
-                                                            toast.success('Orden actualizada');
-                                                        } catch {
-                                                            toast.error('No se pudo actualizar la orden');
-                                                        }
-                                                    }}
-                                                >
-                                                    Completar
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                    ) : isMobile ? (
+                        <div className="space-y-3 p-4 max-h-[480px] overflow-y-auto">
+                            {orders.map((order) => (
+                                <MobileCard key={order.id}>
+                                    <MobileCardHeader>
+                                        <MobileCardTitle className="font-mono text-xs">
+                                            {order.id.slice(0, 8)}...
+                                        </MobileCardTitle>
+                                        <Badge variant={order.status === 'COMPLETED' ? 'confirmed' : 'scheduled'}>
+                                            {getStatusLabel(order.status)}
+                                        </Badge>
+                                    </MobileCardHeader>
+                                    <MobileCardContent>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Total:</MobileCardLabel>
+                                            <MobileCardValue className="font-mono font-semibold">
+                                                ${Number(order.total).toFixed(2)}
+                                            </MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Items:</MobileCardLabel>
+                                            <MobileCardValue>{order.items?.length ?? 0}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardActions>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={async () => {
+                                                    try {
+                                                        await updateOrderStatus.mutateAsync(OrderStatus.COMPLETED);
+                                                        toast.success('Orden actualizada');
+                                                    } catch {
+                                                        toast.error('No se pudo actualizar la orden');
+                                                    }
+                                                }}
+                                            >
+                                                Completar
+                                            </Button>
+                                        </MobileCardActions>
+                                    </MobileCardContent>
+                                </MobileCard>
+                            ))}
                         </div>
+                    ) : (
+                        <ScrollableTable maxHeight="max-h-[480px]" minWidth="min-w-[720px]">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>ID</TableHead>
+                                    <TableHead>Total</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                    <TableHead>Items</TableHead>
+                                    <TableHead>Acción</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {orders.map((order) => (
+                                    <TableRow key={order.id}>
+                                        <TableCell className="font-medium">{order.id.slice(0, 8)}...</TableCell>
+                                        <TableCell>${Number(order.total).toFixed(2)}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={order.status === 'COMPLETED' ? 'confirmed' : 'scheduled'}>
+                                                {getStatusLabel(order.status)}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{order.items?.length ?? 0}</TableCell>
+                                        <TableCell>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                title="Marcar esta orden como completada"
+                                                onClick={async () => {
+                                                    try {
+                                                        await updateOrderStatus.mutateAsync(OrderStatus.COMPLETED);
+                                                        toast.success('Orden actualizada');
+                                                    } catch {
+                                                        toast.error('No se pudo actualizar la orden');
+                                                    }
+                                                }}
+                                            >
+                                                Completar
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </ScrollableTable>
                     )}
                 </CardContent>
             </Card>

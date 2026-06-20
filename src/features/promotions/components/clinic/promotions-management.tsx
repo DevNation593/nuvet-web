@@ -29,6 +29,9 @@ import {
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
 import { Loader2, Pencil, Percent, Plus, Tag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
+import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
@@ -61,6 +64,7 @@ export function PromotionsManagement() {
     const [editTarget, setEditTarget] = useState<Promotion | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const isMobile = useIsMobile();
 
     const queryParams = useMemo(() => {
         if (activeFilter === 'active') return { isActive: true, limit: 100 };
@@ -194,97 +198,164 @@ export function PromotionsManagement() {
                         <ClinicRowsSkeleton rows={5} />
                     ) : promotions.length === 0 ? (
                         <ClinicStateCard message="No hay promociones registradas." />
-                    ) : (
-                        <div className="max-h-[560px] overflow-auto">
-                            <table className="w-full min-w-[720px] text-sm">
-                                <thead className="sticky top-0 z-10 border-y bg-muted/30 text-muted-foreground shadow-sm">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left font-medium">Nombre</th>
-                                        <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                                        <th className="px-4 py-3 text-left font-medium">Descuento</th>
-                                        <th className="px-4 py-3 text-left font-medium">Usos</th>
-                                        <th className="px-4 py-3 text-left font-medium">Vigencia</th>
-                                        <th className="px-4 py-3 text-left font-medium">Estado</th>
-                                        <th className="px-4 py-3 text-left font-medium">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {promotions.map((promo) => (
-                                        <tr key={promo.id} className="border-b hover:bg-muted/20">
-                                            <td className="px-4 py-3">
-                                                <p className="font-medium">{promo.name}</p>
-                                                {promo.description && (
-                                                    <p className="text-xs text-muted-foreground line-clamp-1">{promo.description}</p>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3">{PROMOTION_TYPE_LABELS[promo.type]}</td>
-                                            <td className="px-4 py-3 font-medium">
+                    ) : isMobile ? (
+                        <div className="space-y-3 p-4 max-h-[560px] overflow-y-auto">
+                            {promotions.map((promo) => (
+                                <MobileCard key={promo.id}>
+                                    <MobileCardHeader>
+                                        <MobileCardTitle>{promo.name}</MobileCardTitle>
+                                        <Badge variant={promo.isActive ? 'confirmed' : 'cancelled'}>
+                                            {promo.isActive ? 'Activa' : 'Inactiva'}
+                                        </Badge>
+                                    </MobileCardHeader>
+                                    <MobileCardContent>
+                                        {promo.description && (
+                                            <MobileCardRow>
+                                                <MobileCardValue className="text-xs text-muted-foreground line-clamp-2">
+                                                    {promo.description}
+                                                </MobileCardValue>
+                                            </MobileCardRow>
+                                        )}
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Tipo:</MobileCardLabel>
+                                            <MobileCardValue>{PROMOTION_TYPE_LABELS[promo.type]}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Descuento:</MobileCardLabel>
+                                            <MobileCardValue className="font-medium">
                                                 {promo.type === 'PERCENTAGE'
                                                     ? `${promo.value}%`
                                                     : promo.type === 'FIXED_AMOUNT'
                                                     ? `$${promo.value}`
                                                     : `${promo.buyQuantity ?? 0}x${promo.getQuantity ?? 1}`}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className="tabular-nums">
-                                                    {promo.usageCount}
-                                                    {promo.maxUsages ? ` / ${promo.maxUsages}` : ''}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-xs">
-                                                {promo.startDate
-                                                    ? format(new Date(promo.startDate), 'dd/MM/yy')
-                                                    : '—'}{' '}
-                                                →{' '}
-                                                {promo.endDate
-                                                    ? format(new Date(promo.endDate), 'dd/MM/yy')
-                                                    : '∞'}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <Badge variant={promo.isActive ? 'confirmed' : 'cancelled'}>
-                                                    {promo.isActive ? 'Activa' : 'Inactiva'}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-1">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        title="Editar promoción"
-                                                        onClick={() => openEdit(promo)}
-                                                    >
-                                                        <Pencil className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        title={promo.isActive ? 'Desactivar promoción' : 'Activar promoción'}
-                                                        onClick={() => handleToggle(promo)}
-                                                        disabled={togglePromotion.isPending && selectedId === promo.id}
-                                                    >
-                                                        {togglePromotion.isPending && selectedId === promo.id ? (
-                                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                                        ) : promo.isActive ? (
-                                                            'Desactivar'
-                                                        ) : (
-                                                            'Activar'
-                                                        )}
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        title="Eliminar promoción"
-                                                        onClick={() => setDeleteTarget(promo)}
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Usos:</MobileCardLabel>
+                                            <MobileCardValue>
+                                                {promo.usageCount}
+                                                {promo.maxUsages ? ` / ${promo.maxUsages}` : ''}
+                                            </MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardActions>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={() => openEdit(promo)}
+                                            >
+                                                <Pencil className="h-3.5 w-3.5 mr-1" />
+                                                Editar
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={() => handleToggle(promo)}
+                                                disabled={togglePromotion.isPending && selectedId === promo.id}
+                                            >
+                                                {togglePromotion.isPending && selectedId === promo.id ? (
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                ) : promo.isActive ? (
+                                                    'Desactivar'
+                                                ) : (
+                                                    'Activar'
+                                                )}
+                                            </Button>
+                                        </MobileCardActions>
+                                    </MobileCardContent>
+                                </MobileCard>
+                            ))}
                         </div>
+                    ) : (
+                        <ScrollableTable maxHeight="max-h-[560px]" minWidth="min-w-[720px]">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nombre</TableHead>
+                                    <TableHead>Tipo</TableHead>
+                                    <TableHead>Descuento</TableHead>
+                                    <TableHead>Usos</TableHead>
+                                    <TableHead>Vigencia</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                    <TableHead>Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {promotions.map((promo) => (
+                                    <TableRow key={promo.id}>
+                                        <TableCell>
+                                            <p className="font-medium">{promo.name}</p>
+                                            {promo.description && (
+                                                <p className="text-xs text-muted-foreground line-clamp-1">{promo.description}</p>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>{PROMOTION_TYPE_LABELS[promo.type]}</TableCell>
+                                        <TableCell className="font-medium">
+                                            {promo.type === 'PERCENTAGE'
+                                                ? `${promo.value}%`
+                                                : promo.type === 'FIXED_AMOUNT'
+                                                ? `$${promo.value}`
+                                                : `${promo.buyQuantity ?? 0}x${promo.getQuantity ?? 1}`}
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="tabular-nums">
+                                                {promo.usageCount}
+                                                {promo.maxUsages ? ` / ${promo.maxUsages}` : ''}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-xs">
+                                            {promo.startDate
+                                                ? format(new Date(promo.startDate), 'dd/MM/yy')
+                                                : '—'}{' '}
+                                            →{' '}
+                                            {promo.endDate
+                                                ? format(new Date(promo.endDate), 'dd/MM/yy')
+                                                : '∞'}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={promo.isActive ? 'confirmed' : 'cancelled'}>
+                                                {promo.isActive ? 'Activa' : 'Inactiva'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    title="Editar promoción"
+                                                    onClick={() => openEdit(promo)}
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    title={promo.isActive ? 'Desactivar promoción' : 'Activar promoción'}
+                                                    onClick={() => handleToggle(promo)}
+                                                    disabled={togglePromotion.isPending && selectedId === promo.id}
+                                                >
+                                                    {togglePromotion.isPending && selectedId === promo.id ? (
+                                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                    ) : promo.isActive ? (
+                                                        'Desactivar'
+                                                    ) : (
+                                                        'Activar'
+                                                    )}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    title="Eliminar promoción"
+                                                    onClick={() => setDeleteTarget(promo)}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </ScrollableTable>
                     )}
                 </CardContent>
             </Card>
