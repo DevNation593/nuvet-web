@@ -23,6 +23,7 @@ export const api = axios.create({
 });
 
 let isRefreshing = false;
+let isLoggingOut = false;
 let failedQueue: Array<{
     resolve: (token: string) => void;
     reject: (err: AxiosError) => void;
@@ -33,8 +34,26 @@ function processQueue(error: AxiosError | null, token: string | null) {
     failedQueue = [];
 }
 
+// Función para cancelar todas las peticiones pendientes
+export function cancelAllRequests() {
+    isLoggingOut = true;
+    processQueue(new axios.Cancel('Logout: Cancelando todas las peticiones') as unknown as AxiosError, null);
+    failedQueue = [];
+}
+
+// Función para resetear el flag de logout
+export function resetLogoutFlag() {
+    isLoggingOut = false;
+}
+
 api.interceptors.request.use((config) => {
     if (typeof window === 'undefined') return config;
+    
+    // Si estamos en proceso de logout, rechazar la petición inmediatamente
+    if (isLoggingOut) {
+        return Promise.reject(new axios.Cancel('Request canceled: User is logging out'));
+    }
+    
     const { accessToken, tenantId } = useAuthStore.getState();
     if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
@@ -58,7 +77,12 @@ api.interceptors.response.use(
 
         const { refreshToken, setAuth, logout } = useAuthStore.getState();
         if (!refreshToken) {
+            // Limpiar estado INMEDIATAMENTE
             logout();
+            // Cancelar peticiones pendientes
+            processQueue(error, null);
+            failedQueue = [];
+            // Redirigir ANTES de que se intenten más peticiones
             window.location.href = '/auth/login';
             return Promise.reject(error);
         }
@@ -100,8 +124,12 @@ api.interceptors.response.use(
                 return api(originalRequest);
             }
         } catch (refreshError) {
-            processQueue(refreshError as AxiosError, null);
+            // Limpiar estado INMEDIATAMENTE cuando falla el refresh
             logout();
+            // Rechazar todas las peticiones pendientes
+            processQueue(refreshError as AxiosError, null);
+            failedQueue = [];
+            // Redirigir ANTES de que se intenten más peticiones
             window.location.href = '/auth/login';
             return Promise.reject(refreshError);
         } finally {
