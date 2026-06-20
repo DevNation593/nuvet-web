@@ -40,9 +40,9 @@ export function PetsDashboardTable() {
             </div>
 
             <div className="rounded-md border bg-white dark:bg-gray-800 dark:border-gray-700">
-                <div className="relative w-full overflow-auto">
+                <div className="relative w-full overflow-auto max-h-[600px]">
                     <table className="w-full caption-bottom text-sm text-left">
-                        <thead className="[&_tr]:border-b">
+                        <thead className="[&_tr]:border-b sticky top-0 bg-white dark:bg-gray-800 z-10">
                             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                                 <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Nombre</th>
                                 <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Especie/Raza</th>

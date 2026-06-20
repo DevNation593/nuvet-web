@@ -92,9 +92,9 @@ export function AestheticsManagement() {
                     ) : items.length === 0 ? (
                         <ClinicStateCard message="No hay servicios registrados." />
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto max-h-[600px]">
                             <table className="w-full min-w-[860px] text-sm">
-                                <thead className="border-y bg-muted/30 text-muted-foreground">
+                                <thead className="border-y bg-muted/30 text-muted-foreground sticky top-0 z-10 bg-white dark:bg-gray-800">
                                     <tr>
                                         <th className="px-4 py-3 text-left font-medium">Servicio</th>
                                         <th className="px-4 py-3 text-left font-medium">Mascota</th>

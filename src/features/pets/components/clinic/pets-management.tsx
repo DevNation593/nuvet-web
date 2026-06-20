@@ -24,6 +24,9 @@ import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/
 import { FileText, Loader2, PawPrint, Pencil, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
+import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
+import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 
 type PetRow = {
     id: string;
@@ -98,6 +101,7 @@ export function PetsManagement() {
     const [editingPet, setEditingPet] = useState<PetRow | null>(null);
     const [speciesFilter, setSpeciesFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
+    const isMobile = useIsMobile();
 
     const petsQuery = usePets({ limit: 100, includeInactive: statusFilter !== 'active' });
     const clientsQuery = useClients({ limit: 100 });
@@ -207,94 +211,152 @@ export function PetsManagement() {
                         />
                     ) : filteredPets.length === 0 ? (
                         <ClinicStateCard message="No hay mascotas para mostrar." />
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[860px] text-sm">
-                                <thead className="border-y bg-muted/30 text-muted-foreground">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left font-medium">Nombre</th>
-                                        <th className="px-4 py-3 text-left font-medium">Especie</th>
-                                        <th className="px-4 py-3 text-left font-medium">Raza</th>
-                                        <th className="px-4 py-3 text-left font-medium">Edad</th>
-                                        <th className="px-4 py-3 text-left font-medium">Dueño</th>
-                                        <th className="px-4 py-3 text-left font-medium">Estado</th>
-                                        <th className="px-4 py-3 text-left font-medium">Última visita</th>
-                                        <th className="px-4 py-3 text-left font-medium">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredPets.map((pet) => (
-                                        <tr
-                                            key={pet.id}
-                                            className="cursor-pointer border-b hover:bg-muted/20"
-                                            onClick={() => setSelectedId(pet.id)}
-                                        >
-                                            <td className="px-4 py-3 font-medium">{pet.name}</td>
-                                            <td className="px-4 py-3">{getPetSpeciesLabel(pet.species)}</td>
-                                            <td className="px-4 py-3">{pet.breed ?? '—'}</td>
-                                            <td className="px-4 py-3">{calculateAge(pet.birthDate)}</td>
-                                            <td className="px-4 py-3">
+                    ) : isMobile ? (
+                        <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
+                            {filteredPets.map((pet) => (
+                                <MobileCard key={pet.id} className="cursor-pointer" onClick={() => setSelectedId(pet.id)}>
+                                    <MobileCardHeader>
+                                        <MobileCardTitle>{pet.name}</MobileCardTitle>
+                                        <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
+                                            {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
+                                        </Badge>
+                                    </MobileCardHeader>
+                                    <MobileCardContent>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Especie:</MobileCardLabel>
+                                            <MobileCardValue>{getPetSpeciesLabel(pet.species)}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Raza:</MobileCardLabel>
+                                            <MobileCardValue>{pet.breed ?? '—'}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Edad:</MobileCardLabel>
+                                            <MobileCardValue>{calculateAge(pet.birthDate)}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Dueño:</MobileCardLabel>
+                                            <MobileCardValue>
                                                 {pet.owner?.firstName} {pet.owner?.lastName}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
-                                                    {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-4 py-3">{format(new Date(pet.createdAt), 'dd/MM/yy')}</td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center gap-1">
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            setEditingPet(pet);
-                                                            setModalOpen(true);
-                                                        }}
-                                                        title="Editar"
-                                                    >
-                                                        <Pencil className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            router.push(`/clinic/pets/${pet.id}/history`);
-                                                        }}
-                                                        title="Historial clínico"
-                                                    >
-                                                        <FileText className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        size="icon"
-                                                        variant="ghost"
-                                                        title={(pet.isActive ?? true) ? 'Desactivar mascota' : 'Activar mascota'}
-                                                        onClick={async (event) => {
-                                                            event.stopPropagation();
-                                                            try {
-                                                                if ((pet.isActive ?? true)) {
-                                                                    await deactivatePet.mutateAsync(pet.id);
-                                                                    toast.success('Mascota desactivada');
-                                                                } else {
-                                                                    await reactivatePet.mutateAsync(pet.id);
-                                                                    toast.success('Mascota reactivada');
-                                                                }
-                                                            } catch {
-                                                                toast.error('No se pudo actualizar el estado');
-                                                            }
-                                                        }}
-                                                    >
-                                                        <PawPrint className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardActions>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingPet(pet);
+                                                    setModalOpen(true);
+                                                }}
+                                            >
+                                                <Pencil className="h-3.5 w-3.5 mr-1" />
+                                                Editar
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    router.push(`/clinic/pets/${pet.id}/history`);
+                                                }}
+                                            >
+                                                <FileText className="h-3.5 w-3.5 mr-1" />
+                                                Historial
+                                            </Button>
+                                        </MobileCardActions>
+                                    </MobileCardContent>
+                                </MobileCard>
+                            ))}
                         </div>
+                    ) : (
+                        <ScrollableTable maxHeight="max-h-[600px]" minWidth="min-w-[860px]">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Nombre</TableHead>
+                                    <TableHead>Especie</TableHead>
+                                    <TableHead>Raza</TableHead>
+                                    <TableHead>Edad</TableHead>
+                                    <TableHead>Dueño</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                    <TableHead>Última visita</TableHead>
+                                    <TableHead>Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredPets.map((pet) => (
+                                    <TableRow
+                                        key={pet.id}
+                                        clickable
+                                        onClick={() => setSelectedId(pet.id)}
+                                    >
+                                        <TableCell className="font-medium">{pet.name}</TableCell>
+                                        <TableCell>{getPetSpeciesLabel(pet.species)}</TableCell>
+                                        <TableCell>{pet.breed ?? '—'}</TableCell>
+                                        <TableCell>{calculateAge(pet.birthDate)}</TableCell>
+                                        <TableCell>
+                                            {pet.owner?.firstName} {pet.owner?.lastName}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
+                                                {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{format(new Date(pet.createdAt), 'dd/MM/yy')}</TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        setEditingPet(pet);
+                                                        setModalOpen(true);
+                                                    }}
+                                                    title="Editar"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        router.push(`/clinic/pets/${pet.id}/history`);
+                                                    }}
+                                                    title="Historial clínico"
+                                                >
+                                                    <FileText className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    title={(pet.isActive ?? true) ? 'Desactivar mascota' : 'Activar mascota'}
+                                                    onClick={async (event) => {
+                                                        event.stopPropagation();
+                                                        try {
+                                                            if ((pet.isActive ?? true)) {
+                                                                await deactivatePet.mutateAsync(pet.id);
+                                                                toast.success('Mascota desactivada');
+                                                            } else {
+                                                                await reactivatePet.mutateAsync(pet.id);
+                                                                toast.success('Mascota reactivada');
+                                                            }
+                                                        } catch {
+                                                            toast.error('No se pudo actualizar el estado');
+                                                        }
+                                                    }}
+                                                >
+                                                    <PawPrint className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </ScrollableTable>
                     )}
                 </CardContent>
             </Card>

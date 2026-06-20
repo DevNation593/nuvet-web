@@ -126,9 +126,9 @@ export function AdoptionsManagement() {
                         ) : animals.length === 0 ? (
                             <ClinicStateCard message="No hay animales registrados para adopción." />
                         ) : (
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto max-h-[600px]">
                                 <table className="w-full min-w-[640px] text-sm">
-                                    <thead className="border-y bg-muted/30 text-muted-foreground">
+                                    <thead className="border-y bg-muted/30 text-muted-foreground sticky top-0 z-10 bg-white dark:bg-gray-800">
                                         <tr>
                                             <th className="px-4 py-3 text-left font-medium">Foto</th>
                                             <th className="px-4 py-3 text-left font-medium">Nombre</th>
@@ -240,9 +240,9 @@ export function AdoptionsManagement() {
                         ) : adoptions.length === 0 ? (
                             <ClinicStateCard message="No hay publicaciones." />
                         ) : (
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto max-h-[600px]">
                                 <table className="w-full min-w-[760px] text-sm">
-                                    <thead className="border-y bg-muted/30 text-muted-foreground">
+                                    <thead className="border-y bg-muted/30 text-muted-foreground sticky top-0 z-10 bg-white dark:bg-gray-800">
                                         <tr>
                                             <th className="px-4 py-3 text-left font-medium">Animal</th>
                                             <th className="px-4 py-3 text-left font-medium">Solicitante</th>

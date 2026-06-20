@@ -30,6 +30,9 @@ import { Plus, Syringe } from 'lucide-react';
 import { toast } from 'sonner';
 import { localDateTimeToUTC } from '@/shared/lib/timezone';
 import { VaccinationStatus } from '@nuvet/types';
+import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
+import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 
 const vaccinationSchema = z.object({
     petId: z.string().min(1, 'Selecciona una mascota'),
@@ -48,6 +51,7 @@ export function VaccinationsManagement() {
     const [selectedPetId, setSelectedPetId] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
     const [editingVaccinationId, setEditingVaccinationId] = useState<string | null>(null);
+    const isMobile = useIsMobile();
 
     const petsQuery = usePets({ limit: 100 });
     const vaccinationsQuery = useVaccinations(selectedPetId || null, { limit: 100 });
@@ -120,69 +124,116 @@ export function VaccinationsManagement() {
                                 <Syringe className="h-6 w-6 text-muted-foreground" />
                                 <p className="text-sm font-medium">Sin vacunas registradas</p>
                             </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full min-w-[760px] text-sm">
-                                    <thead className="border-y bg-muted/30 text-muted-foreground">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left font-medium">Vacuna</th>
-                                            <th className="px-4 py-3 text-left font-medium">Dosis</th>
-                                            <th className="px-4 py-3 text-left font-medium">Aplicada</th>
-                                            <th className="px-4 py-3 text-left font-medium">Próxima</th>
-                                            <th className="px-4 py-3 text-left font-medium">Estado</th>
-                                            <th className="px-4 py-3 text-left font-medium">Acción</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {vaccinations.map((vaccination) => (
-                                            <tr key={vaccination.id} className="border-b">
-                                                <td className="px-4 py-3">
-                                                    <p className="font-medium">{vaccination.vaccineName}</p>
-                                                    <p className="text-xs text-muted-foreground">{vaccination.manufacturer ?? '—'}</p>
-                                                </td>
-                                                <td className="px-4 py-3">{vaccination.dose}</td>
-                                                <td className="px-4 py-3">{format(new Date(vaccination.administeredAt), 'dd/MM/yy')}</td>
-                                                <td className="px-4 py-3">
+                        ) : isMobile ? (
+                            <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
+                                {vaccinations.map((vaccination) => (
+                                    <MobileCard key={vaccination.id}>
+                                        <MobileCardHeader>
+                                            <MobileCardTitle>{vaccination.vaccineName}</MobileCardTitle>
+                                            <Badge variant={vaccination.status === VaccinationStatus.ADMINISTERED ? 'confirmed' : 'scheduled'}>
+                                                {getStatusLabel(vaccination.status)}
+                                            </Badge>
+                                        </MobileCardHeader>
+                                        <MobileCardContent>
+                                            <MobileCardRow>
+                                                <MobileCardLabel>Fabricante:</MobileCardLabel>
+                                                <MobileCardValue>{vaccination.manufacturer ?? '—'}</MobileCardValue>
+                                            </MobileCardRow>
+                                            <MobileCardRow>
+                                                <MobileCardLabel>Dosis:</MobileCardLabel>
+                                                <MobileCardValue>{vaccination.dose}</MobileCardValue>
+                                            </MobileCardRow>
+                                            <MobileCardRow>
+                                                <MobileCardLabel>Aplicada:</MobileCardLabel>
+                                                <MobileCardValue>{format(new Date(vaccination.administeredAt), 'dd/MM/yy')}</MobileCardValue>
+                                            </MobileCardRow>
+                                            <MobileCardRow>
+                                                <MobileCardLabel>Próxima:</MobileCardLabel>
+                                                <MobileCardValue>
                                                     {vaccination.nextDueAt ? format(new Date(vaccination.nextDueAt), 'dd/MM/yy') : '—'}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <Badge
-                                                        variant={
-                                                            vaccination.status === VaccinationStatus.ADMINISTERED
-                                                                ? 'confirmed'
-                                                                : 'scheduled'
+                                                </MobileCardValue>
+                                            </MobileCardRow>
+                                            <MobileCardActions>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="flex-1"
+                                                    onClick={async () => {
+                                                        try {
+                                                            setEditingVaccinationId(vaccination.id);
+                                                            await updateVaccination.mutateAsync({
+                                                                status: VaccinationStatus.ADMINISTERED,
+                                                            });
+                                                            toast.success('Estado actualizado');
+                                                        } catch {
+                                                            toast.error('No se pudo actualizar');
+                                                        } finally {
+                                                            setEditingVaccinationId(null);
                                                         }
-                                                    >
-                                                        {getStatusLabel(vaccination.status)}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        title="Marcar vacunación como aplicada"
-                                                        onClick={async () => {
-                                                            try {
-                                                                setEditingVaccinationId(vaccination.id);
-                                                                await updateVaccination.mutateAsync({
-                                                                    status: VaccinationStatus.ADMINISTERED,
-                                                                });
-                                                                toast.success('Estado actualizado');
-                                                            } catch {
-                                                                toast.error('No se pudo actualizar');
-                                                            } finally {
-                                                                setEditingVaccinationId(null);
-                                                            }
-                                                        }}
-                                                    >
-                                                        Marcar aplicada
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                                    }}
+                                                >
+                                                    Marcar aplicada
+                                                </Button>
+                                            </MobileCardActions>
+                                        </MobileCardContent>
+                                    </MobileCard>
+                                ))}
                             </div>
+                        ) : (
+                            <ScrollableTable maxHeight="max-h-[600px]" minWidth="min-w-[760px]">
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Vacuna</TableHead>
+                                        <TableHead>Dosis</TableHead>
+                                        <TableHead>Aplicada</TableHead>
+                                        <TableHead>Próxima</TableHead>
+                                        <TableHead>Estado</TableHead>
+                                        <TableHead>Acción</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {vaccinations.map((vaccination) => (
+                                        <TableRow key={vaccination.id}>
+                                            <TableCell>
+                                                <p className="font-medium">{vaccination.vaccineName}</p>
+                                                <p className="text-xs text-muted-foreground">{vaccination.manufacturer ?? '—'}</p>
+                                            </TableCell>
+                                            <TableCell>{vaccination.dose}</TableCell>
+                                            <TableCell>{format(new Date(vaccination.administeredAt), 'dd/MM/yy')}</TableCell>
+                                            <TableCell>
+                                                {vaccination.nextDueAt ? format(new Date(vaccination.nextDueAt), 'dd/MM/yy') : '—'}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={vaccination.status === VaccinationStatus.ADMINISTERED ? 'confirmed' : 'scheduled'}>
+                                                    {getStatusLabel(vaccination.status)}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    title="Marcar vacunación como aplicada"
+                                                    onClick={async () => {
+                                                        try {
+                                                            setEditingVaccinationId(vaccination.id);
+                                                            await updateVaccination.mutateAsync({
+                                                                status: VaccinationStatus.ADMINISTERED,
+                                                            });
+                                                            toast.success('Estado actualizado');
+                                                        } catch {
+                                                            toast.error('No se pudo actualizar');
+                                                        } finally {
+                                                            setEditingVaccinationId(null);
+                                                        }
+                                                    }}
+                                                >
+                                                    Marcar aplicada
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </ScrollableTable>
                         )}
                     </CardContent>
                 </Card>

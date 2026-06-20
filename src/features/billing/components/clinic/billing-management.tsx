@@ -27,6 +27,9 @@ import {
     DialogTitle,
 } from '@/shared/components/ui/dialog';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
+import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
+import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 import {
     ChevronLeft,
     ChevronRight,
@@ -93,6 +96,7 @@ export function BillingManagement() {
 
     const [issueDialogOpen, setIssueDialogOpen] = useState(!!initialTicketId);
     const [detailInvoice, setDetailInvoice] = useState<InvoiceListItem | null>(null);
+    const isMobile = useIsMobile();
 
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedSearch(searchTerm), 400);
@@ -209,97 +213,178 @@ export function BillingManagement() {
                                     : 'No hay facturas electrónicas emitidas.'}
                             />
                         </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b bg-muted/30 text-left">
-                                        <th className="px-4 py-3 font-medium">N° Factura</th>
-                                        <th className="px-4 py-3 font-medium">Cliente</th>
-                                        <th className="px-4 py-3 font-medium">Total</th>
-                                        <th className="px-4 py-3 font-medium">Pago</th>
-                                        <th className="px-4 py-3 font-medium">Estado</th>
-                                        <th className="px-4 py-3 font-medium">Emisión</th>
-                                        <th className="px-4 py-3 font-medium text-right">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {invoices.map((inv) => (
-                                        <tr key={inv.id} className="border-b hover:bg-muted/20 transition-colors">
-                                            <td className="px-4 py-3">
-                                                <div className="font-mono text-xs font-medium">
-                                                    {inv.invoiceNumber ?? '—'}
-                                                </div>
-                                                <div className="text-[10px] text-muted-foreground truncate max-w-[180px]" title={inv.providerInvoiceId}>
-                                                    {inv.providerInvoiceId}
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {inv.client ? (
-                                                    <div>
-                                                        <p className="font-medium text-xs">{inv.client.name || 'Sin nombre'}</p>
-                                                        {inv.client.identification && (
-                                                            <p className="text-[10px] text-muted-foreground">{inv.client.identification}</p>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-xs text-muted-foreground">Consumidor final</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 font-mono text-xs font-semibold">
+                    ) : isMobile ? (
+                        <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
+                            {invoices.map((inv) => (
+                                <MobileCard key={inv.id}>
+                                    <MobileCardHeader>
+                                        <MobileCardTitle>
+                                            <div className="font-mono text-xs font-medium">
+                                                {inv.invoiceNumber ?? '—'}
+                                            </div>
+                                        </MobileCardTitle>
+                                        <Badge variant={INVOICE_STATUS_VARIANT[inv.invoiceStatus?.toUpperCase()] ?? 'outline'}>
+                                            {INVOICE_STATUS_LABEL[inv.invoiceStatus?.toUpperCase()] ?? inv.invoiceStatus ?? 'N/D'}
+                                        </Badge>
+                                    </MobileCardHeader>
+                                    <MobileCardContent>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Cliente:</MobileCardLabel>
+                                            <MobileCardValue>
+                                                {inv.client ? inv.client.name || 'Sin nombre' : 'Consumidor final'}
+                                            </MobileCardValue>
+                                        </MobileCardRow>
+                                        {inv.client?.identification && (
+                                            <MobileCardRow>
+                                                <MobileCardLabel>Identificación:</MobileCardLabel>
+                                                <MobileCardValue className="text-[10px]">{inv.client.identification}</MobileCardValue>
+                                            </MobileCardRow>
+                                        )}
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Total:</MobileCardLabel>
+                                            <MobileCardValue className="font-mono text-base font-semibold">
                                                 ${inv.total.toFixed(2)}
-                                            </td>
-                                            <td className="px-4 py-3 text-xs">
-                                                {PAYMENT_LABELS[inv.paymentMethod] ?? inv.paymentMethod}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <Badge variant={INVOICE_STATUS_VARIANT[inv.invoiceStatus?.toUpperCase()] ?? 'outline'}>
-                                                    {INVOICE_STATUS_LABEL[inv.invoiceStatus?.toUpperCase()] ?? inv.invoiceStatus ?? 'N/D'}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                                            </MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Pago:</MobileCardLabel>
+                                            <MobileCardValue>{PAYMENT_LABELS[inv.paymentMethod] ?? inv.paymentMethod}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Emisión:</MobileCardLabel>
+                                            <MobileCardValue className="text-[10px]">
                                                 {inv.issuedAt
                                                     ? format(new Date(inv.issuedAt), 'dd MMM yyyy HH:mm', { locale: es })
                                                     : format(new Date(inv.createdAt), 'dd MMM yyyy HH:mm', { locale: es })}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex justify-end gap-1">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7"
-                                                        title="Ver detalle"
-                                                        onClick={() => setDetailInvoice(inv)}
-                                                    >
-                                                        <Eye className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7"
-                                                        title={inv.accessKey ? 'Descargar PDF' : 'PDF no disponible (sin clave de acceso)'}
-                                                        disabled={!inv.accessKey}
-                                                        onClick={() => void openDocument(inv.providerInvoiceId, 'pdf')}
-                                                    >
-                                                        <FileText className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7"
-                                                        title={inv.accessKey ? 'Descargar XML' : 'XML no disponible (sin clave de acceso)'}
-                                                        disabled={!inv.accessKey}
-                                                        onClick={() => void openDocument(inv.providerInvoiceId, 'xml')}
-                                                    >
-                                                        <Download className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardActions>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                title="Ver detalle"
+                                                onClick={() => setDetailInvoice(inv)}
+                                            >
+                                                <Eye className="h-3.5 w-3.5 mr-1" />
+                                                Ver
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                title={inv.accessKey ? 'Descargar PDF' : 'PDF no disponible'}
+                                                disabled={!inv.accessKey}
+                                                onClick={() => void openDocument(inv.providerInvoiceId, 'pdf')}
+                                            >
+                                                <FileText className="h-3.5 w-3.5 mr-1" />
+                                                PDF
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                title={inv.accessKey ? 'Descargar XML' : 'XML no disponible'}
+                                                disabled={!inv.accessKey}
+                                                onClick={() => void openDocument(inv.providerInvoiceId, 'xml')}
+                                            >
+                                                <Download className="h-3.5 w-3.5 mr-1" />
+                                                XML
+                                            </Button>
+                                        </MobileCardActions>
+                                    </MobileCardContent>
+                                </MobileCard>
+                            ))}
                         </div>
+                    ) : (
+                        <ScrollableTable maxHeight="max-h-[600px]" minWidth="min-w-[900px]">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>N° Factura</TableHead>
+                                    <TableHead>Cliente</TableHead>
+                                    <TableHead>Total</TableHead>
+                                    <TableHead>Pago</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                    <TableHead>Emisión</TableHead>
+                                    <TableHead className="text-right">Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {invoices.map((inv) => (
+                                    <TableRow key={inv.id}>
+                                        <TableCell>
+                                            <div className="font-mono text-xs font-medium">
+                                                {inv.invoiceNumber ?? '—'}
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground truncate max-w-[180px]" title={inv.providerInvoiceId}>
+                                                {inv.providerInvoiceId}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {inv.client ? (
+                                                <div>
+                                                    <p className="font-medium text-xs">{inv.client.name || 'Sin nombre'}</p>
+                                                    {inv.client.identification && (
+                                                        <p className="text-[10px] text-muted-foreground">{inv.client.identification}</p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">Consumidor final</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="font-mono text-xs font-semibold">
+                                            ${inv.total.toFixed(2)}
+                                        </TableCell>
+                                        <TableCell className="text-xs">
+                                            {PAYMENT_LABELS[inv.paymentMethod] ?? inv.paymentMethod}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant={INVOICE_STATUS_VARIANT[inv.invoiceStatus?.toUpperCase()] ?? 'outline'}>
+                                                {INVOICE_STATUS_LABEL[inv.invoiceStatus?.toUpperCase()] ?? inv.invoiceStatus ?? 'N/D'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                            {inv.issuedAt
+                                                ? format(new Date(inv.issuedAt), 'dd MMM yyyy HH:mm', { locale: es })
+                                                : format(new Date(inv.createdAt), 'dd MMM yyyy HH:mm', { locale: es })}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex justify-end gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7"
+                                                    title="Ver detalle"
+                                                    onClick={() => setDetailInvoice(inv)}
+                                                >
+                                                    <Eye className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7"
+                                                    title={inv.accessKey ? 'Descargar PDF' : 'PDF no disponible (sin clave de acceso)'}
+                                                    disabled={!inv.accessKey}
+                                                    onClick={() => void openDocument(inv.providerInvoiceId, 'pdf')}
+                                                >
+                                                    <FileText className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7"
+                                                    title={inv.accessKey ? 'Descargar XML' : 'XML no disponible (sin clave de acceso)'}
+                                                    disabled={!inv.accessKey}
+                                                    onClick={() => void openDocument(inv.providerInvoiceId, 'xml')}
+                                                >
+                                                    <Download className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </ScrollableTable>
                     )}
 
                     {/* Pagination */}
