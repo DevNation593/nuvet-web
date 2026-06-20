@@ -14,6 +14,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import api from '@/shared/lib/api-client';
+import { resetLogoutFlag } from '@/shared/lib/api-client';
 import { toast } from 'sonner';
 
 // Iconos (Estilo Lovable/Lucide)
@@ -63,6 +64,9 @@ function LoginPageContent() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
+      // Resetear el flag de logout
+      resetLogoutFlag();
+      
       const res = await api.post<ApiEnvelope<LoginResponse>>('/auth/login', data);
       const payload = res.data?.data ?? res.data;
       const { user, tenant, accessToken, refreshToken, recommendPasswordChange } = payload;

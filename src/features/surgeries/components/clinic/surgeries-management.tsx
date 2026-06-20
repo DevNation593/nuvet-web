@@ -31,6 +31,9 @@ import { getStatusLabel } from '@/shared/lib/status-labels';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { localDateTimeToUTC } from '@/shared/lib/timezone';
+import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
+import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 
 const surgerySchema = z.object({
     petId: z.string().min(1),
@@ -50,6 +53,7 @@ export function SurgeriesManagement() {
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<SurgeryStatus | ''>('');
     const [deleteTarget, setDeleteTarget] = useState<Surgery | null>(null);
+    const isMobile = useIsMobile();
 
     const surgeriesQuery = useSurgeries({ limit: 100, ...(statusFilter ? { status: statusFilter } : {}) });
     const petsQuery = usePets({ limit: 100 });
@@ -146,77 +150,136 @@ export function SurgeriesManagement() {
                         <ClinicStateCard message="No se pudieron cargar las cirugías." tone="error" />
                     ) : surgeries.length === 0 ? (
                         <ClinicStateCard message="No hay cirugías registradas." />
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[860px] text-sm">
-                                <thead className="border-y bg-muted/30 text-muted-foreground">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                                        <th className="px-4 py-3 text-left font-medium">Mascota</th>
-                                        <th className="px-4 py-3 text-left font-medium">Veterinario</th>
-                                        <th className="px-4 py-3 text-left font-medium">Fecha</th>
-                                        <th className="px-4 py-3 text-left font-medium">Estado</th>
-                                        <th className="px-4 py-3 text-left font-medium">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {surgeries.map((surgery) => (
-                                        <tr key={surgery.id} className="border-b">
-                                            <td className="px-4 py-3 font-medium">{surgery.type}</td>
-                                            <td className="px-4 py-3">{surgery.pet?.name ?? '—'}</td>
-                                            <td className="px-4 py-3">
+                    ) : isMobile ? (
+                        <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
+                            {surgeries.map((surgery) => (
+                                <MobileCard key={surgery.id}>
+                                    <MobileCardHeader>
+                                        <MobileCardTitle>{surgery.type}</MobileCardTitle>
+                                        <Badge variant={surgery.status === SurgeryStatus.COMPLETED ? 'confirmed' : 'scheduled'}>
+                                            {getStatusLabel(surgery.status)}
+                                        </Badge>
+                                    </MobileCardHeader>
+                                    <MobileCardContent>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Mascota:</MobileCardLabel>
+                                            <MobileCardValue>{surgery.pet?.name ?? '—'}</MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Veterinario:</MobileCardLabel>
+                                            <MobileCardValue>
                                                 {surgery.vet?.firstName} {surgery.vet?.lastName}
-                                            </td>
-                                            <td className="px-4 py-3">{format(new Date(surgery.scheduledAt), 'dd/MM/yyyy HH:mm')}</td>
-                                            <td className="px-4 py-3">
-                                                <Badge variant={surgery.status === SurgeryStatus.COMPLETED ? 'confirmed' : 'scheduled'}>
-                                                    {getStatusLabel(surgery.status)}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        title="Marcar cirugía como completada"
-                                                        onClick={async () => {
-                                                            try {
-                                                                setSelectedId(surgery.id);
-                                                                await updateSurgery.mutateAsync({ status: SurgeryStatus.COMPLETED });
-                                                                toast.success('Estado actualizado');
-                                                            } catch {
-                                                                toast.error('No se pudo actualizar');
-                                                            } finally {
-                                                                setSelectedId(null);
-                                                            }
-                                                        }}
-                                                        disabled={surgery.status === SurgeryStatus.COMPLETED}
-                                                    >
-                                                        Completar
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        title="Editar cirugía"
-                                                        onClick={() => openEdit(surgery)}
-                                                    >
-                                                        <Pencil className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        title="Eliminar cirugía"
-                                                        onClick={() => setDeleteTarget(surgery)}
-                                                    >
-                                                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                            </MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardRow>
+                                            <MobileCardLabel>Fecha:</MobileCardLabel>
+                                            <MobileCardValue>
+                                                {format(new Date(surgery.scheduledAt), 'dd/MM/yyyy HH:mm')}
+                                            </MobileCardValue>
+                                        </MobileCardRow>
+                                        <MobileCardActions>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={async () => {
+                                                    try {
+                                                        setSelectedId(surgery.id);
+                                                        await updateSurgery.mutateAsync({ status: SurgeryStatus.COMPLETED });
+                                                        toast.success('Estado actualizado');
+                                                    } catch {
+                                                        toast.error('No se pudo actualizar');
+                                                    } finally {
+                                                        setSelectedId(null);
+                                                    }
+                                                }}
+                                                disabled={surgery.status === SurgeryStatus.COMPLETED}
+                                            >
+                                                Completar
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={() => openEdit(surgery)}
+                                            >
+                                                <Pencil className="h-3.5 w-3.5 mr-1" />
+                                                Editar
+                                            </Button>
+                                        </MobileCardActions>
+                                    </MobileCardContent>
+                                </MobileCard>
+                            ))}
                         </div>
+                    ) : (
+                        <ScrollableTable maxHeight="max-h-[600px]" minWidth="min-w-[860px]">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Tipo</TableHead>
+                                    <TableHead>Mascota</TableHead>
+                                    <TableHead>Veterinario</TableHead>
+                                    <TableHead>Fecha</TableHead>
+                                    <TableHead>Estado</TableHead>
+                                    <TableHead>Acciones</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {surgeries.map((surgery) => (
+                                    <TableRow key={surgery.id}>
+                                        <TableCell className="font-medium">{surgery.type}</TableCell>
+                                        <TableCell>{surgery.pet?.name ?? '—'}</TableCell>
+                                        <TableCell>
+                                            {surgery.vet?.firstName} {surgery.vet?.lastName}
+                                        </TableCell>
+                                        <TableCell>{format(new Date(surgery.scheduledAt), 'dd/MM/yyyy HH:mm')}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={surgery.status === SurgeryStatus.COMPLETED ? 'confirmed' : 'scheduled'}>
+                                                {getStatusLabel(surgery.status)}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    title="Marcar cirugía como completada"
+                                                    onClick={async () => {
+                                                        try {
+                                                            setSelectedId(surgery.id);
+                                                            await updateSurgery.mutateAsync({ status: SurgeryStatus.COMPLETED });
+                                                            toast.success('Estado actualizado');
+                                                        } catch {
+                                                            toast.error('No se pudo actualizar');
+                                                        } finally {
+                                                            setSelectedId(null);
+                                                        }
+                                                    }}
+                                                    disabled={surgery.status === SurgeryStatus.COMPLETED}
+                                                >
+                                                    Completar
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    title="Editar cirugía"
+                                                    onClick={() => openEdit(surgery)}
+                                                >
+                                                    <Pencil className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    title="Eliminar cirugía"
+                                                    onClick={() => setDeleteTarget(surgery)}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </ScrollableTable>
                     )}
                 </CardContent>
             </Card>

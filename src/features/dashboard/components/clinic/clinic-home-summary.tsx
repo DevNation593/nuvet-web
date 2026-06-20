@@ -168,7 +168,7 @@ export function ClinicHomeSummary() {
                         </CardHeader>
                         <CardContent>
                             <p className="text-2xl font-bold">{formatCurrency(d?.posMonth?.totalRevenue ?? 0)}</p>
-                            <p className="text-xs text-muted-foreground">{d?.posMonth?.totalTransactions ?? 0} transacciones</p>
+                            <p className="text-xs text-muted-foreground">{(d?.posMonth?.totalTransactions ?? 0)} transacciones</p>
                         </CardContent>
                     </Card>
                 ) : null}
