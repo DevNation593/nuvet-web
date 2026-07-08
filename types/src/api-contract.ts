@@ -462,3 +462,92 @@ export interface PassportLookupResult {
     sourceTenantName: string;
     microchip: string;
 }
+
+// ─── Fase 2 · Membresías (Slice 1) — Espejo de `nuvet-api/types/src/api-contract.ts` ────
+
+export type ApiMembershipBillingPeriod = 'MONTHLY' | 'ANNUAL';
+
+export type ApiMembershipSubscriptionStatus =
+    | 'PENDING'
+    | 'ACTIVE'
+    | 'PAUSED'
+    | 'CANCELLED'
+    | 'EXPIRED'
+    | 'PAST_DUE';
+
+export type ApiBillingProviderKind = 'MOCK' | 'STRIPE' | 'PAYPHONE';
+
+export interface MembershipPlan {
+    id: string;
+    tenantId: string;
+    slug: string;
+    name: string;
+    description: string | null;
+    priceCents: number;
+    currency: string;
+    billingPeriod: ApiMembershipBillingPeriod;
+    includedBenefits: string[];
+    applicableSpecies: string[];
+    isActive: boolean;
+    displayOrder: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface MembershipSubscription {
+    id: string;
+    tenantId: string;
+    sourceTenantId: string;
+    petId: string;
+    ownerId: string;
+    planId: string;
+    status: ApiMembershipSubscriptionStatus;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    nextBillingAt: string;
+    autoRenew: boolean;
+    lastChargedAt: string | null;
+    lastChargeTxId: string | null;
+    canceledAt: string | null;
+    cancelReason: string | null;
+    providerKind: ApiBillingProviderKind;
+    createdAt: string;
+    updatedAt: string;
+    plan?: Pick<MembershipPlan, 'id' | 'name' | 'slug' | 'priceCents' | 'currency' | 'billingPeriod'>;
+    pet?: { id: string; name: string };
+}
+
+export interface CreateMembershipPlanRequest {
+    name: string;
+    slug: string;
+    description?: string;
+    priceCents: number;
+    currency?: string;
+    billingPeriod?: ApiMembershipBillingPeriod;
+    includedBenefits?: string[];
+    applicableSpecies?: string[];
+    isActive?: boolean;
+    displayOrder?: number;
+}
+
+export type UpdateMembershipPlanRequest = Partial<CreateMembershipPlanRequest>;
+
+export interface SubscribeToPlanRequest {
+    petId: string;
+    planId: string;
+    paymentMethodToken?: string;
+}
+
+export interface CancelMembershipSubscriptionRequest {
+    reason?: string;
+}
+
+export interface MembershipPlanListResponse {
+    data: MembershipPlan[];
+    total: number;
+}
+
+export interface MembershipSubscriptionListResponse {
+    data: MembershipSubscription[];
+    total: number;
+}
