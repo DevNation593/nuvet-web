@@ -1,0 +1,50 @@
+# Dependabot config — NuVet Web
+#
+# Mismo patrón que nuvet-api/.github/dependabot.yml. Como el repo usa pnpm
+# y eliminamos package-lock.json del repo (en .gitignore), Dependabot
+# detecta automáticamente el ecosistema npm y escanea el pnpm-lock.yaml.
+#
+# Si en algún momento se vuelve a generar un package-lock.json, este
+# archivo debe revisarse.
+
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      # Patch-level de Next.js + ecosistema (mantiene avance escalonado)
+      - name: "nextjs-deps"
+        patterns:
+          - "next"
+          - "@next/*"
+        update-types:
+          - "minor"
+          - "patch"
+      # UI primitives Radix y similares
+      - name: "radix-ui"
+        patterns:
+          - "@radix-ui/*"
+        update-types:
+          - "minor"
+          - "patch"
+      # Forms + validación
+      - name: "forms-validation"
+        patterns:
+          - "react-hook-form"
+          - "zod"
+          - "@hookform/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
