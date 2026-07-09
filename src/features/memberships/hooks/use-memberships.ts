@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
     CancelMembershipSubscriptionRequest,
     CreateMembershipPlanRequest,
+    ListBillingFailureAttemptsParams,
     MembershipPlan,
     MembershipSubscription,
     SubscribeToPlanRequest,
@@ -10,6 +11,7 @@ import type {
 import {
     cancelSubscription,
     createPlan,
+    fetchBillingFailureReport,
     listMySubscriptions,
     listPublicPlans,
     listTenantPlans,
@@ -106,5 +108,16 @@ export function useUpdateMembershipPlan() {
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ['membership-plans'] });
         },
+    });
+}
+
+/**
+ * Hook para el dashboard de billing-attempts. Recibe el filtro de
+ * `since`/`page`/`pageSize` y devuelve el reporte (`BillingFailureReport`).
+ */
+export function useBillingFailureReport(params: ListBillingFailureAttemptsParams = {}) {
+    return useQuery({
+        queryKey: ['membership-billing-failures', params] as const,
+        queryFn: () => fetchBillingFailureReport(params),
     });
 }
