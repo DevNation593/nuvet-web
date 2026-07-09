@@ -328,3 +328,226 @@ export interface AuthSession {
 export interface LoginResponse extends AuthSession {
     tenant?: ApiAuthTenant;
 }
+
+// ─── Fase 1 · Pasaporte médico + consentimiento interclínico ──────────────────
+// Espejo de `nuvet-api/types/src/api-contract.ts` — mantener sincronizado.
+// Si añades o cambias tipos aquí, replica el cambio en api/types/src/api-contract.ts.
+
+export type ApiConsentStatus = 'PENDING' | 'GRANTED' | 'REVOKED' | 'EXPIRED';
+export type ApiConsentScope = 'PASSPORT_READ' | 'MEDICAL_RECORDS_READ';
+export type ApiConsentAuditAction =
+    | 'CREATED'
+    | 'GRANTED'
+    | 'REVOKED'
+    | 'ACCESSED'
+    | 'SHARE_CREATED'
+    | 'SHARE_REVOKED'
+    | 'SHARE_ACCESSED'
+    | 'EXPIRED';
+
+export interface Consent {
+    id: string;
+    petId: string;
+    ownerId: string;
+    sourceTenantId: string;
+    targetTenantId: string;
+    targetClinicName: string | null;
+    status: ApiConsentStatus;
+    scopes: ApiConsentScope[];
+    message: string | null;
+    grantedAt: string;
+    expiresAt: string | null;
+    revokedAt: string | null;
+    revokeReason: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface GrantConsentRequest {
+    petId: string;
+    targetTenantId: string;
+    targetClinicName?: string;
+    scopes?: ApiConsentScope[];
+    message?: string;
+    expiresAt?: string;
+}
+
+export interface RevokeConsentRequest {
+    reason?: string;
+}
+
+export interface ListConsentsQuery {
+    petId?: string;
+    targetTenantId?: string;
+    status?: ApiConsentStatus;
+    page?: number;
+    limit?: number;
+}
+
+export interface PassportVaccine {
+    id: string;
+    vaccineName: string;
+    manufacturer: string | null;
+    batchNumber: string | null;
+    administeredAt: string;
+    nextDueAt: string | null;
+    status: string;
+}
+
+export interface PassportMedicalRecord {
+    id: string;
+    date: string;
+    chiefComplaint: string;
+    diagnosis: string;
+    treatment: string;
+    vetName: string | null;
+}
+
+export interface PassportSurgery {
+    id: string;
+    scheduledAt: string;
+    completedAt: string | null;
+    type: string;
+    status: string;
+    postInstructions: string | null;
+}
+
+export interface PassportWeightEntry {
+    date: string;
+    weight: number;
+}
+
+export interface PassportPet {
+    id: string;
+    name: string;
+    species: string;
+    breed: string | null;
+    sex: string;
+    birthDate: string | null;
+    color: string | null;
+    microchip: string | null;
+    photoUrl: string | null;
+    weight: number | null;
+    allergies: string | null;
+    isNeutered: boolean;
+    issuedBy: { tenantId: string; tenantName: string };
+    vaccines: PassportVaccine[];
+    medicalRecords: PassportMedicalRecord[];
+    surgeries: PassportSurgery[];
+    weightHistory: PassportWeightEntry[];
+    generatedAt: string;
+}
+
+export interface PassportShare {
+    id: string;
+    petId: string;
+    token: string;
+    expiresAt: string;
+    revokedAt: string | null;
+    accessCount: number;
+    lastAccessedAt: string | null;
+    createdAt: string;
+    shareUrl: string;
+}
+
+export interface CreatePassportShareRequest {
+    petId: string;
+    ttlDays?: number;
+}
+
+export interface PassportLookupResult {
+    petId: string;
+    petName: string;
+    sourceTenantId: string;
+    sourceTenantName: string;
+    microchip: string;
+}
+
+// ─── Fase 2 · Membresías (Slice 1) — Espejo de `nuvet-api/types/src/api-contract.ts` ────
+
+export type ApiMembershipBillingPeriod = 'MONTHLY' | 'ANNUAL';
+
+export type ApiMembershipSubscriptionStatus =
+    | 'PENDING'
+    | 'ACTIVE'
+    | 'PAUSED'
+    | 'CANCELLED'
+    | 'EXPIRED'
+    | 'PAST_DUE';
+
+export type ApiBillingProviderKind = 'MOCK' | 'STRIPE' | 'PAYPHONE';
+
+export interface MembershipPlan {
+    id: string;
+    tenantId: string;
+    slug: string;
+    name: string;
+    description: string | null;
+    priceCents: number;
+    currency: string;
+    billingPeriod: ApiMembershipBillingPeriod;
+    includedBenefits: string[];
+    applicableSpecies: string[];
+    isActive: boolean;
+    displayOrder: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface MembershipSubscription {
+    id: string;
+    tenantId: string;
+    sourceTenantId: string;
+    petId: string;
+    ownerId: string;
+    planId: string;
+    status: ApiMembershipSubscriptionStatus;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    nextBillingAt: string;
+    autoRenew: boolean;
+    lastChargedAt: string | null;
+    lastChargeTxId: string | null;
+    canceledAt: string | null;
+    cancelReason: string | null;
+    providerKind: ApiBillingProviderKind;
+    createdAt: string;
+    updatedAt: string;
+    plan?: Pick<MembershipPlan, 'id' | 'name' | 'slug' | 'priceCents' | 'currency' | 'billingPeriod'>;
+    pet?: { id: string; name: string };
+}
+
+export interface CreateMembershipPlanRequest {
+    name: string;
+    slug: string;
+    description?: string;
+    priceCents: number;
+    currency?: string;
+    billingPeriod?: ApiMembershipBillingPeriod;
+    includedBenefits?: string[];
+    applicableSpecies?: string[];
+    isActive?: boolean;
+    displayOrder?: number;
+}
+
+export type UpdateMembershipPlanRequest = Partial<CreateMembershipPlanRequest>;
+
+export interface SubscribeToPlanRequest {
+    petId: string;
+    planId: string;
+    paymentMethodToken?: string;
+}
+
+export interface CancelMembershipSubscriptionRequest {
+    reason?: string;
+}
+
+export interface MembershipPlanListResponse {
+    data: MembershipPlan[];
+    total: number;
+}
+
+export interface MembershipSubscriptionListResponse {
+    data: MembershipSubscription[];
+    total: number;
+}
