@@ -606,3 +606,90 @@ export interface ListBillingFailureAttemptsParams {
     page?: number;
     pageSize?: number;
 }
+
+// ─── Fase 3 · Campañas de vacunación (Slice 1) — Espejo ───────────────────
+
+export type ApiVaccinationCampaignStatus =
+    | 'DRAFT'
+    | 'OPEN'
+    | 'CLOSED'
+    | 'COMPLETED'
+    | 'CANCELLED';
+
+export type ApiVaccinationRegistrationStatus =
+    | 'REGISTERED'
+    | 'ATTENDED'
+    | 'NO_SHOW'
+    | 'CANCELLED';
+
+export interface VaccinationCampaign {
+    id: string;
+    tenantId: string;
+    name: string;
+    description: string | null;
+    vaccineName: string;
+    startsAt: string;
+    endsAt: string;
+    location: string | null;
+    capacity: number | null;
+    priceCents: number;
+    currency: string;
+    status: ApiVaccinationCampaignStatus;
+    notes: string | null;
+    createdById: string;
+    createdAt: string;
+    updatedAt: string;
+    registrationCount?: number;
+}
+
+export interface VaccinationRegistration {
+    id: string;
+    tenantId: string;
+    campaignId: string;
+    petId: string;
+    ownerId: string;
+    status: ApiVaccinationRegistrationStatus;
+    attendedAt: string | null;
+    notes: string | null;
+    createdAt: string;
+    updatedAt: string;
+    pet?: { id: string; name: string; species: string };
+    owner?: { id: string; firstName: string; lastName: string; email: string };
+}
+
+export interface CreateVaccinationCampaignRequest {
+    name: string;
+    description?: string;
+    vaccineName: string;
+    startsAt: string;
+    endsAt: string;
+    location?: string;
+    capacity?: number;
+    priceCents?: number;
+    currency?: string;
+    notes?: string;
+}
+
+export interface UpdateVaccinationCampaignRequest {
+    name?: string;
+    description?: string;
+    vaccineName?: string;
+    startsAt?: string;
+    endsAt?: string;
+    location?: string;
+    capacity?: number;
+    priceCents?: number;
+    currency?: string;
+    notes?: string;
+    status?: ApiVaccinationCampaignStatus;
+}
+
+export interface RegisterPetToCampaignRequest {
+    petId: string;
+    notes?: string;
+}
+
+export interface MarkRegistrationAttendedRequest {
+    attendedAt?: string;
+    notes?: string;
+}
