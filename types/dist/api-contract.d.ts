@@ -78,6 +78,8 @@ export interface CreateClientRequest {
     lastName: string;
     password?: string;
     phone?: string;
+    identification?: string;
+    billingAddress?: string;
 }
 export interface UpdateClientRequest {
     email?: string;
@@ -85,6 +87,8 @@ export interface UpdateClientRequest {
     lastName?: string;
     password?: string;
     phone?: string;
+    identification?: string;
+    billingAddress?: string;
     isActive?: boolean;
 }
 export interface CreatePetRequest {
@@ -272,6 +276,12 @@ export interface AuthSession {
 export interface LoginResponse extends AuthSession {
     tenant?: ApiAuthTenant;
 }
+/**
+ * Los nombres de los enums coinciden con los valores que produce el cliente
+ * Prisma del backend (`@prisma/client`). Usar los literales aquí garantiza
+ * que web/mobile consuman exactamente lo que la API serializa, sin
+ * dependencia de runtime del Prisma client.
+ */
 export type ApiConsentStatus = 'PENDING' | 'GRANTED' | 'REVOKED' | 'EXPIRED';
 export type ApiConsentScope = 'PASSPORT_READ' | 'MEDICAL_RECORDS_READ';
 export type ApiConsentAuditAction = 'CREATED' | 'GRANTED' | 'REVOKED' | 'ACCESSED' | 'SHARE_CREATED' | 'SHARE_REVOKED' | 'SHARE_ACCESSED' | 'EXPIRED';
@@ -383,4 +393,153 @@ export interface PassportLookupResult {
     sourceTenantId: string;
     sourceTenantName: string;
     microchip: string;
+}
+export type ApiMembershipBillingPeriod = 'MONTHLY' | 'ANNUAL';
+export type ApiMembershipSubscriptionStatus = 'PENDING' | 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'EXPIRED' | 'PAST_DUE';
+export type ApiBillingProviderKind = 'MOCK' | 'STRIPE' | 'PAYPHONE';
+export interface MembershipPlan {
+    id: string;
+    tenantId: string;
+    slug: string;
+    name: string;
+    description: string | null;
+    priceCents: number;
+    currency: string;
+    billingPeriod: ApiMembershipBillingPeriod;
+    includedBenefits: string[];
+    applicableSpecies: string[];
+    isActive: boolean;
+    displayOrder: number;
+    createdAt: string;
+    updatedAt: string;
+}
+export interface MembershipSubscription {
+    id: string;
+    tenantId: string;
+    sourceTenantId: string;
+    petId: string;
+    ownerId: string;
+    planId: string;
+    status: ApiMembershipSubscriptionStatus;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    nextBillingAt: string;
+    autoRenew: boolean;
+    lastChargedAt: string | null;
+    lastChargeTxId: string | null;
+    canceledAt: string | null;
+    cancelReason: string | null;
+    providerKind: ApiBillingProviderKind;
+    createdAt: string;
+    updatedAt: string;
+    plan?: Pick<MembershipPlan, 'id' | 'name' | 'slug' | 'priceCents' | 'currency' | 'billingPeriod'>;
+    pet?: {
+        id: string;
+        name: string;
+    };
+}
+export interface CreateMembershipPlanRequest {
+    name: string;
+    slug: string;
+    description?: string;
+    priceCents: number;
+    currency?: string;
+    billingPeriod?: ApiMembershipBillingPeriod;
+    includedBenefits?: string[];
+    applicableSpecies?: string[];
+    isActive?: boolean;
+    displayOrder?: number;
+}
+export type UpdateMembershipPlanRequest = Partial<CreateMembershipPlanRequest>;
+export interface SubscribeToPlanRequest {
+    petId: string;
+    planId: string;
+    paymentMethodToken?: string;
+}
+export interface CancelMembershipSubscriptionRequest {
+    reason?: string;
+}
+export interface MembershipPlanListResponse {
+    data: MembershipPlan[];
+    total: number;
+}
+export interface MembershipSubscriptionListResponse {
+    data: MembershipSubscription[];
+    total: number;
+}
+/**
+ * Literales que coinciden 1:1 con los enums `ConsentTokenScope` /
+ * `ConsentTokenStatus` / `ConsentAccessAction` del schema Prisma.
+ * Mantener sincronizados para que web/mobile consuman exactamente lo que la
+ * API serializa (sin dependencia de runtime del Prisma client).
+ */
+export type ApiConsentTokenScope = 'READ' | 'FULL';
+export type ApiConsentTokenStatus = 'ACTIVE' | 'REVOKED' | 'EXPIRED';
+export type ApiConsentAccessAction = 'VALIDATE' | 'READ' | 'REVOKE';
+/**
+ * Payload de creación de un token de consentimiento.
+ * El emisor debe ser el dueño (CLIENT) o staff del mismo tenant que custodia
+ * el expediente; el backend valida la membresía de cada `petId` al tenant.
+ */
+export interface CreateConsentTokenInput {
+    granteeEmail: string;
+    granteeTenantId?: string | null;
+    scope?: ApiConsentTokenScope;
+    petIds: string[];
+    expiresAt: string;
+    auditReason?: string | null;
+}
+/**
+ * Payload de actualización parcial (revocación). Cualquier subset de campos
+ * actualizables puede enviarse; `status` se forzará a REVOKED si no se
+ * especifica, ya que el endpoint principal es revocación.
+ */
+export interface UpdateConsentTokenInput {
+    scope?: ApiConsentTokenScope;
+    expiresAt?: string;
+    auditReason?: string | null;
+}
+/**
+ * Payload para validar/canjear un token. Devuelve la entidad si está
+ * vigente, lanza error en caso contrario.
+ */
+export interface ValidateConsentTokenInput {
+    tokenId: string;
+}
+export interface ConsentTokenView {
+    id: string;
+    tenantId: string;
+    ownerUserId: string;
+    granteeEmail: string;
+    granteeTenantId: string | null;
+    scope: ApiConsentTokenScope;
+    petIds: string[];
+    status: ApiConsentTokenStatus;
+    expiresAt: string;
+    createdAt: string;
+    revokedAt: string | null;
+    auditReason: string | null;
+}
+export interface ConsentAccessLogView {
+    id: string;
+    tenantId: string;
+    consentTokenId: string;
+    accessedByUserId: string;
+    accessedByTenantId: string | null;
+    action: ApiConsentAccessAction;
+    ipAddress: string | null;
+    userAgent: string | null;
+    createdAt: string;
+}
+export interface ConsentAccessLogListResponse {
+    success: true;
+    data: ConsentAccessLogView[];
+    meta: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNextPage: boolean;
+        hasPrevPage: boolean;
+    };
 }
