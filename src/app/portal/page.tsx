@@ -16,9 +16,12 @@ export default function PortalHomePage() {
                 <CardTitle>Bienvenido al portal de tu mascota</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                     <Button asChild>
                         <Link href="/portal/pets">Mis mascotas</Link>
+                    </Button>
+                    <Button asChild variant="outline">
+                        <Link href="/portal/memberships">Mis membresías</Link>
                     </Button>
                     <Button asChild variant="outline">
                         <Link href="/portal/passport">Pasaporte médico</Link>

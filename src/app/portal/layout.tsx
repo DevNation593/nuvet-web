@@ -40,6 +40,15 @@ export default function PortalLayout({
                             Mis mascotas
                         </Link>
                         <Link
+                            href="/portal/memberships"
+                            className={cn(
+                                buttonVariants({ variant: 'ghost', size: 'sm' }),
+                                'text-muted-foreground hover:text-foreground',
+                            )}
+                        >
+                            Membresías
+                        </Link>
+                        <Link
                             href="/portal/passport"
                             className={cn(
                                 buttonVariants({ variant: 'ghost', size: 'sm' }),
