@@ -551,3 +551,58 @@ export interface MembershipSubscriptionListResponse {
     data: MembershipSubscription[];
     total: number;
 }
+
+// ─── Fase 2 · Membresías (Slice 2 — Reportes de Billing) ─────────────────────
+
+export type ApiBillingAttemptStatus = 'SUCCESS' | 'FAILED';
+
+export interface BillingAttempt {
+    id: string;
+    tenantId: string;
+    subscriptionId: string;
+    provider: ApiBillingProviderKind;
+    transactionId: string | null;
+    status: ApiBillingAttemptStatus;
+    amountCents: number;
+    currency: string;
+    failureCode: string | null;
+    failureMessage: string | null;
+    createdAt: string;
+    subscription?: {
+        id: string;
+        status: ApiMembershipSubscriptionStatus;
+        ownerId: string;
+        owner?: { id: string; firstName: string; lastName: string; email: string };
+        plan?: { id: string; name: string; priceCents: number; currency: string };
+        pet?: { id: string; name: string };
+    };
+}
+
+export interface BillingFailureCodeCount {
+    failureCode: string;
+    failureMessage: string | null;
+    count: number;
+}
+
+export interface BillingFailureReportSummary {
+    failuresLast24Hours: number;
+    failuresLast7Days: number;
+    failuresLast30Days: number;
+    pastDueSubscriptions: number;
+    topFailureCodes: BillingFailureCodeCount[];
+    totalRecoveredAfterFailure: number;
+}
+
+export interface BillingFailureReport {
+    summary: BillingFailureReportSummary;
+    attempts: BillingAttempt[];
+    total: number;
+    page: number;
+    pageSize: number;
+}
+
+export interface ListBillingFailureAttemptsParams {
+    since?: string;
+    page?: number;
+    pageSize?: number;
+}
