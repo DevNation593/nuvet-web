@@ -78,8 +78,6 @@ export interface CreateClientRequest {
     lastName: string;
     password?: string;
     phone?: string;
-    identification?: string;
-    billingAddress?: string;
 }
 export interface UpdateClientRequest {
     email?: string;
@@ -87,8 +85,6 @@ export interface UpdateClientRequest {
     lastName?: string;
     password?: string;
     phone?: string;
-    identification?: string;
-    billingAddress?: string;
     isActive?: boolean;
 }
 export interface CreatePetRequest {
@@ -276,12 +272,6 @@ export interface AuthSession {
 export interface LoginResponse extends AuthSession {
     tenant?: ApiAuthTenant;
 }
-/**
- * Los nombres de los enums coinciden con los valores que produce el cliente
- * Prisma del backend (`@prisma/client`). Usar los literales aquí garantiza
- * que web/mobile consuman exactamente lo que la API serializa, sin
- * dependencia de runtime del Prisma client.
- */
 export type ApiConsentStatus = 'PENDING' | 'GRANTED' | 'REVOKED' | 'EXPIRED';
 export type ApiConsentScope = 'PASSPORT_READ' | 'MEDICAL_RECORDS_READ';
 export type ApiConsentAuditAction = 'CREATED' | 'GRANTED' | 'REVOKED' | 'ACCESSED' | 'SHARE_CREATED' | 'SHARE_REVOKED' | 'SHARE_ACCESSED' | 'EXPIRED';
@@ -467,79 +457,140 @@ export interface MembershipSubscriptionListResponse {
     data: MembershipSubscription[];
     total: number;
 }
-/**
- * Literales que coinciden 1:1 con los enums `ConsentTokenScope` /
- * `ConsentTokenStatus` / `ConsentAccessAction` del schema Prisma.
- * Mantener sincronizados para que web/mobile consuman exactamente lo que la
- * API serializa (sin dependencia de runtime del Prisma client).
- */
-export type ApiConsentTokenScope = 'READ' | 'FULL';
-export type ApiConsentTokenStatus = 'ACTIVE' | 'REVOKED' | 'EXPIRED';
-export type ApiConsentAccessAction = 'VALIDATE' | 'READ' | 'REVOKE';
-/**
- * Payload de creación de un token de consentimiento.
- * El emisor debe ser el dueño (CLIENT) o staff del mismo tenant que custodia
- * el expediente; el backend valida la membresía de cada `petId` al tenant.
- */
-export interface CreateConsentTokenInput {
-    granteeEmail: string;
-    granteeTenantId?: string | null;
-    scope?: ApiConsentTokenScope;
-    petIds: string[];
-    expiresAt: string;
-    auditReason?: string | null;
-}
-/**
- * Payload de actualización parcial (revocación). Cualquier subset de campos
- * actualizables puede enviarse; `status` se forzará a REVOKED si no se
- * especifica, ya que el endpoint principal es revocación.
- */
-export interface UpdateConsentTokenInput {
-    scope?: ApiConsentTokenScope;
-    expiresAt?: string;
-    auditReason?: string | null;
-}
-/**
- * Payload para validar/canjear un token. Devuelve la entidad si está
- * vigente, lanza error en caso contrario.
- */
-export interface ValidateConsentTokenInput {
-    tokenId: string;
-}
-export interface ConsentTokenView {
+export type ApiBillingAttemptStatus = 'SUCCESS' | 'FAILED';
+export interface BillingAttempt {
     id: string;
     tenantId: string;
-    ownerUserId: string;
-    granteeEmail: string;
-    granteeTenantId: string | null;
-    scope: ApiConsentTokenScope;
-    petIds: string[];
-    status: ApiConsentTokenStatus;
-    expiresAt: string;
+    subscriptionId: string;
+    provider: ApiBillingProviderKind;
+    transactionId: string | null;
+    status: ApiBillingAttemptStatus;
+    amountCents: number;
+    currency: string;
+    failureCode: string | null;
+    failureMessage: string | null;
     createdAt: string;
-    revokedAt: string | null;
-    auditReason: string | null;
-}
-export interface ConsentAccessLogView {
-    id: string;
-    tenantId: string;
-    consentTokenId: string;
-    accessedByUserId: string;
-    accessedByTenantId: string | null;
-    action: ApiConsentAccessAction;
-    ipAddress: string | null;
-    userAgent: string | null;
-    createdAt: string;
-}
-export interface ConsentAccessLogListResponse {
-    success: true;
-    data: ConsentAccessLogView[];
-    meta: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-        hasNextPage: boolean;
-        hasPrevPage: boolean;
+    subscription?: {
+        id: string;
+        status: ApiMembershipSubscriptionStatus;
+        ownerId: string;
+        owner?: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+        };
+        plan?: {
+            id: string;
+            name: string;
+            priceCents: number;
+            currency: string;
+        };
+        pet?: {
+            id: string;
+            name: string;
+        };
     };
+}
+export interface BillingFailureCodeCount {
+    failureCode: string;
+    failureMessage: string | null;
+    count: number;
+}
+export interface BillingFailureReportSummary {
+    failuresLast24Hours: number;
+    failuresLast7Days: number;
+    failuresLast30Days: number;
+    pastDueSubscriptions: number;
+    topFailureCodes: BillingFailureCodeCount[];
+    totalRecoveredAfterFailure: number;
+}
+export interface BillingFailureReport {
+    summary: BillingFailureReportSummary;
+    attempts: BillingAttempt[];
+    total: number;
+    page: number;
+    pageSize: number;
+}
+export interface ListBillingFailureAttemptsParams {
+    since?: string;
+    page?: number;
+    pageSize?: number;
+}
+export type ApiVaccinationCampaignStatus = 'DRAFT' | 'OPEN' | 'CLOSED' | 'COMPLETED' | 'CANCELLED';
+export type ApiVaccinationRegistrationStatus = 'REGISTERED' | 'ATTENDED' | 'NO_SHOW' | 'CANCELLED';
+export interface VaccinationCampaign {
+    id: string;
+    tenantId: string;
+    name: string;
+    description: string | null;
+    vaccineName: string;
+    startsAt: string;
+    endsAt: string;
+    location: string | null;
+    capacity: number | null;
+    priceCents: number;
+    currency: string;
+    status: ApiVaccinationCampaignStatus;
+    notes: string | null;
+    createdById: string;
+    createdAt: string;
+    updatedAt: string;
+    registrationCount?: number;
+}
+export interface VaccinationRegistration {
+    id: string;
+    tenantId: string;
+    campaignId: string;
+    petId: string;
+    ownerId: string;
+    status: ApiVaccinationRegistrationStatus;
+    attendedAt: string | null;
+    notes: string | null;
+    createdAt: string;
+    updatedAt: string;
+    pet?: {
+        id: string;
+        name: string;
+        species: string;
+    };
+    owner?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+    };
+}
+export interface CreateVaccinationCampaignRequest {
+    name: string;
+    description?: string;
+    vaccineName: string;
+    startsAt: string;
+    endsAt: string;
+    location?: string;
+    capacity?: number;
+    priceCents?: number;
+    currency?: string;
+    notes?: string;
+}
+export interface UpdateVaccinationCampaignRequest {
+    name?: string;
+    description?: string;
+    vaccineName?: string;
+    startsAt?: string;
+    endsAt?: string;
+    location?: string;
+    capacity?: number;
+    priceCents?: number;
+    currency?: string;
+    notes?: string;
+    status?: ApiVaccinationCampaignStatus;
+}
+export interface RegisterPetToCampaignRequest {
+    petId: string;
+    notes?: string;
+}
+export interface MarkRegistrationAttendedRequest {
+    attendedAt?: string;
+    notes?: string;
 }
