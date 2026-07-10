@@ -19,11 +19,6 @@ import {
     markNoShow,
     cancelRegistration,
 } from './vaccination-campaigns-service';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type {
-    VaccinationCampaign,
-    VaccinationRegistration,
-} from '@nuvet/types';
 
 vi.mock('@/shared/lib/api-client', () => ({
     default: {
@@ -35,22 +30,6 @@ vi.mock('@/shared/lib/api-client', () => ({
     },
 }));
 
-import {
-    listVaccinationCampaigns,
-    getVaccinationCampaign,
-    createVaccinationCampaign,
-    updateVaccinationCampaign,
-    openVaccinationCampaign,
-    closeVaccinationCampaign,
-    completeVaccinationCampaign,
-    cancelVaccinationCampaign,
-    deleteVaccinationCampaign,
-    listCampaignRegistrations,
-    registerPetToCampaign,
-    markAttended,
-    markNoShow,
-    cancelRegistration,
-} from './vaccination-campaigns-service';
 import api from '@/shared/lib/api-client';
 
 const mockedApi = api as unknown as {
@@ -172,7 +151,7 @@ describe('vaccination-campaigns-service', () => {
     });
 
     describe('transitions', () => {
-        it('open posts to /open', async () => {
+        it('open patches with status OPEN', async () => {
             const campaign = makeCampaign({ status: 'OPEN' });
             mockedApi.patch.mockResolvedValueOnce({ data: { data: campaign } });
             const result = await openVaccinationCampaign('c-1');
@@ -183,7 +162,7 @@ describe('vaccination-campaigns-service', () => {
             expect(result).toEqual(campaign);
         });
 
-        it('close posts to ... with status CLOSED', async () => {
+        it('close patches with status CLOSED', async () => {
             const campaign = makeCampaign({ status: 'CLOSED' });
             mockedApi.patch.mockResolvedValueOnce({ data: { data: campaign } });
             const result = await closeVaccinationCampaign('c-1');
@@ -194,7 +173,7 @@ describe('vaccination-campaigns-service', () => {
             expect(result).toEqual(campaign);
         });
 
-        it('complete posts with status COMPLETED', async () => {
+        it('complete patches with status COMPLETED', async () => {
             const campaign = makeCampaign({ status: 'COMPLETED' });
             mockedApi.patch.mockResolvedValueOnce({ data: { data: campaign } });
             const result = await completeVaccinationCampaign('c-1');
@@ -205,7 +184,7 @@ describe('vaccination-campaigns-service', () => {
             expect(result).toEqual(campaign);
         });
 
-        it('cancel posts with status CANCELLED', async () => {
+        it('cancel patches with status CANCELLED', async () => {
             const campaign = makeCampaign({ status: 'CANCELLED' });
             mockedApi.patch.mockResolvedValueOnce({ data: { data: campaign } });
             const result = await cancelVaccinationCampaign('c-1');
