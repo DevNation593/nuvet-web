@@ -21,7 +21,7 @@ import {
 import { useClients } from '@/features/clients/hooks/use-clients';
 import { useCreatePet, useDeactivatePet, usePet, usePets, useReactivatePet, useUpdatePet } from '@/features/pets/hooks/use-pets';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
-import { FileText, Loader2, PawPrint, Pencil, Search, UserPlus } from 'lucide-react';
+import { Eye, FileText, Loader2, PawPrint, Pencil, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
 import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
@@ -232,7 +232,7 @@ export function PetsManagement() {
                     ) : isMobile ? (
                         <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
                             {filteredPets.map((pet) => (
-                                <MobileCard key={pet.id} className="cursor-pointer" onClick={() => openDetail(pet.id)}>
+                                <MobileCard key={pet.id}>
                                     <MobileCardHeader>
                                         <MobileCardTitle>{pet.name}</MobileCardTitle>
                                         <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
@@ -263,11 +263,21 @@ export function PetsManagement() {
                                                 variant="outline"
                                                 size="sm"
                                                 className="flex-1"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
+                                                onClick={() => openDetail(pet.id)}
+                                                aria-label={`Ver detalle de ${pet.name}`}
+                                            >
+                                                <Eye className="h-3.5 w-3.5 mr-1" />
+                                                Detalle
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={() => {
                                                     setEditingPet(pet);
                                                     setModalOpen(true);
                                                 }}
+                                                aria-label={`Editar ${pet.name}`}
                                             >
                                                 <Pencil className="h-3.5 w-3.5 mr-1" />
                                                 Editar
@@ -276,10 +286,8 @@ export function PetsManagement() {
                                                 variant="outline"
                                                 size="sm"
                                                 className="flex-1"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    router.push(`/clinic/pets/${pet.id}/history`);
-                                                }}
+                                                onClick={() => router.push(`/clinic/pets/${pet.id}/history`)}
+                                                aria-label={`Ver historial de ${pet.name}`}
                                             >
                                                 <FileText className="h-3.5 w-3.5 mr-1" />
                                                 Historial
@@ -305,11 +313,7 @@ export function PetsManagement() {
                             </TableHeader>
                             <TableBody>
                                 {filteredPets.map((pet) => (
-                                    <TableRow
-                                        key={pet.id}
-                                        clickable
-                                        onClick={() => openDetail(pet.id)}
-                                    >
+                                    <TableRow key={pet.id}>
                                         <TableCell className="font-medium">{pet.name}</TableCell>
                                         <TableCell>{getPetSpeciesLabel(pet.species)}</TableCell>
                                         <TableCell>{pet.breed ?? '—'}</TableCell>
@@ -328,23 +332,30 @@ export function PetsManagement() {
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
+                                                    onClick={() => openDetail(pet.id)}
+                                                    title={`Ver detalle de ${pet.name}`}
+                                                    aria-label={`Ver detalle de ${pet.name}`}
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={() => {
                                                         setEditingPet(pet);
                                                         setModalOpen(true);
                                                     }}
                                                     title="Editar"
+                                                    aria-label={`Editar ${pet.name}`}
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        router.push(`/clinic/pets/${pet.id}/history`);
-                                                    }}
+                                                    onClick={() => router.push(`/clinic/pets/${pet.id}/history`)}
                                                     title="Historial clínico"
+                                                    aria-label={`Ver historial de ${pet.name}`}
                                                 >
                                                     <FileText className="h-4 w-4" />
                                                 </Button>
@@ -352,8 +363,8 @@ export function PetsManagement() {
                                                     size="icon"
                                                     variant="ghost"
                                                     title={(pet.isActive ?? true) ? 'Desactivar mascota' : 'Activar mascota'}
-                                                    onClick={async (event) => {
-                                                        event.stopPropagation();
+                                                    aria-label={(pet.isActive ?? true) ? `Desactivar ${pet.name}` : `Activar ${pet.name}`}
+                                                    onClick={async () => {
                                                         try {
                                                             if ((pet.isActive ?? true)) {
                                                                 await deactivatePet.mutateAsync(pet.id);

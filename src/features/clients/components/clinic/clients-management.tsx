@@ -27,7 +27,7 @@ import {
 } from '@/features/clients/hooks/use-clients';
 import { usePets } from '@/features/pets/hooks/use-pets';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
-import { Loader2, Pencil, Search, UserPlus } from 'lucide-react';
+import { Eye, Loader2, Pencil, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
 import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
@@ -145,7 +145,7 @@ export function ClientsManagement() {
                     ) : isMobile ? (
                         <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
                             {filteredClients.map((client) => (
-                                <MobileCard key={client.id} className="cursor-pointer" onClick={() => openDetail(client.id)}>
+                                <MobileCard key={client.id}>
                                     <MobileCardHeader>
                                         <MobileCardTitle>
                                             {client.firstName} {client.lastName}
@@ -176,11 +176,21 @@ export function ClientsManagement() {
                                                 variant="outline"
                                                 size="sm"
                                                 className="flex-1"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
+                                                onClick={() => openDetail(client.id)}
+                                                aria-label={`Ver detalle de ${client.firstName} ${client.lastName}`}
+                                            >
+                                                <Eye className="h-3.5 w-3.5 mr-1" />
+                                                Detalle
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={() => {
                                                     setEditingClient(client);
                                                     setModalOpen(true);
                                                 }}
+                                                aria-label={`Editar ${client.firstName} ${client.lastName}`}
                                             >
                                                 <Pencil className="h-3.5 w-3.5 mr-1" />
                                                 Editar
@@ -205,11 +215,7 @@ export function ClientsManagement() {
                             </TableHeader>
                             <TableBody>
                                 {filteredClients.map((client) => (
-                                    <TableRow
-                                        key={client.id}
-                                        clickable
-                                        onClick={() => openDetail(client.id)}
-                                    >
+                                    <TableRow key={client.id}>
                                         <TableCell className="font-medium">
                                             {client.firstName} {client.lastName}
                                         </TableCell>
@@ -225,18 +231,29 @@ export function ClientsManagement() {
                                             {format(new Date(client.createdAt), 'dd/MM/yy')}
                                         </TableCell>
                                         <TableCell>
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                title="Editar cliente"
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    setEditingClient(client);
-                                                    setModalOpen(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
+                                            <div className="flex items-center gap-1">
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    title={`Ver detalle de ${client.firstName}`}
+                                                    aria-label={`Ver detalle de ${client.firstName} ${client.lastName}`}
+                                                    onClick={() => openDetail(client.id)}
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    title="Editar cliente"
+                                                    aria-label={`Editar ${client.firstName} ${client.lastName}`}
+                                                    onClick={() => {
+                                                        setEditingClient(client);
+                                                        setModalOpen(true);
+                                                    }}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
