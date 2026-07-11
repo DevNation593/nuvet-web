@@ -101,5 +101,10 @@
       "launch-editor": "^6.4.3",
       "@babel/core": "^7.29.6"
     }
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion": "^2.0.2"
+    }
   }
 }

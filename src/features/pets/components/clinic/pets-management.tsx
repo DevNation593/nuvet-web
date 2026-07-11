@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -21,12 +21,11 @@ import {
 import { useClients } from '@/features/clients/hooks/use-clients';
 import { useCreatePet, useDeactivatePet, usePet, usePets, useReactivatePet, useUpdatePet } from '@/features/pets/hooks/use-pets';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
-import { FileText, Loader2, PawPrint, Pencil, Search, UserPlus } from 'lucide-react';
+import { Eye, FileText, Loader2, PawPrint, Pencil, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
-import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
-import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
-import { useIsMobile } from '@/shared/hooks/use-media-query';
+import { ResponsiveDataTable, type ResponsiveColumn } from '@/shared/components/ui/responsive-data-table';
+import { VisuallyHidden } from '@/shared/components/ui/visually-hidden';
 
 type PetRow = {
     id: string;
@@ -101,9 +100,21 @@ export function PetsManagement() {
     const [editingPet, setEditingPet] = useState<PetRow | null>(null);
     const [speciesFilter, setSpeciesFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('active');
-    const isMobile = useIsMobile();
+    const [page, setPage] = useState(1);
+    const [detailOpen, setDetailOpen] = useState(false);
+    const PAGE_SIZE = 20;
 
-    const petsQuery = usePets({ limit: 100, includeInactive: statusFilter !== 'active' });
+    const petsQuery = usePets({
+        page,
+        limit: PAGE_SIZE,
+        includeInactive: statusFilter !== 'active',
+    });
+    const petsMeta = petsQuery.data?.meta ?? {
+        page: 1,
+        limit: PAGE_SIZE,
+        total: 0,
+        totalPages: 1,
+    };
     const clientsQuery = useClients({ limit: 100 });
     const selectedPetQuery = usePet(selectedId);
     const createPet = useCreatePet();
@@ -114,6 +125,11 @@ export function PetsManagement() {
     const pets = useMemo(() => (((petsQuery.data?.data ?? []) as unknown[]) as PetRow[]), [petsQuery.data?.data]);
     const clients = useMemo(() => clientsQuery.data?.data ?? [], [clientsQuery.data?.data]);
     const selectedPet = (selectedPetQuery.data as unknown as PetDetail | undefined) ?? undefined;
+
+    const openDetail = useCallback((id: string) => {
+        setSelectedId(id);
+        setDetailOpen(true);
+    }, []);
 
     const filteredPets = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -133,6 +149,111 @@ export function PetsManagement() {
             return matchesSearch && matchesSpecies && matchesStatus;
         });
     }, [pets, search, speciesFilter, statusFilter]);
+
+    const petColumns = useMemo<ResponsiveColumn<PetRow>[]>(() => [
+        {
+            key: 'name',
+            header: 'Nombre',
+            cell: (pet) => <span className="font-medium">{pet.name}</span>,
+        },
+        {
+            key: 'species',
+            header: 'Especie',
+            cell: (pet) => getPetSpeciesLabel(pet.species),
+        },
+        {
+            key: 'breed',
+            header: 'Raza',
+            cell: (pet) => pet.breed ?? '—',
+        },
+        {
+            key: 'age',
+            header: 'Edad',
+            cell: (pet) => calculateAge(pet.birthDate),
+        },
+        {
+            key: 'owner',
+            header: 'Dueño',
+            cell: (pet) => `${pet.owner?.firstName ?? ''} ${pet.owner?.lastName ?? ''}`.trim() || '—',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (pet) => (
+                <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
+                    {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
+                </Badge>
+            ),
+            hideOnMobile: true,
+        },
+        {
+            key: 'lastVisit',
+            header: 'Última visita',
+            cell: (pet) => format(new Date(pet.createdAt), 'dd/MM/yy'),
+            hideOnMobile: true,
+        },
+        {
+            key: 'actions',
+            header: 'Acciones',
+            headerClassName: 'text-right',
+            cell: (pet) => (
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => openDetail(pet.id)}
+                        title={`Ver detalle de ${pet.name}`}
+                        aria-label={`Ver detalle de ${pet.name}`}
+                    >
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                            setEditingPet(pet);
+                            setModalOpen(true);
+                        }}
+                        title="Editar"
+                        aria-label={`Editar ${pet.name}`}
+                    >
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => router.push(`/clinic/pets/${pet.id}/history`)}
+                        title="Historial clínico"
+                        aria-label={`Ver historial de ${pet.name}`}
+                    >
+                        <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        title={(pet.isActive ?? true) ? 'Desactivar mascota' : 'Activar mascota'}
+                        aria-label={(pet.isActive ?? true) ? `Desactivar ${pet.name}` : `Activar ${pet.name}`}
+                        onClick={async () => {
+                            try {
+                                if ((pet.isActive ?? true)) {
+                                    await deactivatePet.mutateAsync(pet.id);
+                                    toast.success('Mascota desactivada');
+                                } else {
+                                    await reactivatePet.mutateAsync(pet.id);
+                                    toast.success('Mascota reactivada');
+                                }
+                            } catch {
+                                toast.error('No se pudo actualizar el estado');
+                            }
+                        }}
+                    >
+                        <PawPrint className="h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+            hideOnMobile: true,
+        },
+    ], [openDetail, deactivatePet, reactivatePet, router]);
 
     return (
         <div className="space-y-4">
@@ -209,264 +330,255 @@ export function PetsManagement() {
                                 </Button>
                             }
                         />
-                    ) : filteredPets.length === 0 ? (
-                        <ClinicStateCard message="No hay mascotas para mostrar." />
-                    ) : isMobile ? (
-                        <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
-                            {filteredPets.map((pet) => (
-                                <MobileCard key={pet.id} className="cursor-pointer" onClick={() => setSelectedId(pet.id)}>
-                                    <MobileCardHeader>
-                                        <MobileCardTitle>{pet.name}</MobileCardTitle>
-                                        <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
-                                            {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
-                                        </Badge>
-                                    </MobileCardHeader>
-                                    <MobileCardContent>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Especie:</MobileCardLabel>
-                                            <MobileCardValue>{getPetSpeciesLabel(pet.species)}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Raza:</MobileCardLabel>
-                                            <MobileCardValue>{pet.breed ?? '—'}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Edad:</MobileCardLabel>
-                                            <MobileCardValue>{calculateAge(pet.birthDate)}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Dueño:</MobileCardLabel>
-                                            <MobileCardValue>
-                                                {pet.owner?.firstName} {pet.owner?.lastName}
-                                            </MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardActions>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="flex-1"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingPet(pet);
-                                                    setModalOpen(true);
-                                                }}
-                                            >
-                                                <Pencil className="h-3.5 w-3.5 mr-1" />
-                                                Editar
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="flex-1"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    router.push(`/clinic/pets/${pet.id}/history`);
-                                                }}
-                                            >
-                                                <FileText className="h-3.5 w-3.5 mr-1" />
-                                                Historial
-                                            </Button>
-                                        </MobileCardActions>
-                                    </MobileCardContent>
-                                </MobileCard>
-                            ))}
-                        </div>
                     ) : (
-                        <ScrollableTable maxHeight="max-h-[600px]" minWidth="min-w-[860px]">
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Nombre</TableHead>
-                                    <TableHead>Especie</TableHead>
-                                    <TableHead>Raza</TableHead>
-                                    <TableHead>Edad</TableHead>
-                                    <TableHead>Dueño</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead>Última visita</TableHead>
-                                    <TableHead>Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredPets.map((pet) => (
-                                    <TableRow
-                                        key={pet.id}
-                                        clickable
-                                        onClick={() => setSelectedId(pet.id)}
+                        <ResponsiveDataTable<PetRow>
+                            data={filteredPets}
+                            columns={petColumns}
+                            getRowKey={(pet) => pet.id}
+                            maxHeight="max-h-[600px]"
+                            minWidth="min-w-[860px]"
+                            getMobileTitle={(pet) => pet.name}
+                            getMobileBadge={(pet) => (
+                                <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
+                                    {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
+                                </Badge>
+                            )}
+                            getMobileActions={(pet) => (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => openDetail(pet.id)}
+                                        aria-label={`Ver detalle de ${pet.name}`}
                                     >
-                                        <TableCell className="font-medium">{pet.name}</TableCell>
-                                        <TableCell>{getPetSpeciesLabel(pet.species)}</TableCell>
-                                        <TableCell>{pet.breed ?? '—'}</TableCell>
-                                        <TableCell>{calculateAge(pet.birthDate)}</TableCell>
-                                        <TableCell>
-                                            {pet.owner?.firstName} {pet.owner?.lastName}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
-                                                {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>{format(new Date(pet.createdAt), 'dd/MM/yy')}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        setEditingPet(pet);
-                                                        setModalOpen(true);
-                                                    }}
-                                                    title="Editar"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={(event) => {
-                                                        event.stopPropagation();
-                                                        router.push(`/clinic/pets/${pet.id}/history`);
-                                                    }}
-                                                    title="Historial clínico"
-                                                >
-                                                    <FileText className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    title={(pet.isActive ?? true) ? 'Desactivar mascota' : 'Activar mascota'}
-                                                    onClick={async (event) => {
-                                                        event.stopPropagation();
-                                                        try {
-                                                            if ((pet.isActive ?? true)) {
-                                                                await deactivatePet.mutateAsync(pet.id);
-                                                                toast.success('Mascota desactivada');
-                                                            } else {
-                                                                await reactivatePet.mutateAsync(pet.id);
-                                                                toast.success('Mascota reactivada');
-                                                            }
-                                                        } catch {
-                                                            toast.error('No se pudo actualizar el estado');
-                                                        }
-                                                    }}
-                                                >
-                                                    <PawPrint className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </ScrollableTable>
+                                        <Eye className="h-3.5 w-3.5 mr-1" />
+                                        Detalle
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => {
+                                            setEditingPet(pet);
+                                            setModalOpen(true);
+                                        }}
+                                        aria-label={`Editar ${pet.name}`}
+                                    >
+                                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                                        Editar
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => router.push(`/clinic/pets/${pet.id}/history`)}
+                                        aria-label={`Ver historial de ${pet.name}`}
+                                    >
+                                        <FileText className="h-3.5 w-3.5 mr-1" />
+                                        Historial
+                                    </Button>
+                                </>
+                            )}
+                            emptyState={<ClinicStateCard message="No hay mascotas para mostrar." />}
+                        />
                     )}
                 </CardContent>
             </Card>
 
             <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Detalle de mascota</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {selectedPetQuery.isLoading ? (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Cargando detalle...
-                        </div>
-                    ) : !selectedPet ? (
-                        <p className="text-sm text-muted-foreground">
-                            Selecciona una mascota para ver su información.
-                        </p>
-                    ) : (
-                        <div className="grid gap-2 text-sm sm:grid-cols-2">
-                            <DetailItem label="Nombre" value={selectedPet.name} />
-                            <DetailItem label="Especie" value={getPetSpeciesLabel(selectedPet.species)} />
-                            <DetailItem label="Raza" value={selectedPet.breed ?? '—'} />
-                            <DetailItem label="Sexo" value={selectedPet.sex} />
-                            <DetailItem label="Edad" value={calculateAge(selectedPet.birthDate)} />
-                            <DetailItem
-                                label="Dueño"
-                                value={`${selectedPet.owner?.firstName ?? ''} ${selectedPet.owner?.lastName ?? ''}`.trim() || '—'}
-                            />
-                            <DetailItem
-                                label="Historial clínico"
-                                value={
-                                    selectedPet.medicalRecords && selectedPet.medicalRecords.length > 0
-                                        ? `${selectedPet.medicalRecords.length} registros recientes`
-                                        : 'Sin registros'
-                                }
-                            />
-                            <DetailItem
-                                label="Vacunas"
-                                value={
-                                    selectedPet.vaccinations && selectedPet.vaccinations.length > 0
-                                        ? `${selectedPet.vaccinations.length} vacunas registradas`
-                                        : 'Sin vacunas registradas'
-                                }
-                            />
-                        </div>
-                    )}
-
-                    {selectedPet ? (
-                        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                            <div className="rounded-md border bg-muted/10 p-3">
-                                <p className="mb-2 text-sm font-semibold">Registros médicos recientes</p>
-                                {!selectedPet.medicalRecords || selectedPet.medicalRecords.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground">No hay historial clínico registrado.</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {selectedPet.medicalRecords.map((record) => (
-                                            <div key={record.id} className="rounded-md border bg-background p-2 text-xs">
-                                                <p className="font-medium">{record.diagnosis || 'Sin diagnóstico'}</p>
-                                                <p className="text-muted-foreground">
-                                                    Fecha: {formatDate(record.createdAt)}
-                                                </p>
-                                                {record.treatment ? <p>Tratamiento: {record.treatment}</p> : null}
-                                                {record.notes ? <p>Notas: {record.notes}</p> : null}
-                                                <div className="mt-2">
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        title="Ver historial clínico completo"
-                                                        onClick={() =>
-                                                            router.push(
-                                                                `/clinic/medical-records?petId=${selectedPet.id}&recordId=${record.id}`,
-                                                            )
-                                                        }
-                                                    >
-                                                        Abrir historial
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="rounded-md border bg-muted/10 p-3">
-                                <p className="mb-2 text-sm font-semibold">Vacunación reciente</p>
-                                {!selectedPet.vaccinations || selectedPet.vaccinations.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground">No hay vacunas registradas.</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {selectedPet.vaccinations.map((vaccination) => (
-                                            <div key={vaccination.id} className="rounded-md border bg-background p-2 text-xs">
-                                                <p className="font-medium">{vaccination.vaccineName || 'Vacuna sin nombre'}</p>
-                                                <p className="text-muted-foreground">
-                                                    Aplicada: {formatDate(vaccination.administeredAt)}
-                                                </p>
-                                                {vaccination.nextDueAt ? (
-                                                    <p className="text-muted-foreground">Próxima dosis: {formatDate(vaccination.nextDueAt)}</p>
-                                                ) : null}
-                                                {vaccination.status ? <p>Estado: {vaccination.status}</p> : null}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    ) : null}
+                <CardContent className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-sm text-muted-foreground">
+                        {petsMeta.total === 0
+                            ? 'Sin mascotas para mostrar'
+                            : `Mostrando ${pets.length} de ${petsMeta.total} mascotas`}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            disabled={page <= 1 || petsQuery.isFetching}
+                        >
+                            Anterior
+                        </Button>
+                        <span className="text-sm text-muted-foreground px-2">
+                            Página {petsMeta.page} de {Math.max(1, petsMeta.totalPages)}
+                        </span>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setPage((p) => p + 1)}
+                            disabled={page >= petsMeta.totalPages || petsQuery.isFetching}
+                        >
+                            Siguiente
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
+
+            <Dialog
+                open={detailOpen}
+                onOpenChange={(open) => {
+                    setDetailOpen(open);
+                    if (!open) setSelectedId(null);
+                }}
+            >
+                <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+                    {selectedPetQuery.isLoading ? (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    <VisuallyHidden>Cargando detalle de mascota</VisuallyHidden>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Cargando detalle...
+                            </div>
+                        </>
+                    ) : !selectedPet ? (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    <VisuallyHidden>Mascota no encontrada</VisuallyHidden>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <p className="text-sm text-muted-foreground">
+                                No se encontró la mascota.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>{selectedPet.name}</DialogTitle>
+                                <DialogDescription>
+                                    {getPetSpeciesLabel(selectedPet.species)}
+                                    {selectedPet.breed ? ` · ${selectedPet.breed}` : ''}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-2 text-sm sm:grid-cols-2">
+                                <DetailItem label="Nombre" value={selectedPet.name} />
+                                <DetailItem label="Especie" value={getPetSpeciesLabel(selectedPet.species)} />
+                                <DetailItem label="Raza" value={selectedPet.breed ?? '—'} />
+                                <DetailItem label="Sexo" value={selectedPet.sex} />
+                                <DetailItem label="Edad" value={calculateAge(selectedPet.birthDate)} />
+                                <DetailItem
+                                    label="Dueño"
+                                    value={`${selectedPet.owner?.firstName ?? ''} ${selectedPet.owner?.lastName ?? ''}`.trim() || '—'}
+                                />
+                                <DetailItem
+                                    label="Historial clínico"
+                                    value={
+                                        selectedPet.medicalRecords && selectedPet.medicalRecords.length > 0
+                                            ? `${selectedPet.medicalRecords.length} registros recientes`
+                                            : 'Sin registros'
+                                    }
+                                />
+                                <DetailItem
+                                    label="Vacunas"
+                                    value={
+                                        selectedPet.vaccinations && selectedPet.vaccinations.length > 0
+                                            ? `${selectedPet.vaccinations.length} vacunas registradas`
+                                            : 'Sin vacunas registradas'
+                                    }
+                                />
+                            </div>
+
+                            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                                <div className="rounded-md border bg-muted/10 p-3">
+                                    <p className="mb-2 text-sm font-semibold">Registros médicos recientes</p>
+                                    {!selectedPet.medicalRecords || selectedPet.medicalRecords.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground">No hay historial clínico registrado.</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {selectedPet.medicalRecords.map((record) => (
+                                                <div key={record.id} className="rounded-md border bg-background p-2 text-xs">
+                                                    <p className="font-medium">{record.diagnosis || 'Sin diagnóstico'}</p>
+                                                    <p className="text-muted-foreground">
+                                                        Fecha: {formatDate(record.createdAt)}
+                                                    </p>
+                                                    {record.treatment ? <p>Tratamiento: {record.treatment}</p> : null}
+                                                    {record.notes ? <p>Notas: {record.notes}</p> : null}
+                                                    <div className="mt-2">
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            title="Ver historial clínico completo"
+                                                            onClick={() =>
+                                                                router.push(
+                                                                    `/clinic/medical-records?petId=${selectedPet.id}&recordId=${record.id}`,
+                                                                )
+                                                            }
+                                                        >
+                                                            Abrir historial
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="rounded-md border bg-muted/10 p-3">
+                                    <p className="mb-2 text-sm font-semibold">Vacunación reciente</p>
+                                    {!selectedPet.vaccinations || selectedPet.vaccinations.length === 0 ? (
+                                        <p className="text-xs text-muted-foreground">No hay vacunas registradas.</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {selectedPet.vaccinations.map((vaccination) => (
+                                                <div key={vaccination.id} className="rounded-md border bg-background p-2 text-xs">
+                                                    <p className="font-medium">{vaccination.vaccineName || 'Vacuna sin nombre'}</p>
+                                                    <p className="text-muted-foreground">
+                                                        Aplicada: {formatDate(vaccination.administeredAt)}
+                                                    </p>
+                                                    {vaccination.nextDueAt ? (
+                                                        <p className="text-muted-foreground">Próxima dosis: {formatDate(vaccination.nextDueAt)}</p>
+                                                    ) : null}
+                                                    {vaccination.status ? <p>Estado: {vaccination.status}</p> : null}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="mt-4 flex flex-wrap justify-end gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setEditingPet(selectedPet as PetRow);
+                                        setModalOpen(true);
+                                        setDetailOpen(false);
+                                    }}
+                                >
+                                    <Pencil className="h-3.5 w-3.5 mr-1" />
+                                    Editar
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        router.push(`/clinic/pets/${selectedPet.id}/history`);
+                                    }}
+                                >
+                                    <FileText className="h-3.5 w-3.5 mr-1" />
+                                    Ver historial completo
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setDetailOpen(false)}
+                                >
+                                    Cerrar
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             <PetModal
                 open={modalOpen}
