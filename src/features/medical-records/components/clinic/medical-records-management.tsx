@@ -18,6 +18,7 @@ import {
     DialogTitle,
 } from '@/shared/components/ui/dialog';
 import { ResponsiveDataTable, type ResponsiveColumn } from '@/shared/components/ui/responsive-data-table';
+import { VisuallyHidden } from '@/shared/components/ui/visually-hidden';
 import { usePets } from '@/features/pets/hooks/use-pets';
 import {
     MedicalRecord,
@@ -306,13 +307,27 @@ export function MedicalRecordsManagement() {
             >
                 <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
                     {recordQuery.isLoading && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Cargando consulta...
-                        </div>
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    <VisuallyHidden>Cargando consulta médica</VisuallyHidden>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Cargando consulta...
+                            </div>
+                        </>
                     )}
                     {!recordQuery.isLoading && !selectedRecord && (
-                        <p className="text-muted-foreground">No se encontró la consulta.</p>
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    <VisuallyHidden>Consulta no encontrada</VisuallyHidden>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <p className="text-muted-foreground">No se encontró la consulta.</p>
+                        </>
                     )}
                     {!recordQuery.isLoading && selectedRecord && (
                         <>

@@ -30,6 +30,7 @@ import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/
 import { Eye, Loader2, Pencil, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { ResponsiveDataTable, type ResponsiveColumn } from '@/shared/components/ui/responsive-data-table';
+import { VisuallyHidden } from '@/shared/components/ui/visually-hidden';
 
 const clientSchema = z.object({
     firstName: z.string().min(2, 'Nombre requerido'),
@@ -293,14 +294,28 @@ export function ClientsManagement() {
             >
                 <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                     {selectedClientQuery.isLoading ? (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Cargando detalle...
-                        </div>
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    <VisuallyHidden>Cargando detalle de cliente</VisuallyHidden>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Cargando detalle...
+                            </div>
+                        </>
                     ) : !selectedClientQuery.data ? (
-                        <p className="text-sm text-muted-foreground">
-                            No se encontró el cliente.
-                        </p>
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    <VisuallyHidden>Cliente no encontrado</VisuallyHidden>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <p className="text-sm text-muted-foreground">
+                                No se encontró el cliente.
+                            </p>
+                        </>
                     ) : (
                         <>
                             <DialogHeader>

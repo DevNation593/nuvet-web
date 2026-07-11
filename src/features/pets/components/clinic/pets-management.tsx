@@ -25,6 +25,7 @@ import { Eye, FileText, Loader2, PawPrint, Pencil, Search, UserPlus } from 'luci
 import { toast } from 'sonner';
 import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
 import { ResponsiveDataTable, type ResponsiveColumn } from '@/shared/components/ui/responsive-data-table';
+import { VisuallyHidden } from '@/shared/components/ui/visually-hidden';
 
 type PetRow = {
     id: string;
@@ -425,14 +426,28 @@ export function PetsManagement() {
             >
                 <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
                     {selectedPetQuery.isLoading ? (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Cargando detalle...
-                        </div>
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    <VisuallyHidden>Cargando detalle de mascota</VisuallyHidden>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Cargando detalle...
+                            </div>
+                        </>
                     ) : !selectedPet ? (
-                        <p className="text-sm text-muted-foreground">
-                            No se encontró la mascota.
-                        </p>
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>
+                                    <VisuallyHidden>Mascota no encontrada</VisuallyHidden>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <p className="text-sm text-muted-foreground">
+                                No se encontró la mascota.
+                            </p>
+                        </>
                     ) : (
                         <>
                             <DialogHeader>
