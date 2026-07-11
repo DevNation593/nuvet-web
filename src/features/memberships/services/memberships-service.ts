@@ -2,8 +2,10 @@ import api from '@/shared/lib/api-client';
 import { unwrapResponse, unwrapPaginatedResponse } from '@/shared/lib/api-helpers';
 import type {
     ApiEnvelope,
+    BillingFailureReport,
     CancelMembershipSubscriptionRequest,
     CreateMembershipPlanRequest,
+    ListBillingFailureAttemptsParams,
     MembershipPlan,
     MembershipSubscription,
     SubscribeToPlanRequest,
@@ -92,4 +94,26 @@ export async function updatePlan(
         input,
     );
     return unwrapResponse<MembershipPlan>(data);
+}
+
+/**
+ * Reporte paginado de intentos de cobro fallidos + agregados.
+ *   params.since   → ISO date; default backend = 30 días atrás
+ *   params.page    → 1-based; default 1
+ *   params.pageSize → default 20, máximo 100
+ */
+export async function fetchBillingFailureReport(
+    params: ListBillingFailureAttemptsParams = {},
+): Promise<BillingFailureReport> {
+    const { data } = await api.get<ApiEnvelope<BillingFailureReport>>(
+        '/memberships/subscriptions/billing-failures/report',
+        {
+            params: {
+                since: params.since,
+                page: params.page,
+                pageSize: params.pageSize,
+            },
+        },
+    );
+    return unwrapResponse<BillingFailureReport>(data);
 }

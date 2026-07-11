@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
@@ -41,6 +41,7 @@ export function InsightsDashboard() {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
+    // Estado de inputs (lo que el usuario está tipeando)
     const [from, setFrom] = useState(() => searchParams.get('from') ?? thirtyDaysAgoISO());
     const [to, setTo] = useState(() => searchParams.get('to') ?? todayISO());
     const [productId, setProductId] = useState(() => searchParams.get('productId') ?? '');
@@ -49,20 +50,62 @@ export function InsightsDashboard() {
     const [lookbackDays, setLookbackDays] = useState(() => Number(searchParams.get('lookbackDays') ?? 30));
     const [inactiveDays, setInactiveDays] = useState(() => Number(searchParams.get('inactiveDays') ?? 60));
 
-    const kpisQ = useExecutiveKpis(from, to);
-    const segmentationQ = useClientSegmentation({ inactiveDays });
+    // Estado aplicado (lo que la query realmente consume)
+    // Solo cambia cuando el usuario presiona "Buscar".
+    const [applied, setApplied] = useState(() => ({
+        from: searchParams.get('from') ?? thirtyDaysAgoISO(),
+        to: searchParams.get('to') ?? todayISO(),
+        productId: searchParams.get('productId') ?? '',
+        branchId: searchParams.get('branchId') ?? '',
+        discountId: searchParams.get('discountId') ?? '',
+        lookbackDays: Number(searchParams.get('lookbackDays') ?? 30),
+        inactiveDays: Number(searchParams.get('inactiveDays') ?? 60),
+    }));
+
+    const applyFilters = () => {
+        const next = {
+            from,
+            to,
+            productId: productId.trim(),
+            branchId: branchId.trim(),
+            discountId: discountId.trim(),
+            lookbackDays,
+            inactiveDays,
+        };
+        setApplied(next);
+
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('from', next.from);
+        params.set('to', next.to);
+        params.set('lookbackDays', String(next.lookbackDays));
+        params.set('inactiveDays', String(next.inactiveDays));
+        if (next.productId) params.set('productId', next.productId);
+        else params.delete('productId');
+        if (next.branchId) params.set('branchId', next.branchId);
+        else params.delete('branchId');
+        if (next.discountId) params.set('discountId', next.discountId);
+        else params.delete('discountId');
+
+        const nextQuery = params.toString();
+        if (nextQuery !== searchParams.toString()) {
+            router.replace(`${pathname}?${nextQuery}`, { scroll: false });
+        }
+    };
+
+    const kpisQ = useExecutiveKpis(applied.from, applied.to);
+    const segmentationQ = useClientSegmentation({ inactiveDays: applied.inactiveDays });
     const kardexQ = useInventoryKardex({
-        productId: productId.trim() || undefined,
-        from,
-        to,
+        productId: applied.productId || undefined,
+        from: applied.from,
+        to: applied.to,
     });
     const posDiscountQ = usePosDiscountUsageReport({
-        from,
-        to,
-        branchId: branchId.trim() || undefined,
-        discountId: discountId.trim() || undefined,
+        from: applied.from,
+        to: applied.to,
+        branchId: applied.branchId || undefined,
+        discountId: applied.discountId || undefined,
     });
-    const restockQ = useRestockSuggestions({ lookbackDays });
+    const restockQ = useRestockSuggestions({ lookbackDays: applied.lookbackDays });
     const promotionsQ = usePromotions({ isActive: true, limit: 100 }, { enabled: true });
     const triggerReminders = useTriggerClinicalReminders();
 
@@ -105,49 +148,6 @@ export function InsightsDashboard() {
             { label: 'Recompra', value: `${sales.repurchaseRate.toFixed(2)}%` },
         ];
     }, [kpisQ.data]);
-
-    useEffect(() => {
-        const params = new URLSearchParams(searchParams.toString());
-
-        params.set('from', from);
-        params.set('to', to);
-        params.set('lookbackDays', String(lookbackDays));
-        params.set('inactiveDays', String(inactiveDays));
-
-        if (productId.trim()) {
-            params.set('productId', productId.trim());
-        } else {
-            params.delete('productId');
-        }
-
-        if (branchId.trim()) {
-            params.set('branchId', branchId.trim());
-        } else {
-            params.delete('branchId');
-        }
-
-        if (discountId.trim()) {
-            params.set('discountId', discountId.trim());
-        } else {
-            params.delete('discountId');
-        }
-
-        const nextQuery = params.toString();
-        if (nextQuery !== searchParams.toString()) {
-            router.replace(`${pathname}?${nextQuery}`, { scroll: false });
-        }
-    }, [
-        router,
-        pathname,
-        searchParams,
-        from,
-        to,
-        productId,
-        branchId,
-        discountId,
-        lookbackDays,
-        inactiveDays,
-    ]);
 
     return (
         <div className="space-y-4">
@@ -226,6 +226,16 @@ export function InsightsDashboard() {
                                 <option key={discount.id} value={discount.id}>{discount.name}</option>
                             ))}
                         </select>
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                        <Button
+                            onClick={applyFilters}
+                            disabled={loading}
+                            title="Aplicar los filtros y refrescar los reportes"
+                        >
+                            <Search className="mr-2 h-4 w-4" />
+                            Buscar
+                        </Button>
                     </div>
                 </CardContent>
             </Card>

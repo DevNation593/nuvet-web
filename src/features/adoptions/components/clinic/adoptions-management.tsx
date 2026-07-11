@@ -605,6 +605,8 @@ function AdoptionListingModal({
         resolver: zodResolver(listingSchema),
         values: { adoptionAnimalId: '', notes: '' },
     });
+    const selectedAnimalId = form.watch('adoptionAnimalId');
+    const selectedAnimal = animals.find((animal) => animal.id === selectedAnimalId);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -624,6 +626,45 @@ function AdoptionListingModal({
                             ))}
                         </select>
                     </Field>
+                    {selectedAnimal && (
+                        <div className="rounded-md border bg-muted/10 p-3">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Foto del animal seleccionado
+                            </p>
+                            <div className="flex items-center gap-3">
+                                {selectedAnimal.photoUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={selectedAnimal.photoUrl}
+                                        alt={selectedAnimal.name}
+                                        className="h-24 w-24 rounded-md border object-cover"
+                                    />
+                                ) : (
+                                    <div className="flex h-24 w-24 items-center justify-center rounded-md border bg-muted/40 text-[10px] text-muted-foreground">
+                                        Sin foto
+                                    </div>
+                                )}
+                                <div className="text-sm">
+                                    <p className="font-semibold">{selectedAnimal.name}</p>
+                                    <p className="text-muted-foreground">
+                                        {getPetSpeciesLabel(selectedAnimal.species)}
+                                        {selectedAnimal.breed ? ` · ${selectedAnimal.breed}` : ''}
+                                    </p>
+                                    {selectedAnimal.description ? (
+                                        <p className="mt-1 line-clamp-3 text-muted-foreground text-xs">
+                                            {selectedAnimal.description}
+                                        </p>
+                                    ) : null}
+                                </div>
+                            </div>
+                            {!selectedAnimal.photoUrl && (
+                                <p className="mt-2 text-xs text-amber-700">
+                                    Este animal no tiene foto. Edita su ficha para subir una
+                                    antes de publicar la adopción.
+                                </p>
+                            )}
+                        </div>
+                    )}
                     <Field label="Notas">
                         <textarea rows={3} className="w-full rounded-md border border-input px-3 py-2 text-sm" {...form.register('notes')} />
                     </Field>

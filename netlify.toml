@@ -1,0 +1,19 @@
+# NuVet Web — Netlify build config
+# Force pnpm para que el workspace `@nuvet/types` se symlinkee correctamente
+# y el `prepare` hook pueda construir el dist localmente.
+# Sin esto, Netlify usa npm por defecto, que copia la carpeta `types/` con
+# el dist sin construir → `Module '@nuvet/types' has no exported member ...`
+# en tiempo de build de Next.js.
+
+[build]
+  base    = "."
+  command = "pnpm install --frozen-lockfile && pnpm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS    = "--version=9.15.4"
+  PNPM_FLAGS   = "--version=9.15.4"
+  # Sin pnpm: shamefully-hoist replica el comportamiento de npm hoisting
+  # necesario para algunas deps de Next 16 + react-hook-form.
+  NEXT_TELEMETRY_DISABLED = "1"

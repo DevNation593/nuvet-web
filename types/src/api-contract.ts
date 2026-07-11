@@ -462,3 +462,350 @@ export interface PassportLookupResult {
     sourceTenantName: string;
     microchip: string;
 }
+
+// ─── Fase 2 · Membresías (monetización recurrente) ───────────────────────────
+
+export type ApiMembershipBillingPeriod = 'MONTHLY' | 'ANNUAL';
+export type ApiMembershipSubscriptionStatus =
+    | 'PENDING'
+    | 'ACTIVE'
+    | 'PAUSED'
+    | 'CANCELLED'
+    | 'EXPIRED'
+    | 'PAST_DUE';
+export type ApiBillingProviderKind = 'MOCK' | 'STRIPE' | 'PAYPHONE';
+
+export interface MembershipPlan {
+    id: string;
+    tenantId: string;
+    slug: string;
+    name: string;
+    description: string | null;
+    priceCents: number;
+    currency: string;
+    billingPeriod: ApiMembershipBillingPeriod;
+    includedBenefits: string[];
+    applicableSpecies: string[];
+    isActive: boolean;
+    displayOrder: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface MembershipSubscription {
+    id: string;
+    tenantId: string;
+    sourceTenantId: string;
+    petId: string;
+    ownerId: string;
+    planId: string;
+    status: ApiMembershipSubscriptionStatus;
+    currentPeriodStart: string;
+    currentPeriodEnd: string;
+    nextBillingAt: string;
+    autoRenew: boolean;
+    lastChargedAt: string | null;
+    lastChargeTxId: string | null;
+    canceledAt: string | null;
+    cancelReason: string | null;
+    providerKind: ApiBillingProviderKind;
+    createdAt: string;
+    updatedAt: string;
+    plan?: Pick<
+        MembershipPlan,
+        'id' | 'name' | 'slug' | 'priceCents' | 'currency' | 'billingPeriod'
+    >;
+    pet?: {
+        id: string;
+        name: string;
+    };
+}
+
+export interface CreateMembershipPlanRequest {
+    name: string;
+    slug: string;
+    description?: string;
+    priceCents: number;
+    currency?: string;
+    billingPeriod?: ApiMembershipBillingPeriod;
+    includedBenefits?: string[];
+    applicableSpecies?: string[];
+    isActive?: boolean;
+    displayOrder?: number;
+}
+
+export type UpdateMembershipPlanRequest = Partial<CreateMembershipPlanRequest>;
+
+export interface SubscribeToPlanRequest {
+    petId: string;
+    planId: string;
+    paymentMethodToken?: string;
+}
+
+export interface CancelMembershipSubscriptionRequest {
+    reason?: string;
+}
+
+export interface MembershipPlanListResponse {
+    data: MembershipPlan[];
+    total: number;
+}
+
+export interface MembershipSubscriptionListResponse {
+    data: MembershipSubscription[];
+    total: number;
+}
+
+// ─── Fase 2 · Reporte de intentos de cobro fallidos (dashboard) ──────────────
+
+export type ApiBillingAttemptStatus = 'SUCCESS' | 'FAILED';
+
+export interface BillingAttempt {
+    id: string;
+    tenantId: string;
+    subscriptionId: string;
+    provider: ApiBillingProviderKind;
+    transactionId: string | null;
+    status: ApiBillingAttemptStatus;
+    amountCents: number;
+    currency: string;
+    failureCode: string | null;
+    failureMessage: string | null;
+    createdAt: string;
+    subscription?: {
+        id: string;
+        status: ApiMembershipSubscriptionStatus;
+        ownerId: string;
+        owner?: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+        };
+        plan?: {
+            id: string;
+            name: string;
+            priceCents: number;
+            currency: string;
+        };
+        pet?: {
+            id: string;
+            name: string;
+        };
+    };
+}
+
+export interface BillingFailureCodeCount {
+    failureCode: string;
+    failureMessage: string | null;
+    count: number;
+}
+
+export interface BillingFailureReportSummary {
+    failuresLast24Hours: number;
+    failuresLast7Days: number;
+    failuresLast30Days: number;
+    pastDueSubscriptions: number;
+    topFailureCodes: BillingFailureCodeCount[];
+    totalRecoveredAfterFailure: number;
+}
+
+export interface BillingFailureReport {
+    summary: BillingFailureReportSummary;
+    attempts: BillingAttempt[];
+    total: number;
+    page: number;
+    pageSize: number;
+}
+
+export interface ListBillingFailureAttemptsParams {
+    since?: string;
+    page?: number;
+    pageSize?: number;
+}
+
+// ─── Fase 3 · Slice 1 · Campañas de vacunación ───────────────────────────────
+
+export type ApiVaccinationCampaignStatus =
+    | 'DRAFT'
+    | 'OPEN'
+    | 'CLOSED'
+    | 'COMPLETED'
+    | 'CANCELLED';
+
+export type ApiVaccinationRegistrationStatus =
+    | 'REGISTERED'
+    | 'ATTENDED'
+    | 'NO_SHOW'
+    | 'CANCELLED';
+
+export interface VaccinationCampaign {
+    id: string;
+    tenantId: string;
+    name: string;
+    description: string | null;
+    vaccineName: string;
+    startsAt: string;
+    endsAt: string;
+    location: string | null;
+    capacity: number | null;
+    priceCents: number;
+    currency: string;
+    status: ApiVaccinationCampaignStatus;
+    notes: string | null;
+    createdById: string;
+    createdAt: string;
+    updatedAt: string;
+    registrationCount?: number;
+}
+
+export interface VaccinationRegistration {
+    id: string;
+    tenantId: string;
+    campaignId: string;
+    petId: string;
+    ownerId: string;
+    status: ApiVaccinationRegistrationStatus;
+    attendedAt: string | null;
+    notes: string | null;
+    createdAt: string;
+    updatedAt: string;
+    pet?: {
+        id: string;
+        name: string;
+        species: string;
+    };
+    owner?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+    };
+}
+
+export interface CreateVaccinationCampaignRequest {
+    name: string;
+    description?: string;
+    vaccineName: string;
+    startsAt: string;
+    endsAt: string;
+    location?: string;
+    capacity?: number;
+    priceCents?: number;
+    currency?: string;
+    notes?: string;
+}
+
+export interface UpdateVaccinationCampaignRequest {
+    name?: string;
+    description?: string;
+    vaccineName?: string;
+    startsAt?: string;
+    endsAt?: string;
+    location?: string;
+    capacity?: number;
+    priceCents?: number;
+    currency?: string;
+    notes?: string;
+    status?: ApiVaccinationCampaignStatus;
+}
+
+export interface RegisterPetToCampaignRequest {
+    petId: string;
+    notes?: string;
+}
+
+export interface MarkRegistrationAttendedRequest {
+    attendedAt?: string;
+    notes?: string;
+}
+
+// ─── Fase 3 · Slice 2 · Veterinario a domicilio ──────────────────────────────
+
+export type ApiHomeVetBookingStatus =
+    | 'REQUESTED'
+    | 'CONFIRMED'
+    | 'EN_ROUTE'
+    | 'IN_PROGRESS'
+    | 'COMPLETED'
+    | 'CANCELLED'
+    | 'NO_SHOW';
+
+export interface HomeVetBooking {
+    id: string;
+    tenantId: string;
+    ownerId: string;
+    petId: string;
+    vetId: string | null;
+    scheduledAt: string;
+    address: string;
+    addressNotes: string | null;
+    reason: string;
+    status: ApiHomeVetBookingStatus;
+    visitFeeCents: number;
+    travelFeeCents: number;
+    totalCents: number;
+    currency: string;
+    visitNotes: string | null;
+    diagnosis: string | null;
+    internalNotes: string | null;
+    cancelReason: string | null;
+    cancelledAt: string | null;
+    completedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+    pet?: { id: string; name: string; species: string };
+    owner?: { id: string; firstName: string; lastName: string; email: string };
+    vet?: { id: string; firstName: string; lastName: string } | null;
+}
+
+export interface CreateHomeVetBookingRequest {
+    petId: string;
+    scheduledAt: string;
+    address: string;
+    addressNotes?: string;
+    reason: string;
+    visitFeeCents?: number;
+    travelFeeCents?: number;
+    totalCents?: number;
+    currency?: string;
+    ownerId?: string;
+}
+
+export interface UpdateHomeVetBookingRequest {
+    scheduledAt?: string;
+    address?: string;
+    addressNotes?: string;
+    reason?: string;
+    visitFeeCents?: number;
+    travelFeeCents?: number;
+    totalCents?: number;
+    currency?: string;
+    visitNotes?: string;
+    diagnosis?: string;
+    internalNotes?: string;
+}
+
+export interface AssignVetRequest {
+    vetId: string;
+}
+
+export interface CancelHomeVetBookingRequest {
+    reason?: string;
+}
+
+export interface CompleteHomeVetBookingRequest {
+    visitNotes?: string;
+    diagnosis?: string;
+}
+
+export interface ListHomeVetBookingsParams {
+    status?: ApiHomeVetBookingStatus;
+    fromDate?: string;
+    toDate?: string;
+    ownerId?: string;
+    vetId?: string;
+    petId?: string;
+    page?: number;
+    pageSize?: number;
+}
