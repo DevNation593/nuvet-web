@@ -9,7 +9,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
-import { Badge } from '@/shared/components/ui/badge';
 import {
     Dialog,
     DialogContent,
@@ -18,7 +17,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/shared/components/ui/dialog';
-import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
+import { ResponsiveDataTable, type ResponsiveColumn } from '@/shared/components/ui/responsive-data-table';
 import { usePets } from '@/features/pets/hooks/use-pets';
 import {
     MedicalRecord,
@@ -118,6 +117,62 @@ export function MedicalRecordsManagement() {
         return ownerName ? `${pet.name} · ${ownerName}` : pet.name;
     }, [pets, selectedPetId]);
 
+    const recordColumns = useMemo<ResponsiveColumn<MedicalRecord>[]>(() => [
+        {
+            key: 'createdAt',
+            header: 'Fecha y hora',
+            cell: (record) => (
+                <span className="font-medium whitespace-nowrap">
+                    {format(new Date(record.createdAt), "d MMM yyyy · HH:mm", { locale: es })}
+                </span>
+            ),
+        },
+        {
+            key: 'pet',
+            header: 'Paciente',
+            cell: (record) => record.pet?.name ?? '—',
+        },
+        {
+            key: 'chiefComplaint',
+            header: 'Motivo de consulta',
+            cell: (record) => (
+                <span className="line-clamp-2 block max-w-[260px]">{record.chiefComplaint}</span>
+            ),
+        },
+        {
+            key: 'diagnosis',
+            header: 'Diagnóstico',
+            cell: (record) => (
+                <span className="line-clamp-2 block max-w-[260px]">{record.diagnosis}</span>
+            ),
+        },
+        {
+            key: 'treatment',
+            header: 'Tratamiento',
+            cell: (record) => (
+                <span className="line-clamp-2 block max-w-[260px]">{record.treatment}</span>
+            ),
+            hideOnMobile: true,
+        },
+        {
+            key: 'actions',
+            header: 'Acciones',
+            headerClassName: 'text-right',
+            cellClassName: 'text-right',
+            cell: (record) => (
+                <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openDetail(record.id)}
+                    aria-label={`Ver detalle de consulta de ${record.pet?.name ?? 'mascota'}`}
+                >
+                    Ver detalle
+                </Button>
+            ),
+            hideOnMobile: true,
+        },
+    ], []);
+
     return (
         <div className="space-y-4">
             <header className="flex flex-wrap items-center justify-between gap-3">
@@ -181,72 +236,35 @@ export function MedicalRecordsManagement() {
                                 </Button>
                             }
                         />
-                    ) : records.length === 0 ? (
-                        <div className="flex min-h-[260px] flex-col items-center justify-center gap-2 p-6 text-center">
-                            <Stethoscope className="h-6 w-6 text-muted-foreground" />
-                            <p className="text-sm font-medium">Sin consultas registradas</p>
-                            <p className="text-xs text-muted-foreground">
-                                Crea la primera consulta médica para este paciente.
-                            </p>
-                        </div>
                     ) : (
-                        <ScrollableTable maxHeight="max-h-[520px]" minWidth="min-w-[920px]">
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Fecha y hora</TableHead>
-                                    <TableHead>Paciente</TableHead>
-                                    <TableHead>Motivo de consulta</TableHead>
-                                    <TableHead>Diagnóstico</TableHead>
-                                    <TableHead>Tratamiento</TableHead>
-                                    <TableHead className="text-right">Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {records.map((record) => (
-                                    <TableRow
-                                        key={record.id}
-                                        clickable
-                                        onClick={() => openDetail(record.id)}
-                                    >
-                                        <TableCell className="font-medium whitespace-nowrap">
-                                            {format(
-                                                new Date(record.createdAt),
-                                                "d MMM yyyy · HH:mm",
-                                                { locale: es },
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{record.pet?.name ?? '—'}</TableCell>
-                                        <TableCell className="max-w-[260px]">
-                                            <span className="line-clamp-2">
-                                                {record.chiefComplaint}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="max-w-[260px]">
-                                            <span className="line-clamp-2">
-                                                {record.diagnosis}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="max-w-[260px]">
-                                            <span className="line-clamp-2">
-                                                {record.treatment}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openDetail(record.id);
-                                                }}
-                                            >
-                                                Ver detalle
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </ScrollableTable>
+                        <ResponsiveDataTable<MedicalRecord>
+                            data={records}
+                            columns={recordColumns}
+                            getRowKey={(record) => record.id}
+                            maxHeight="max-h-[520px]"
+                            minWidth="min-w-[920px]"
+                            getMobileTitle={(record) => `${record.pet?.name ?? 'Consulta'} · ${format(new Date(record.createdAt), "d MMM HH:mm", { locale: es })}`}
+                            getMobileActions={(record) => (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => openDetail(record.id)}
+                                    aria-label={`Ver detalle de consulta de ${record.pet?.name ?? 'mascota'}`}
+                                >
+                                    Ver detalle
+                                </Button>
+                            )}
+                            emptyState={
+                                <div className="flex min-h-[260px] flex-col items-center justify-center gap-2 p-6 text-center">
+                                    <Stethoscope className="h-6 w-6 text-muted-foreground" />
+                                    <p className="text-sm font-medium">Sin consultas registradas</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Crea la primera consulta médica para este paciente.
+                                    </p>
+                                </div>
+                            }
+                        />
                     )}
                 </CardContent>
                 {records.length > 0 && (

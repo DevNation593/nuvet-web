@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,9 +29,7 @@ import { usePets } from '@/features/pets/hooks/use-pets';
 import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/ui-states';
 import { Eye, Loader2, Pencil, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
-import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
-import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
-import { useIsMobile } from '@/shared/hooks/use-media-query';
+import { ResponsiveDataTable, type ResponsiveColumn } from '@/shared/components/ui/responsive-data-table';
 
 const clientSchema = z.object({
     firstName: z.string().min(2, 'Nombre requerido'),
@@ -53,11 +51,10 @@ export function ClientsManagement() {
     const [editingClient, setEditingClient] = useState<ClinicClient | null>(null);
     const [detailOpen, setDetailOpen] = useState(false);
     const PAGE_SIZE = 10;
-    const openDetail = (id: string) => {
+    const openDetail = useCallback((id: string) => {
         setSelectedId(id);
         setDetailOpen(true);
-    };
-    const isMobile = useIsMobile();
+    }, []);
 
     const clientsQuery = useClients({ page, limit: PAGE_SIZE });
     const clientsMeta = clientsQuery.data?.meta ?? {
@@ -95,6 +92,76 @@ export function ClientsManagement() {
                 .includes(term),
         );
     }, [clients, search]);
+
+    const clientColumns = useMemo<ResponsiveColumn<ClinicClient>[]>(() => [
+        {
+            key: 'name',
+            header: 'Nombre',
+            cell: (client) => <span className="font-medium">{client.firstName} {client.lastName}</span>,
+        },
+        {
+            key: 'email',
+            header: 'Correo',
+            cell: (client) => client.email,
+        },
+        {
+            key: 'phone',
+            header: 'Teléfono',
+            cell: (client) => client.phone ?? '—',
+        },
+        {
+            key: 'petCount',
+            header: 'Mascotas',
+            cell: (client) => petCountByOwner.get(client.id) ?? 0,
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (client) => (
+                <Badge variant={client.isActive ? 'confirmed' : 'cancelled'}>
+                    {client.isActive ? 'Activo' : 'Inactivo'}
+                </Badge>
+            ),
+            hideOnMobile: true,
+        },
+        {
+            key: 'createdAt',
+            header: 'Registro',
+            cell: (client) => format(new Date(client.createdAt), 'dd/MM/yy'),
+            hideOnMobile: true,
+        },
+        {
+            key: 'actions',
+            header: 'Acciones',
+            headerClassName: 'text-right',
+            cell: (client) => (
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        title={`Ver detalle de ${client.firstName}`}
+                        aria-label={`Ver detalle de ${client.firstName} ${client.lastName}`}
+                        onClick={() => openDetail(client.id)}
+                    >
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        title="Editar cliente"
+                        aria-label={`Editar ${client.firstName} ${client.lastName}`}
+                        onClick={() => {
+                            setEditingClient(client);
+                            setModalOpen(true);
+                        }}
+                    >
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+            hideOnMobile: true,
+        },
+    ], [openDetail, petCountByOwner]);
 
     return (
         <div className="space-y-4">
@@ -140,125 +207,48 @@ export function ClientsManagement() {
                                 </Button>
                             }
                         />
-                    ) : filteredClients.length === 0 ? (
-                        <ClinicStateCard message="No hay clientes para mostrar." />
-                    ) : isMobile ? (
-                        <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
-                            {filteredClients.map((client) => (
-                                <MobileCard key={client.id}>
-                                    <MobileCardHeader>
-                                        <MobileCardTitle>
-                                            {client.firstName} {client.lastName}
-                                        </MobileCardTitle>
-                                        <Badge variant={client.isActive ? 'confirmed' : 'cancelled'}>
-                                            {client.isActive ? 'Activo' : 'Inactivo'}
-                                        </Badge>
-                                    </MobileCardHeader>
-                                    <MobileCardContent>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Correo:</MobileCardLabel>
-                                            <MobileCardValue>{client.email}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Teléfono:</MobileCardLabel>
-                                            <MobileCardValue>{client.phone ?? '—'}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Mascotas:</MobileCardLabel>
-                                            <MobileCardValue>{petCountByOwner.get(client.id) ?? 0}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Registro:</MobileCardLabel>
-                                            <MobileCardValue>{format(new Date(client.createdAt), 'dd/MM/yy')}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardActions>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="flex-1"
-                                                onClick={() => openDetail(client.id)}
-                                                aria-label={`Ver detalle de ${client.firstName} ${client.lastName}`}
-                                            >
-                                                <Eye className="h-3.5 w-3.5 mr-1" />
-                                                Detalle
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="flex-1"
-                                                onClick={() => {
-                                                    setEditingClient(client);
-                                                    setModalOpen(true);
-                                                }}
-                                                aria-label={`Editar ${client.firstName} ${client.lastName}`}
-                                            >
-                                                <Pencil className="h-3.5 w-3.5 mr-1" />
-                                                Editar
-                                            </Button>
-                                        </MobileCardActions>
-                                    </MobileCardContent>
-                                </MobileCard>
-                            ))}
-                        </div>
                     ) : (
-                        <ScrollableTable maxHeight="max-h-[600px]" minWidth="min-w-[760px]">
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Nombre</TableHead>
-                                    <TableHead>Correo</TableHead>
-                                    <TableHead>Teléfono</TableHead>
-                                    <TableHead>Mascotas</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead>Registro</TableHead>
-                                    <TableHead>Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredClients.map((client) => (
-                                    <TableRow key={client.id}>
-                                        <TableCell className="font-medium">
-                                            {client.firstName} {client.lastName}
-                                        </TableCell>
-                                        <TableCell>{client.email}</TableCell>
-                                        <TableCell>{client.phone ?? '—'}</TableCell>
-                                        <TableCell>{petCountByOwner.get(client.id) ?? 0}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={client.isActive ? 'confirmed' : 'cancelled'}>
-                                                {client.isActive ? 'Activo' : 'Inactivo'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            {format(new Date(client.createdAt), 'dd/MM/yy')}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    title={`Ver detalle de ${client.firstName}`}
-                                                    aria-label={`Ver detalle de ${client.firstName} ${client.lastName}`}
-                                                    onClick={() => openDetail(client.id)}
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    title="Editar cliente"
-                                                    aria-label={`Editar ${client.firstName} ${client.lastName}`}
-                                                    onClick={() => {
-                                                        setEditingClient(client);
-                                                        setModalOpen(true);
-                                                    }}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </ScrollableTable>
+                        <ResponsiveDataTable<ClinicClient>
+                            data={filteredClients}
+                            columns={clientColumns}
+                            getRowKey={(client) => client.id}
+                            maxHeight="max-h-[600px]"
+                            minWidth="min-w-[760px]"
+                            getMobileTitle={(client) => `${client.firstName} ${client.lastName}`}
+                            getMobileBadge={(client) => (
+                                <Badge variant={client.isActive ? 'confirmed' : 'cancelled'}>
+                                    {client.isActive ? 'Activo' : 'Inactivo'}
+                                </Badge>
+                            )}
+                            getMobileActions={(client) => (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => openDetail(client.id)}
+                                        aria-label={`Ver detalle de ${client.firstName} ${client.lastName}`}
+                                    >
+                                        <Eye className="h-3.5 w-3.5 mr-1" />
+                                        Detalle
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => {
+                                            setEditingClient(client);
+                                            setModalOpen(true);
+                                        }}
+                                        aria-label={`Editar ${client.firstName} ${client.lastName}`}
+                                    >
+                                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                                        Editar
+                                    </Button>
+                                </>
+                            )}
+                            emptyState={<ClinicStateCard message="No hay clientes para mostrar." />}
+                        />
                     )}
                 </CardContent>
             </Card>

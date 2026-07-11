@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -24,9 +24,7 @@ import { ClinicRowsSkeleton, ClinicStateCard } from '@/shared/components/clinic/
 import { Eye, FileText, Loader2, PawPrint, Pencil, Search, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { getPetSpeciesLabel } from '@/shared/lib/pet-labels';
-import { ScrollableTable, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/shared/components/ui/table';
-import { MobileCard, MobileCardHeader, MobileCardTitle, MobileCardContent, MobileCardRow, MobileCardLabel, MobileCardValue, MobileCardActions } from '@/shared/components/ui/mobile-card';
-import { useIsMobile } from '@/shared/hooks/use-media-query';
+import { ResponsiveDataTable, type ResponsiveColumn } from '@/shared/components/ui/responsive-data-table';
 
 type PetRow = {
     id: string;
@@ -104,7 +102,6 @@ export function PetsManagement() {
     const [page, setPage] = useState(1);
     const [detailOpen, setDetailOpen] = useState(false);
     const PAGE_SIZE = 20;
-    const isMobile = useIsMobile();
 
     const petsQuery = usePets({
         page,
@@ -128,10 +125,10 @@ export function PetsManagement() {
     const clients = useMemo(() => clientsQuery.data?.data ?? [], [clientsQuery.data?.data]);
     const selectedPet = (selectedPetQuery.data as unknown as PetDetail | undefined) ?? undefined;
 
-    const openDetail = (id: string) => {
+    const openDetail = useCallback((id: string) => {
         setSelectedId(id);
         setDetailOpen(true);
-    };
+    }, []);
 
     const filteredPets = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -151,6 +148,111 @@ export function PetsManagement() {
             return matchesSearch && matchesSpecies && matchesStatus;
         });
     }, [pets, search, speciesFilter, statusFilter]);
+
+    const petColumns = useMemo<ResponsiveColumn<PetRow>[]>(() => [
+        {
+            key: 'name',
+            header: 'Nombre',
+            cell: (pet) => <span className="font-medium">{pet.name}</span>,
+        },
+        {
+            key: 'species',
+            header: 'Especie',
+            cell: (pet) => getPetSpeciesLabel(pet.species),
+        },
+        {
+            key: 'breed',
+            header: 'Raza',
+            cell: (pet) => pet.breed ?? '—',
+        },
+        {
+            key: 'age',
+            header: 'Edad',
+            cell: (pet) => calculateAge(pet.birthDate),
+        },
+        {
+            key: 'owner',
+            header: 'Dueño',
+            cell: (pet) => `${pet.owner?.firstName ?? ''} ${pet.owner?.lastName ?? ''}`.trim() || '—',
+        },
+        {
+            key: 'status',
+            header: 'Estado',
+            cell: (pet) => (
+                <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
+                    {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
+                </Badge>
+            ),
+            hideOnMobile: true,
+        },
+        {
+            key: 'lastVisit',
+            header: 'Última visita',
+            cell: (pet) => format(new Date(pet.createdAt), 'dd/MM/yy'),
+            hideOnMobile: true,
+        },
+        {
+            key: 'actions',
+            header: 'Acciones',
+            headerClassName: 'text-right',
+            cell: (pet) => (
+                <div className="flex items-center justify-end gap-1">
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => openDetail(pet.id)}
+                        title={`Ver detalle de ${pet.name}`}
+                        aria-label={`Ver detalle de ${pet.name}`}
+                    >
+                        <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                            setEditingPet(pet);
+                            setModalOpen(true);
+                        }}
+                        title="Editar"
+                        aria-label={`Editar ${pet.name}`}
+                    >
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => router.push(`/clinic/pets/${pet.id}/history`)}
+                        title="Historial clínico"
+                        aria-label={`Ver historial de ${pet.name}`}
+                    >
+                        <FileText className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        title={(pet.isActive ?? true) ? 'Desactivar mascota' : 'Activar mascota'}
+                        aria-label={(pet.isActive ?? true) ? `Desactivar ${pet.name}` : `Activar ${pet.name}`}
+                        onClick={async () => {
+                            try {
+                                if ((pet.isActive ?? true)) {
+                                    await deactivatePet.mutateAsync(pet.id);
+                                    toast.success('Mascota desactivada');
+                                } else {
+                                    await reactivatePet.mutateAsync(pet.id);
+                                    toast.success('Mascota reactivada');
+                                }
+                            } catch {
+                                toast.error('No se pudo actualizar el estado');
+                            }
+                        }}
+                    >
+                        <PawPrint className="h-4 w-4" />
+                    </Button>
+                </div>
+            ),
+            hideOnMobile: true,
+        },
+    ], [openDetail, deactivatePet, reactivatePet, router]);
 
     return (
         <div className="space-y-4">
@@ -227,165 +329,58 @@ export function PetsManagement() {
                                 </Button>
                             }
                         />
-                    ) : filteredPets.length === 0 ? (
-                        <ClinicStateCard message="No hay mascotas para mostrar." />
-                    ) : isMobile ? (
-                        <div className="space-y-3 p-4 max-h-[600px] overflow-y-auto">
-                            {filteredPets.map((pet) => (
-                                <MobileCard key={pet.id}>
-                                    <MobileCardHeader>
-                                        <MobileCardTitle>{pet.name}</MobileCardTitle>
-                                        <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
-                                            {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
-                                        </Badge>
-                                    </MobileCardHeader>
-                                    <MobileCardContent>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Especie:</MobileCardLabel>
-                                            <MobileCardValue>{getPetSpeciesLabel(pet.species)}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Raza:</MobileCardLabel>
-                                            <MobileCardValue>{pet.breed ?? '—'}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Edad:</MobileCardLabel>
-                                            <MobileCardValue>{calculateAge(pet.birthDate)}</MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardRow>
-                                            <MobileCardLabel>Dueño:</MobileCardLabel>
-                                            <MobileCardValue>
-                                                {pet.owner?.firstName} {pet.owner?.lastName}
-                                            </MobileCardValue>
-                                        </MobileCardRow>
-                                        <MobileCardActions>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="flex-1"
-                                                onClick={() => openDetail(pet.id)}
-                                                aria-label={`Ver detalle de ${pet.name}`}
-                                            >
-                                                <Eye className="h-3.5 w-3.5 mr-1" />
-                                                Detalle
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="flex-1"
-                                                onClick={() => {
-                                                    setEditingPet(pet);
-                                                    setModalOpen(true);
-                                                }}
-                                                aria-label={`Editar ${pet.name}`}
-                                            >
-                                                <Pencil className="h-3.5 w-3.5 mr-1" />
-                                                Editar
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="flex-1"
-                                                onClick={() => router.push(`/clinic/pets/${pet.id}/history`)}
-                                                aria-label={`Ver historial de ${pet.name}`}
-                                            >
-                                                <FileText className="h-3.5 w-3.5 mr-1" />
-                                                Historial
-                                            </Button>
-                                        </MobileCardActions>
-                                    </MobileCardContent>
-                                </MobileCard>
-                            ))}
-                        </div>
                     ) : (
-                        <ScrollableTable maxHeight="max-h-[600px]" minWidth="min-w-[860px]">
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Nombre</TableHead>
-                                    <TableHead>Especie</TableHead>
-                                    <TableHead>Raza</TableHead>
-                                    <TableHead>Edad</TableHead>
-                                    <TableHead>Dueño</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead>Última visita</TableHead>
-                                    <TableHead>Acciones</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredPets.map((pet) => (
-                                    <TableRow key={pet.id}>
-                                        <TableCell className="font-medium">{pet.name}</TableCell>
-                                        <TableCell>{getPetSpeciesLabel(pet.species)}</TableCell>
-                                        <TableCell>{pet.breed ?? '—'}</TableCell>
-                                        <TableCell>{calculateAge(pet.birthDate)}</TableCell>
-                                        <TableCell>
-                                            {pet.owner?.firstName} {pet.owner?.lastName}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
-                                                {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>{format(new Date(pet.createdAt), 'dd/MM/yy')}</TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={() => openDetail(pet.id)}
-                                                    title={`Ver detalle de ${pet.name}`}
-                                                    aria-label={`Ver detalle de ${pet.name}`}
-                                                >
-                                                    <Eye className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={() => {
-                                                        setEditingPet(pet);
-                                                        setModalOpen(true);
-                                                    }}
-                                                    title="Editar"
-                                                    aria-label={`Editar ${pet.name}`}
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    onClick={() => router.push(`/clinic/pets/${pet.id}/history`)}
-                                                    title="Historial clínico"
-                                                    aria-label={`Ver historial de ${pet.name}`}
-                                                >
-                                                    <FileText className="h-4 w-4" />
-                                                </Button>
-                                                <Button
-                                                    size="icon"
-                                                    variant="ghost"
-                                                    title={(pet.isActive ?? true) ? 'Desactivar mascota' : 'Activar mascota'}
-                                                    aria-label={(pet.isActive ?? true) ? `Desactivar ${pet.name}` : `Activar ${pet.name}`}
-                                                    onClick={async () => {
-                                                        try {
-                                                            if ((pet.isActive ?? true)) {
-                                                                await deactivatePet.mutateAsync(pet.id);
-                                                                toast.success('Mascota desactivada');
-                                                            } else {
-                                                                await reactivatePet.mutateAsync(pet.id);
-                                                                toast.success('Mascota reactivada');
-                                                            }
-                                                        } catch {
-                                                            toast.error('No se pudo actualizar el estado');
-                                                        }
-                                                    }}
-                                                >
-                                                    <PawPrint className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </ScrollableTable>
+                        <ResponsiveDataTable<PetRow>
+                            data={filteredPets}
+                            columns={petColumns}
+                            getRowKey={(pet) => pet.id}
+                            maxHeight="max-h-[600px]"
+                            minWidth="min-w-[860px]"
+                            getMobileTitle={(pet) => pet.name}
+                            getMobileBadge={(pet) => (
+                                <Badge variant={(pet.isActive ?? true) ? 'confirmed' : 'cancelled'}>
+                                    {(pet.isActive ?? true) ? 'Activo' : 'Inactivo'}
+                                </Badge>
+                            )}
+                            getMobileActions={(pet) => (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => openDetail(pet.id)}
+                                        aria-label={`Ver detalle de ${pet.name}`}
+                                    >
+                                        <Eye className="h-3.5 w-3.5 mr-1" />
+                                        Detalle
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => {
+                                            setEditingPet(pet);
+                                            setModalOpen(true);
+                                        }}
+                                        aria-label={`Editar ${pet.name}`}
+                                    >
+                                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                                        Editar
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1"
+                                        onClick={() => router.push(`/clinic/pets/${pet.id}/history`)}
+                                        aria-label={`Ver historial de ${pet.name}`}
+                                    >
+                                        <FileText className="h-3.5 w-3.5 mr-1" />
+                                        Historial
+                                    </Button>
+                                </>
+                            )}
+                            emptyState={<ClinicStateCard message="No hay mascotas para mostrar." />}
+                        />
                     )}
                 </CardContent>
             </Card>
